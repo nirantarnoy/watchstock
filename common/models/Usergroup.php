@@ -34,7 +34,7 @@ class UserGroup extends \yii\db\ActiveRecord
     {
         return [
             [['status', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
-            [['code', 'name', 'description'], 'string', 'max' => 255],
+            [['name', 'description'], 'string', 'max' => 255],
         ];
     }
 
@@ -45,7 +45,6 @@ class UserGroup extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'code' => 'รหัส',
             'name' => 'ชื่อ',
             'description' => 'รายละเอียด',
             'status' => 'สถานะ',

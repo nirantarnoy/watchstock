@@ -84,7 +84,7 @@ class Stocktrans extends \common\models\StockTrans
 
     public static function getIssueLastNo()
     {
-        $model = Stocktrans::find()->where(['activity_type_id' => 5])->MAX('journal_no');
+        $model = Stocktrans::find()->where(['trans_type_id' => 5])->MAX('journal_no');
 
         $pre = "IS";
 

@@ -17,8 +17,8 @@ class StocktransSearch extends Stocktrans
     public function rules()
     {
         return [
-            [['id', 'activity_type_id', 'product_id', 'created_by', 'created_at', 'stock_type_id'], 'integer'],
-            [['journal_no', 'trans_date'], 'safe'],
+            [['id', 'trans_type_id', 'product_id', 'created_by', 'created_at', 'stock_type_id','warehouse_id'], 'integer'],
+            [['trans_date'], 'safe'],
             [['qty'], 'number'],
         ];
     }
@@ -61,15 +61,16 @@ class StocktransSearch extends Stocktrans
         $query->andFilterWhere([
             'id' => $this->id,
             'trans_date' => $this->trans_date,
-            'activity_type_id' => $this->activity_type_id,
+            'trans_type_id' => $this->trans_type_id,
             'product_id' => $this->product_id,
             'qty' => $this->qty,
             'created_by' => $this->created_by,
             'created_at' => $this->created_at,
             'stock_type_id' => $this->stock_type_id,
+            'warehouse_id' => $this->warehouse_id,
         ]);
 
-        $query->andFilterWhere(['like', 'journal_no', $this->journal_no]);
+       // $query->andFilterWhere(['like', 'journal_no', $this->journal_no]);
 
         return $dataProvider;
     }

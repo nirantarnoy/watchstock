@@ -12,31 +12,26 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'description')->textarea(['maxlength' => true]) ?>
-
     <div class="row">
-        <div class="col-lg-4">
-            <?= $form->field($model, 'company_id')->widget(\kartik\select2\Select2::className(),[
-                'data'=>\yii\helpers\ArrayHelper::map(\backend\models\Company::find()->all(),'id','name'),
-                'options' => [
+        <div class="col-lg-1">
 
-                ],
-                'pluginOptions' => [
-                    'allowClear'=> true,
-                ]
-            ]) ?>
+        </div>
+        <div class="col-lg-10">
+            <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
+
+            <?= $form->field($model, 'description')->textarea(['maxlength' => true]) ?>
+
+            <?php echo $form->field($model, 'status')->widget(\toxor88\switchery\Switchery::className(), ['options' => ['label' => '', 'class' => 'form-control']])->label() ?>
+
+            <div class="form-group">
+                <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+            </div>
+        </div>
+
+        <div class="col-lg-1">
+
         </div>
     </div>
-
-
-    <?php echo $form->field($model, 'status')->widget(\toxor88\switchery\Switchery::className(), ['options' => ['label' => '', 'class' => 'form-control']])->label() ?>
-
-    <div class="form-group">
-        <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
-    </div>
-
     <?php ActiveForm::end(); ?>
 
 </div>

@@ -174,26 +174,50 @@ $is_pos_user = 0;
             $("#form-perpage").submit();
         });
 
-        if (cururl == 'pos' || cururl == 'orders' || cururl == 'salereport' || cururl == 'salereportemp') {
-            $(".sidebar-mini").removeClass('layout-fixed');
-            $(".sidebar-mini").addClass('sidebar-collapse');
-        }
+        // if (cururl == 'pos' || cururl == 'orders' || cururl == 'salereport' || cururl == 'salereportemp') {
+        //     $(".sidebar-mini").removeClass('layout-fixed');
+        //     $(".sidebar-mini").addClass('sidebar-collapse');
+        // }
+        //
+        // //     var xx = $(".nav-sidebar").find(".nav-item").find("."+cururl+"").find(".nav-link").parent().parent().attr("class");
+        // $("ul.nav-sidebar li").each(function (index) {
+        //     var cli = $(this).attr("class");
+        //     var list_class = cli.split(" ");
+        //     //console.log(list_class);
+        //     if ($.inArray("has-sub", list_class) !== -1) {
+        //         $(this).find(".nav-treeview").find(".nav-item").find("." + cururl).addClass("active");
+        //         $(this).find(".nav-treeview").find(".nav-item").find("." + cururl).parent().parent().parent().find(".nav-link").trigger("click");
+        //         //console.log(x);
+        //     } else {
+        //         $(this).find("." + cururl).addClass("active");
+        //     }
+        //
+        // });
+        // //--- end active menu
 
-        //     var xx = $(".nav-sidebar").find(".nav-item").find("."+cururl+"").find(".nav-link").parent().parent().attr("class");
-        $("ul.nav-sidebar li").each(function (index) {
-            var cli = $(this).attr("class");
-            var list_class = cli.split(" ");
-            //console.log(list_class);
-            if ($.inArray("has-sub", list_class) !== -1) {
-                $(this).find(".nav-treeview").find(".nav-item").find("." + cururl).addClass("active");
-                $(this).find(".nav-treeview").find(".nav-item").find("." + cururl).parent().parent().parent().find(".nav-link").trigger("click");
-                //console.log(x);
-            } else {
-                $(this).find("." + cururl).addClass("active");
+        // Highlight current menu
+        $("ul.nav-sidebar li").each(function () {
+            let $this = $(this);
+            let targetClass = cururl;
+
+            if(cururl.includes('job')){
+                targetClass = 'jobmain';
             }
 
+            if ($this.hasClass("has-sub")) {
+                let $target = $this.find(".nav-link." + targetClass);
+                if ($target.length > 0) {
+                    $target.addClass("active");
+                    $this.addClass("menu-open");
+                    $this.children("a.nav-link").addClass("active");
+                }
+            } else {
+                let $target = $this.find("a.nav-link." + targetClass);
+                if ($target.length > 0) {
+                    $target.addClass("active");
+                }
+            }
         });
-        //--- end active menu
 
         const Toast = Swal.mixin({
             toast: true,

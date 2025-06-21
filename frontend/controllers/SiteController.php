@@ -300,13 +300,13 @@ class SiteController extends Controller
     {
         $model = new SignupForm();
         if ($model->load(Yii::$app->request->post()) && $model->signup()) {
-            $model_customer = new Customer();
-            $model_customer->email = $model->email;
-            $model_customer->status = 0;
-            if($model_customer->save(false)){
-                $max_id = \backend\models\User::find()->where(['status'=>10])->max('id');
-                \backend\models\User::updateAll(['customer_ref_id' => $model_customer->id], ['id' => $max_id]);
-            }
+//            $model_customer = new Customer();
+//            $model_customer->email = $model->email;
+//            $model_customer->status = 0;
+//            if($model_customer->save(false)){
+//            //    $max_id = \backend\models\User::find()->where(['status'=>10])->max('id');
+//              //  \backend\models\User::updateAll(['customer_ref_id' => $model_customer->id], ['id' => $max_id]);
+//            }
             Yii::$app->session->setFlash('success', 'ขอบคุณสำหรับการลงทะเบียน. กรุณายืนยันการลงทะเบียนผ่านทาง Inbox อีเมลของคุณ.');
             return $this->goHome();
         }

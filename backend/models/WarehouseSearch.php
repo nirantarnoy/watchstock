@@ -18,7 +18,7 @@ class WarehouseSearch extends Warehouse
     public function rules()
     {
         return [
-            [['id', 'company_id', 'status', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
+            [['id', 'status', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
             [['name', 'description','globalSearch'], 'safe'],
         ];
     }
@@ -60,7 +60,6 @@ class WarehouseSearch extends Warehouse
         // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
-            'company_id' => $this->company_id,
             'status' => $this->status,
             'created_at' => $this->created_at,
             'created_by' => $this->created_by,

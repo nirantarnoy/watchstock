@@ -27,7 +27,7 @@ use yii\widgets\ActiveForm;
                     'placeholder' => '--เลือกกลุ่มผู้ใช้งาน--'
                 ]
             ])->label('กลุ่มผู้ใช้งาน') ?>
-            <?= $form->field($model, 'employee_ref_id')->widget(\kartik\select2\Select2::className(), [
+            <?= $form->field($model, 'emp_ref_id')->widget(\kartik\select2\Select2::className(), [
                 'data' => \yii\helpers\ArrayHelper::map(\backend\models\Employee::find()->all(), 'id', function ($data) {
                     return $data->fname;
                 }),

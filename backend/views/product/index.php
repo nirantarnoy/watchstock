@@ -59,10 +59,21 @@ $this->params['breadcrumbs'][] = $this->title;
                 'headerOptions' => ['style' => 'text-align:center;'],
                 'contentOptions' => ['style' => 'text-align: center'],
             ],
-
-            'sku',
-            'name',
-            'barcode',
+            [
+                    'attribute' => 'photo',
+                    'headerOptions' => ['style' => 'text-align: center'],
+                    'contentOptions' => ['style' => 'text-align: center'],
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        $url = Yii::$app->request->hostInfo . Yii::$app->request->baseUrl . '/uploads/product_photo/' . $data->photo;
+                        return Html::a(
+                            Html::img($url, ['style' => 'max-width:50px']),
+                            $url,
+                            ['target' => '_blank']
+                        );
+                    }
+            ],
+                   'name',
            // 'product_type_id',
             [
                 'attribute' => 'product_group_id',
@@ -70,7 +81,28 @@ $this->params['breadcrumbs'][] = $this->title;
                     return \backend\models\Productgroup::findName($data->product_group_id);
                 }
             ],
-            //'product_cat_id',
+            [
+                'attribute' => 'brand_id',
+                'value' => function ($data) {
+                    return \backend\models\Productbrand::findName($data->brand_id);
+                }
+            ],
+            [
+                'attribute' => 'product_type_id',
+                'headerOptions' => ['style' => 'text-align: center'],
+                'contentOptions' => ['style' => 'text-align: center'],
+                'value' => function ($data) {
+                    return \backend\helpers\ProductType::getTypeById($data->product_type_id);
+                }
+            ],
+            [
+                'attribute' => 'type_id',
+                'headerOptions' => ['style' => 'text-align: center'],
+                'contentOptions' => ['style' => 'text-align: center'],
+                'value' => function ($data) {
+                    return \backend\helpers\CatType::getTypeById($data->type_id);
+                }
+            ],
             //'status',
             //'last_price',
             //'std_price',
@@ -82,20 +114,20 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align: center'],
                 'value' => function ($data) {
                     if ($data->status == 1) {
-                        return '<div class="badge badge-success">ใช้งาน</div>';
+                        return '<div class="badge badge-pill badge-success" style="padding: 10px;">ใช้งาน</div>';
                     } else {
-                        return '<div class="badge badge-secondary">ไม่ใช้งาน</div>';
+                        return '<div class="badge badge-pill badge-secondary" style="padding: 10px;">ไม่ใช้งาน</div>';
                     }
                 }
             ],
             [
-                'attribute' => 'total_qty',
+                'attribute' => 'stock_qty',
                 'label' => 'คงเหลือ',
                 'headerOptions' => ['style' => 'text-align: right'],
                 'contentOptions' => ['style' => 'text-align: right'],
                 'value' => function ($data) {
-                    $qty = \backend\models\Product::getTotalQty($data->id);
-                   return number_format($qty,0);
+                   // $qty = \backend\models\Product::getTotalQty($data->id);
+                   return number_format($data->stock_qty,0);
                 }
             ],
 

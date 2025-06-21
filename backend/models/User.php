@@ -17,7 +17,7 @@ class User extends \common\models\User
             [
                 [['username','user_group_id'],'required'],
                 [['username', 'pwd'], 'string'],
-                [['user_group_id','employee_ref_id','status'],'integer'],
+                [['user_group_id','emp_ref_id','status'],'integer'],
                 [['roles'], 'safe'],
             ];
     }

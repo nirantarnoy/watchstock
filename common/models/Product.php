@@ -40,7 +40,8 @@ class Product extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['status', 'product_group_id', 'unit_id', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
+            [['name'], 'required'],
+            [['status', 'product_group_id', 'unit_id', 'created_at', 'created_by', 'updated_at', 'updated_by','type_id','product_type_id','brand_id'], 'integer'],
             [['cost_price', 'sale_price', 'stock_qty'], 'number'],
             [['code', 'name', 'description', 'remark', 'photo'], 'string', 'max' => 255],
         ];
@@ -53,21 +54,24 @@ class Product extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'code' => 'Code',
-            'name' => 'Name',
-            'description' => 'Description',
-            'status' => 'Status',
-            'product_group_id' => 'Product Group ID',
-            'unit_id' => 'Unit ID',
-            'cost_price' => 'Cost Price',
-            'sale_price' => 'Sale Price',
-            'stock_qty' => 'Stock Qty',
+            'code' => 'รหัสสินค้า',
+            'name' => 'ชื่อสินค้า',
+            'description' => 'รายละเอียด',
+            'status' => 'สถานะ',
+            'product_group_id' => 'กลุ่มสินค้า',
+            'unit_id' => 'หน่วยนับ',
+            'cost_price' => 'ต้นทุน',
+            'sale_price' => 'ราคาขาย',
+            'stock_qty' => 'จำนวนคงเหลือ',
             'remark' => 'Remark',
-            'photo' => 'Photo',
+            'photo' => 'รูปภาพ',
             'created_at' => 'Created At',
             'created_by' => 'Created By',
             'updated_at' => 'Updated At',
             'updated_by' => 'Updated By',
+            'type_id' => 'สภาพสินค้า',
+            'product_type_id' => 'ประเภทสินค้า',
+            'brand_id' => 'ยี่ห้อ',
         ];
     }
 }

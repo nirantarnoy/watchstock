@@ -23,29 +23,33 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
-        //'filterModel' => $searchModel,
+        // 'filterModel' => $searchModel,
+        'emptyCell' => '-',
+        'layout' => "{items}\n{summary}\n<div class='text-center'>{pager}</div>",
+        'summary' => "แสดง {begin} - {end} ของทั้งหมด {totalCount} รายการ",
+        'showOnEmpty' => false,
+        //    'bordered' => true,
+        //     'striped' => false,
+        //    'hover' => true,
+        'id' => 'product-grid',
+        //'tableOptions' => ['class' => 'table table-hover'],
+        'emptyText' => '<div style="color: red;text-align: center;"> <b>ไม่พบรายการไดๆ</b> <span> เพิ่มรายการโดยการคลิกที่ปุ่ม </span><span class="text-success">"สร้างใหม่"</span></div>',
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+            [
+                    'class' => 'yii\grid\SerialColumn',
+                'headerOptions' => ['style' => 'text-align: center'],
+                'contentOptions' => ['style' => 'text-align: center'],
+            ],
 
-            'journal_no',
+           [
+                'attribute' =>  'journal_no',
+               'label' => 'เลขที่เอกสาร',
+           ],
             'trans_date',
             [
                 'attribute' => 'product_id',
                 'value' => function ($data) {
-                    return \backend\models\Product::findSku($data->product_id);
-                }
-            ],
-            [
-                'attribute' => 'product_id',
-                'label' => 'ชื่อสินค้า',
-                'value' => function ($data) {
                     return \backend\models\Product::findName($data->product_id);
-                }
-            ],
-            [
-                'attribute' => 'activity_type_id',
-                'value' => function ($data) {
-                    return \backend\helpers\ActivityType::getTypeById($data->activity_type_id);
                 }
             ],
             [
@@ -79,7 +83,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'created_by',
                 'headerOptions' => ['style' => 'text-align: center'],
                 'contentOptions' => ['style' => 'text-align: center'],
-                'label'=>'ผู้ใช้งาน',
+                'label'=>'ผู้ทํารายการ',
                 'value' => function ($data) {
                     return \backend\models\User::findName($data->created_by);
                 }

@@ -17,8 +17,6 @@ use yii\widgets\ActiveForm;
 
         </div>
         <div class="col-lg-10">
-            <?= $form->field($model, 'code')->textInput(['maxlength' => true]) ?>
-
             <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
             <?= $form->field($model, 'description')->textarea(['maxlength' => true]) ?>
 

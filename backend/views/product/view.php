@@ -31,12 +31,59 @@ $this->params['breadcrumbs'][] = $this->title;
             'code',
             'name',
             'description',
-            'product_type_id',
-            'product_cat_id',
-            'status',
-            'last_price',
-            'std_price',
-            'company_id',
+            [
+                'attribute' => 'product_group_id',
+                'value' => function ($data) {
+                    return \backend\models\Productgroup::findName($data->product_group_id);
+                }
+            ],
+            [
+                'attribute' => 'brand_id',
+                'value' => function ($data) {
+                    return \backend\models\Productbrand::findName($data->brand_id);
+                }
+            ],
+            [
+                'attribute' => 'product_type_id',
+                'value' => function ($data) {
+                    return \backend\helpers\ProductType::getTypeById($data->product_type_id);
+                }
+            ],
+            [
+                'attribute' => 'type_id',
+                'value' => function ($data) {
+                    return \backend\helpers\CatType::getTypeById($data->type_id);
+                }
+            ],
+            'cost_price',
+            'sale_price',
+            [
+                'attribute' => 'status',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    return $model->status == 1 ? '<div class="badge badge-success" style="padding: 10px;">ใช้งาน</div>' : '<div class="badge badge-secondary">ไม่ใช้งาน</div>';
+                }
+            ],
+            [
+                'attribute' => 'created_at',
+                'format' => ['date', 'php:d-m-Y H:i:s'],
+            ],
+            [
+                'attribute' => 'created_by',
+                'value' => function ($model) {
+                    return \backend\models\User::findName($model->created_by);
+                }
+            ],
+            [
+                'attribute' => 'updated_at',
+                'format' => ['date', 'php:d-m-Y H:i:s'],
+            ],
+            [
+                'attribute' => 'updated_by',
+                'value' => function ($model) {
+                    return \backend\models\User::findName($model->updated_by);
+                }
+            ],
         ],
     ]) ?>
 

@@ -3,5 +3,5 @@
     <div class="float-right d-none d-sm-inline">
     </div>
     <!-- Default to the left -->
-    <strong>Copyright &copy; <?=date('Y')?> mmc </strong>
+    <strong>Copyright &copy; <?=date('Y')?> mheewatch </strong>
 </footer>

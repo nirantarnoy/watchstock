@@ -12,9 +12,6 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
 <div class="warehouse-view">
-
-    <h1><?= Html::encode($this->title) ?></h1>
-
     <p>
         <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
         <?= Html::a('Delete', ['delete', 'id' => $model->id], [
@@ -32,11 +29,33 @@ $this->params['breadcrumbs'][] = $this->title;
             'name',
             'description',
             'company_id',
-            'status',
-            'created_at',
-            'created_by',
-            'updated_at',
-            'updated_by',
+            [
+                'attribute' => 'status',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    return $model->status == 1 ? '<div class="badge badge-success" style="padding: 10px;">ใช้งาน</div>' : '<div class="badge badge-secondary">ไม่ใช้งาน</div>';
+                }
+            ],
+            [
+                    'attribute' => 'created_at',
+                    'format' => ['date', 'php:d-m-Y H:i:s'],
+            ],
+            [
+                'attribute' => 'created_by',
+                'value' => function ($model) {
+                    return \backend\models\User::findName($model->created_by);
+                }
+            ],
+            [
+                'attribute' => 'updated_at',
+                'format' => ['date', 'php:d-m-Y H:i:s'],
+            ],
+            [
+                'attribute' => 'updated_by',
+                'value' => function ($model) {
+                    return \backend\models\User::findName($model->updated_by);
+                }
+            ],
         ],
     ]) ?>
 

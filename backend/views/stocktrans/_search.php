@@ -20,8 +20,8 @@ use yii\widgets\ActiveForm;
 
     <div class="input-group">
 
-        <?= $form->field($model, 'activity_type_id')->widget(\kartik\select2\Select2::className(), [
-            'data' => \yii\helpers\ArrayHelper::map(\backend\helpers\ActivityType::asArrayObject(), 'id', 'name'),
+        <?= $form->field($model, 'trans_type_id')->widget(\kartik\select2\Select2::className(), [
+            'data' => \yii\helpers\ArrayHelper::map(\backend\helpers\TransType::asArrayObject(), 'id', 'name'),
             'options' => [
                 'placeholder' => '--เลือกกิจกรรม--',
                 'onchange' => 'this.form.submit();'

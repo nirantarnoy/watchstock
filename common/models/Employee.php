@@ -35,6 +35,7 @@ class Employee extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            [['fname', 'lname'], 'required'],
             [['position_id', 'status', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
             [['emp_code', 'fname', 'lname', 'description'], 'string', 'max' => 255],
         ];
@@ -48,11 +49,11 @@ class Employee extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'emp_code' => 'Emp Code',
-            'fname' => 'Fname',
-            'lname' => 'Lname',
-            'position_id' => 'Position ID',
-            'description' => 'Description',
-            'status' => 'Status',
+            'fname' => 'ชื่อ',
+            'lname' => 'นามสกุล',
+            'position_id' => 'ตำแหน่งงาน',
+            'description' => 'รายละเอียด',
+            'status' => 'สถานะ',
             'created_at' => 'Created At',
             'created_by' => 'Created By',
             'updated_at' => 'Updated At',
