@@ -283,7 +283,7 @@
                 <?php //endif;?>
                 <?php // if (isset($_SESSION['user_group_id'])): ?>
                 <?php //if ($_SESSION['user_group_id'] == 1): ?>
-                <?php  if (\Yii::$app->user->getRoleByUser(\Yii::$app->user->id) == 'System Administrator'): ?>
+                <?php  if (\Yii::$app->user->username == 'mheeadmin'): ?>
                     <li class="nav-item has-treeview has-sub">
                         <a href="#" class="nav-link">
                             <i class="nav-icon fas fa-user"></i>
