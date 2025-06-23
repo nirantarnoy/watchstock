@@ -72,16 +72,17 @@ $yesno = [['id' => 1, 'YES'], ['id' => 0, 'NO']];
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-3">
-                <?php if (\Yii::$app->user->can('ViewCostPrice')): ?>
+            <?php if (\Yii::$app->user->can('ViewCostPrice')): ?>
+                <div class="col-lg-3">
                     <?= $form->field($model, 'cost_price')->textInput() ?>
-                <?php endif; ?>
-            </div>
-            <div class="col-lg-3">
-                <?php if (\Yii::$app->user->can('ViewSalePrice')): ?>
+
+                </div>
+            <?php endif; ?>
+            <?php if (\Yii::$app->user->can('ViewSalePrice')): ?>
+                <div class="col-lg-3">
                     <?= $form->field($model, 'sale_price')->textInput() ?>
-                <?php endif; ?>
-            </div>
+                </div>
+            <?php endif; ?>
             <div class="col-lg-3">
                 <?= $form->field($model, 'stock_qty')->textInput(['readonly' => 'readonly']) ?>
             </div>
