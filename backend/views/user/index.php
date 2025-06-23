@@ -146,7 +146,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'data-var' => $data->id,
                             'onclick' => 'recDelete($(this));'
                         ]);
-                        return Html::a('<span class="fas fa-trash-alt btn btn-xs btn-default"></span>', 'javascript:void(0)', $options);
+                        return $data->id == 1 ? '' : Html::a('<span class="fas fa-trash-alt btn btn-xs btn-default"></span>', 'javascript:void(0)', $options);
                     }
                 ]
             ],
