@@ -1,17 +1,20 @@
 <?php
 
+use backend\models\Warehouse;
 use yii\helpers\Html;
+use yii\helpers\Url;
+use yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
-use yii\helpers\Url;
-use yii\bootstrap4\LinkPager;
+use yii\widgets\LinkPager;
+/** @var yii\web\View $this */
+/** @var backend\models\WarehouseSearch $searchModel */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 
-
-$this->title = 'กลุ่มผู้ใช้งาน';
+$this->title = 'คลังสินค้า';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="usergroup-index">
-
+<div class="employee-index">
     <?php Pjax::begin(); ?>
     <div class="row">
         <div class="col-lg-10">
@@ -20,7 +23,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </p>
         </div>
         <div class="col-lg-2" style="text-align: right">
-            <form id="form-perpage" class="form-inline" action="<?= Url::to(['warehouse/index'], true) ?>"
+            <form id="form-perpage" class="form-inline" action="<?= Url::to(['employee/index'], true) ?>"
                   method="post">
                 <div class="form-group">
                     <label>แสดง </label>
@@ -34,7 +37,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </form>
         </div>
     </div>
-    <?php echo $this->render('_search', ['model' => $searchModel]); ?>
+    <?php echo $this->render('_search', ['model' => $searchModel,'viewstatus'=>$viewstatus]); ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -52,18 +55,12 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             [
                 'class' => 'yii\grid\SerialColumn',
-                'headerOptions' => ['style' => 'text-align: center'],
-                'contentOptions' => ['style' => 'text-align: center']],
-           // 'code',
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align: center'],
+            ],
+
             'name',
             'description',
-           // 'car_type_id',
-            //'status',
-            //'created_at',
-            //'updated_at',
-            //'created_by',
-            //'updated_by',
-
             [
                 'attribute' => 'status',
                 'format' => 'raw',
@@ -71,18 +68,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align: center'],
                 'value' => function ($data) {
                     if ($data->status == 1) {
-                        return '<div class="badge badge-pill badge-success" style="padding: 10px;">ใช้งาน</div>';
+                        return '<div class="badge badge-success">ใช้งาน</div>';
                     } else {
-                        return '<div class="badge badge-pill badge-success" style="padding: 10px;">ไม่ใช้งาน</div>';
+                        return '<div class="badge badge-secondary">ไม่ใช้งาน</div>';
                     }
                 }
             ],
-            //'company_id',
-            //'branch_id',
-            //'created_at',
-            //'updated_at',
-            //'created_by',
-            //'updated_by',
 
             [
 

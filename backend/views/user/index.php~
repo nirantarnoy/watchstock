@@ -1,17 +1,15 @@
 <?php
 
 use yii\helpers\Html;
-use yii\grid\GridView;
+use kartik\grid\GridView;
 use yii\widgets\Pjax;
 use yii\helpers\Url;
 use yii\bootstrap4\LinkPager;
 
-
-$this->title = 'กลุ่มผู้ใช้งาน';
+$this->title = 'ผู้ใช้งาน';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="usergroup-index">
-
+<div class="user-index">
     <?php Pjax::begin(); ?>
     <div class="row">
         <div class="col-lg-10">
@@ -20,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </p>
         </div>
         <div class="col-lg-2" style="text-align: right">
-            <form id="form-perpage" class="form-inline" action="<?= Url::to(['warehouse/index'], true) ?>"
+            <form id="form-perpage" class="form-inline" action="<?= Url::to(['user/index'], true) ?>"
                   method="post">
                 <div class="form-group">
                     <label>แสดง </label>
@@ -34,7 +32,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </form>
         </div>
     </div>
-    <?php echo $this->render('_search', ['model' => $searchModel]); ?>
+    <?php echo $this->render('_search', ['model' => $searchModel,'viewstatus'=>$viewstatus]); ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -54,26 +52,36 @@ $this->params['breadcrumbs'][] = $this->title;
                 'class' => 'yii\grid\SerialColumn',
                 'headerOptions' => ['style' => 'text-align: center'],
                 'contentOptions' => ['style' => 'text-align: center']],
-           // 'code',
-            'name',
-            'description',
-           // 'car_type_id',
-            //'status',
-            //'created_at',
-            //'updated_at',
-            //'created_by',
-            //'updated_by',
-
+            'username',
+            [
+                'attribute' => 'user_group_id',
+                'label'=>'กลุ่มผู้ใช้งาน',
+                'headerOptions' => ['style' => 'text-align: center'],
+                'contentOptions' => ['style' => 'text-align: center'],
+                'value' => function ($data) {
+                   return \backend\models\Usergroup::findName($data->user_group_id);
+                }
+            ],
+//            [
+//                'attribute' => 'employee_ref_id',
+//                'label'=>'พนักงาน',
+//                'headerOptions' => ['style' => 'text-align: center'],
+//                'contentOptions' => ['style' => 'text-align: left'],
+//                'value' => function ($data) {
+//                    return \backend\models\Employee::findFullName($data->employee_ref_id);
+//                }
+//            ],
             [
                 'attribute' => 'status',
                 'format' => 'raw',
+                'label'=>'สถานะ',
                 'headerOptions' => ['style' => 'text-align: center'],
                 'contentOptions' => ['style' => 'text-align: center'],
                 'value' => function ($data) {
                     if ($data->status == 1) {
-                        return '<div class="badge badge-pill badge-success" style="padding: 10px;">ใช้งาน</div>';
+                        return '<div class="badge badge-success">ใช้งาน</div>';
                     } else {
-                        return '<div class="badge badge-pill badge-success" style="padding: 10px;">ไม่ใช้งาน</div>';
+                        return '<div class="badge badge-dark">ไม่ใช้งาน</div>';
                     }
                 }
             ],
@@ -90,16 +98,25 @@ $this->params['breadcrumbs'][] = $this->title;
                 'headerOptions' => ['style' => 'text-align:center;', 'class' => 'activity-view-link',],
                 'class' => 'yii\grid\ActionColumn',
                 'contentOptions' => ['style' => 'text-align: center'],
-                'template' => '{view} {update}{delete}',
+                'template' => '{updatecustomer} {update} {delete}',
                 'buttons' => [
-                    'view' => function ($url, $data, $index) {
+//                    'view' => function ($url, $data, $index) {
+//                        $options = [
+//                            'title' => Yii::t('yii', 'View'),
+//                            'aria-label' => Yii::t('yii', 'View'),
+//                            'data-pjax' => '0',
+//                        ];
+//                        return Html::a(
+//                            '<span class="fas fa-eye btn btn-xs btn-default"></span>', $url, $options);
+//                    },
+                    'updatecustomer' => function ($url, $data, $index) {
                         $options = [
                             'title' => Yii::t('yii', 'View'),
                             'aria-label' => Yii::t('yii', 'View'),
                             'data-pjax' => '0',
                         ];
                         return Html::a(
-                            '<span class="fas fa-eye btn btn-xs btn-default"></span>', $url, $options);
+                            '<span class="fas fa-user btn btn-xs btn-default"></span>', $url, $options);
                     },
                     'update' => function ($url, $data, $index) {
                         $options = array_merge([

@@ -15,6 +15,10 @@ use yii\helpers\Url;
 $this->title = 'Stock Transaction';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+<div id="loading"
+     style="display:none; position: fixed; top: 0; left: 0; z-index: 9999; width: 100%; height: 100%; background-color: rgba(255,255,255,0.7); text-align: center; padding-top: 20%;">
+    <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><br>กำลังโหลดข้อมูล...
+</div>
 <div class="journal-trans-index">
    <div class="row">
        <div class="col-lg-10">
@@ -56,6 +60,8 @@ $this->params['breadcrumbs'][] = $this->title;
         //     'striped' => false,
         //    'hover' => true,
         'id' => 'product-grid',
+        'pjax' => true,
+        'pjaxSettings' => ['neverTimeout' => true],
         //'tableOptions' => ['class' => 'table table-hover'],
         'emptyText' => '<div style="color: red;text-align: center;"> <b>ไม่พบรายการไดๆ</b> <span> เพิ่มรายการโดยการคลิกที่ปุ่ม </span><span class="text-success">"สร้างใหม่"</span></div>',
         'columns' => [
@@ -215,4 +221,16 @@ function getBadgeStatus($status,$status_name) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }
 }
+?>
+
+<?php
+$this->registerJs(<<<JS
+        $(document).on('pjax:start', function() {
+            $('#loading').fadeIn();
+        });
+        $(document).on('pjax:end', function() {
+           $('#loading').fadeOut();
+        });
+        JS
+);
 ?>
