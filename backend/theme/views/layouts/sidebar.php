@@ -345,7 +345,7 @@
                             </li>
                         </ul>
                     </li>
-                <?php // endif;?>
+                <?php  endif;?>
                 <?php //endif; ?>
                 <?php //endif; ?>
             </ul>
