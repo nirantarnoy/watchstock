@@ -2,7 +2,7 @@
     <!-- Brand Logo -->
     <a href="index.php?r=site/index" class="brand-link" style="text-align: center;">
 <!--        <img src="--><?php //echo Yii::$app->request->baseUrl; ?><!--/uploads/logo/ab_logo.jpg" alt="mmc" class="brand-image">-->
-        <img src="<?php echo Yii::$app->request->baseUrl; ?>/uploads/logo/mhee_logo.jpg" alt="mhee" width="30%">
+        <img src="<?php echo Yii::$app->request->baseUrl; ?>/uploads/logo/mhee_logo.jpeg" alt="mhee" width="30%">
         <!--        <span style="margin-left: 20px; " class="brand-text font-weight-light">MHEEWATCH</span>-->
     </a>
 

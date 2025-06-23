@@ -270,9 +270,9 @@
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <?php //if (\Yii::$app->user->can('salereport/index')): ?>
+                            <?php //if (\Yii::$app->user->can('salereport/crosstab')): ?>
                                 <li class="nav-item">
-                                    <a href="index.php?r=salereport/index" class="nav-link salereport">
+                                    <a href="index.php?r=salereport/crosstab" class="nav-link salereport">
                                         <i class="far fa-circlez nav-icon"></i>
                                         <p>รายงานยอดขาย</p>
                                     </a>

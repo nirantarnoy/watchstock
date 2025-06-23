@@ -95,6 +95,9 @@ class JournaltransController extends Controller
                 );
             }
 
+            //custom model data
+            $model->stock_type_id = 2;
+
             // Validate all models
             $valid = $model->validate();
            // $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
@@ -112,19 +115,22 @@ class JournaltransController extends Controller
                     }
 
                     if($flag) {
+                        $total_qty = 0;
                         foreach ($modelLines as $modelLine) {
+                            $total_qty += $modelLine->qty;
                             $model_stock_trans = new \common\models\StockTrans();
                             $model_stock_trans->trans_date = $model->trans_date;
                             $model_stock_trans->journal_trans_id = $model->id;
                             $model_stock_trans->trans_type_id = $model->trans_type_id;
                             $model_stock_trans->product_id = $modelLine->product_id;
                             $model_stock_trans->qty = $modelLine->qty;
-                            $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
+                            $model_stock_trans->warehouse_id = $model->warehouse_id;
                             $model_stock_trans->stock_type_id = $model->stock_type_id;
                             $model_stock_trans->remark = $modelLine->remark;
+                            $model_stock_trans->created_by = $model->created_by;
                             $model_stock_trans->save(false);
                         }
-
+                       \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
                     }
 
                     if ($flag) {
@@ -284,5 +290,63 @@ class JournaltransController extends Controller
         unset($model, $formName, $post);
 
         return $models;
+    }
+
+    public function actionAddreturnproduct(){
+         $product_id = \Yii::$app->request->post('product_id');
+         $journal_trans_id = \Yii::$app->request->post('journal_trans_id');
+         $qty = \Yii::$app->request->post('return_qty');
+         $remark = \Yii::$app->request->post('return_remark');
+         $return_to_type = \Yii::$app->request->post('return_to_type');
+
+         if($journal_trans_id && $qty !=null){
+             $model = new \backend\models\JournalTrans();
+             $model->trans_date = date('Y-m-d H:i:s');
+             $model->journal_no = '';
+             $model->remark = '';
+             $model->trans_type_id = 8; // 8 = คืนสินค้าช่าง
+             $model->status = 3;
+             $model->stock_type_id = 1; // 1 เข้า 2 ออก
+             $model->trans_ref_id = $journal_trans_id;
+             if($model->save(false)){
+                 if($product_id != null){
+                     for($i=0;$i<count($product_id);$i++){
+                         $model_line = new \common\models\JournalTransLine();
+                         $model_line->journal_trans_id = $model->id;
+                         $model_line->product_id = $product_id[$i];
+                         $model_line->qty = $qty[$i];
+                         $model_line->remark = $remark[$i];
+                         $model_line->warehouse_id = 1; // default
+                         $model_line->return_to_type = $return_to_type[$i];
+                         if($model_line->save(false)){
+                             $model_stock_trans = new \common\models\StockTrans();
+                             $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                             $model_stock_trans->trans_type_id = 8;
+                             $model_stock_trans->product_id = $product_id[$i];
+                             $model_stock_trans->journal_trans_id = $model->id;
+                             $model_stock_trans->qty = $qty[$i];
+                             $model_stock_trans->remark = $remark[$i];
+                             $model_stock_trans->save(false);
+
+                             \backend\models\Product::updateAll(['product_type_id'=>$return_to_type[$i]],['id'=>$product_id[$i]]);
+                         }
+                     }
+                 }
+                 $this->calForcomplete($journal_trans_id,$model->id);
+             }
+
+         }
+         return $this->redirect(['journaltrans/view', 'id' => $journal_trans_id]);
+    }
+    function calForcomplete($journal_trans_origin_id,$journal_return_id){
+        if($journal_trans_origin_id && $journal_return_id){
+            $return_sum = \common\models\JournalTransLine::find()->where(['journal_trans_id'=>$journal_return_id])->sum('qty');
+            $trans_sum = \common\models\JournalTransLine::find()->where(['journal_trans_id'=>$journal_trans_origin_id])->sum('qty');
+            if($return_sum == $trans_sum){
+                $model = \backend\models\JournalTrans::findOne($journal_trans_origin_id);
+                $model->status = 3; // trans complete
+                $model->save(false);
+            }
+        }
     }
 }

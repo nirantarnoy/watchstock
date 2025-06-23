@@ -157,7 +157,7 @@ JS;
 $this->registerJs($initFunctionsJs, \yii\web\View::POS_HEAD);
 
 $is_disabled_maker = true;
-if($create_type == 7){
+if ($create_type == 7) {
     $is_disabled_maker = false;
 }
 ?>
@@ -165,18 +165,22 @@ if($create_type == 7){
     <div class="journal-trans-form">
 
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
-
+        <?php $model->trans_type_id = $model->isNewRecord ? $create_type : $model->trans_type_id ?>
+        <?= $form->field($model, 'trans_type_id')->hiddenInput()->label(false) ?>
         <div class="row">
             <div class="col-md-3">
-                <?php $model->trans_type_id = $model->isNewRecord ? $create_type : $model->trans_type_id ?>
-                <?= $form->field($model, 'trans_type_id')->widget(Select2::className(),[
-                    'data' => ArrayHelper::map(\backend\helpers\TransType::asArrayObject(), 'id', 'name'),
-                    'options' => ['placeholder' => '-- เลือกประเภทรายการ --','readonly' => true],
-                    'pluginOptions' => [
-                        'allowClear' => true,
-                        'theme' => 'krajee',
-                    ],
-                ]) ?>
+                <!--                --><?php //= $form->field($model, 'trans_type_id')->widget(Select2::className(),[
+                //                    'data' => ArrayHelper::map(\backend\helpers\TransType::asArrayObject(), 'id', 'name'),
+                //                    'options' => ['placeholder' => '-- เลือกประเภทรายการ --','disabled' => true],
+                //                    'pluginOptions' => [
+                //                        'allowClear' => true,
+                //                        'theme' => 'krajee',
+                //                    ],
+                //                ]) ?>
+                <label for="">ประเภทรายการ</label>
+                <input type="text" class="form-control"
+                       value="<?= \backend\helpers\TransType::getTypeById($model->trans_type_id) ?>"
+                       readonly="readonly">
             </div>
             <div class="col-md-3">
                 <?= $form->field($model, 'trans_date')->widget(DatePicker::classname(), [
@@ -189,7 +193,7 @@ if($create_type == 7){
                 ]) ?>
             </div>
             <div class="col-md-3">
-                <?= $form->field($model, 'warehouse_id')->widget(Select2::className(),[
+                <?= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
                     'options' => ['placeholder' => '-- เลือกคลัง --',],
                     'pluginOptions' => [
@@ -199,9 +203,9 @@ if($create_type == 7){
                 ]) ?>
             </div>
             <div class="col-md-3">
-                <?= $form->field($model, 'party_id')->widget(Select2::className(),[
+                <?= $form->field($model, 'party_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Watchmaker::find()->all(), 'id', 'name'),
-                    'options' => ['class'=>'form-control party-id','placeholder' => '-- เลือกช่าง --','disabled'=>$is_disabled_maker],
+                    'options' => ['class' => 'form-control party-id', 'placeholder' => '-- เลือกช่าง --', 'disabled' => $is_disabled_maker],
                     'pluginOptions' => [
                         'allowClear' => true,
                         'theme' => 'krajee',
@@ -218,7 +222,7 @@ if($create_type == 7){
                 <?= $form->field($model, 'remark')->textInput(['maxlength' => true]) ?>
             </div>
         </div>
-        <br />
+        <br/>
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h4><i class="fa fa-list"></i> รายการสินค้า</h4>
@@ -252,8 +256,10 @@ if($create_type == 7){
                             <div class="panel-heading">
                                 <h3 class="panel-title pull-left panel-title-address">รายการที่: <?= ($i + 1) ?></h3>
                                 <div class="pull-right">
-                                    <button type="button" class="add-item btn btn-success btn-xs"><i class="glyphicon glyphicon-plus"></i></button>
-                                    <button type="button" class="remove-item btn btn-danger btn-xs"><i class="glyphicon glyphicon-minus"></i></button>
+                                    <button type="button" class="add-item btn btn-success btn-xs"><i
+                                                class="glyphicon glyphicon-plus"></i></button>
+                                    <button type="button" class="remove-item btn btn-danger btn-xs"><i
+                                                class="glyphicon glyphicon-minus"></i></button>
                                 </div>
                                 <div class="clearfix"></div>
                             </div>
@@ -266,17 +272,17 @@ if($create_type == 7){
                                 ?>
                                 <div class="row">
                                     <div class="col-sm-3">
-<!--                                        --><?php //= $form->field($modelLine, "[{$i}]product_id")->widget(Select2::className(),[
-//                                            'data' => ArrayHelper::map(\backend\models\Product::find()->all(), 'id', 'name'),
-//                                            'options' => [
-//                                                'placeholder' => '-- เลือกสินค้า --',
-//                                                'class' => 'form-control product-select'
-//                                            ],
-//                                            'pluginOptions' => [
-//                                                'allowClear' => true,
-//                                                'theme' => 'krajee',
-//                                            ],
-//                                        ]) ?>
+                                        <!--                                        --><?php //= $form->field($modelLine, "[{$i}]product_id")->widget(Select2::className(),[
+                                        //                                            'data' => ArrayHelper::map(\backend\models\Product::find()->all(), 'id', 'name'),
+                                        //                                            'options' => [
+                                        //                                                'placeholder' => '-- เลือกสินค้า --',
+                                        //                                                'class' => 'form-control product-select'
+                                        //                                            ],
+                                        //                                            'pluginOptions' => [
+                                        //                                                'allowClear' => true,
+                                        //                                                'theme' => 'krajee',
+                                        //                                            ],
+                                        //                                        ]) ?>
                                         <?= $form->field($modelLine, "[{$i}]product_id")->dropDownList(
                                             ArrayHelper::map(\backend\models\Product::find()->all(), 'id', 'name'),
                                             ['prompt' => '-- เลือกสินค้า --', 'class' => 'form-control product-select']
@@ -289,7 +295,8 @@ if($create_type == 7){
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
                                     </div>
                                     <div class="col-sm-1 text-right" style="padding-top: 25px;">
-                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i
+                                                    class="fa fa-trash"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -300,10 +307,12 @@ if($create_type == 7){
             </div>
         </div>
 
-        <div class="form-group">
-            <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
-            <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
-        </div>
+        <?php if ($model->status != 3): ?>
+            <div class="form-group">
+                <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+                <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
+            </div>
+        <?php endif; ?>
 
         <?php ActiveForm::end(); ?>
 

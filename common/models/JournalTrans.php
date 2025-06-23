@@ -208,9 +208,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             self::TYPE_RETURN_SALE => 'คืนขาย',
             self::TYPE_LOAN => 'ยืม',
             self::TYPE_RETURN_LOAN => 'คืนยืม',
-            self::TYPE_SEND => 'ส่ง',
-            self::TYPE_RETURN_SEND => 'คืนส่ง',
-            self::TYPE_DROP => 'เบิก',
+            self::TYPE_SEND => 'ส่งช่าง',
+            self::TYPE_RETURN_SEND => 'คืนส่งช่าง',
+            self::TYPE_DROP => 'ขาย Drop Ship',
         ];
     }
 

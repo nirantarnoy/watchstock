@@ -202,10 +202,15 @@ class JournalTrans extends \yii\db\ActiveRecord
     public static function getTransactionTypeList()
     {
         return [
-            self::TYPE_ISSUE => 'เบิก',
-            self::TYPE_RETURN => 'คืน',
+            self::TYPE_OPENING => 'ปรับยอดยกมา',
             self::TYPE_ADJUST => 'ปรับยอด',
             self::TYPE_SALE => 'ขาย',
+            self::TYPE_RETURN_SALE => 'คืนขาย',
+            self::TYPE_LOAN => 'ยืม',
+            self::TYPE_RETURN_LOAN => 'คืนยืม',
+            self::TYPE_SEND => 'ส่งช่าง',
+            self::TYPE_RETURN_SEND => 'คืนส่งช่าง',
+            self::TYPE_DROP => 'ขาย Drop Off',
         ];
     }
 

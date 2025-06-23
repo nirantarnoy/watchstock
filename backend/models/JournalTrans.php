@@ -67,5 +67,10 @@ class JournalTrans extends \common\models\JournalTrans
         return $qty;
     }
 
+    public static function findJournalNoFromStockTransId($id) {
+        $journal_no = JournalTrans::find()->where(['id'=>$id])->one();
+        return $journal_no->journal_no;
+    }
+
 
 }

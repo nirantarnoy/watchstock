@@ -72,7 +72,7 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                 <?= DetailView::widget([
                     'model' => $model,
                     'attributes' => [
-                        //'customer_id',
+                        'customer_id',
                         'customer_name',
                         [
                             'attribute' => 'qty',
