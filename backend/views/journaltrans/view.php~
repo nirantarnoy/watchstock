@@ -82,7 +82,7 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                         [
                             'attribute' => 'status',
                             'headerOptions' => ['style' => 'text-align:center'],
-                            'contentOptions' => ['style' => 'text-align:center'],
+                            'contentOptions' => ['style' => 'text-align:left'],
                             'format' => 'raw',
                             'value' => function($model) {
                                 $status_name = \backend\helpers\TransStatusType::getTypeById($model->status);

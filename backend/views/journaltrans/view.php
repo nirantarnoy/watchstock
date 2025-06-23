@@ -126,6 +126,7 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                 [
                     'attribute' => 'qty',
                     'format' => ['decimal', 2],
+                    'headerOptions' => ['style' => 'text-align:right'],
                     'contentOptions' => ['style' => 'text-align:right'],
                 ],
                 'remark',
