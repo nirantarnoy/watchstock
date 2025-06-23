@@ -209,7 +209,9 @@ class ProductController extends Controller
                         \backend\models\Product::updateAll(['photo' => $upfiles], ['id' => $model->id]);
 
                         if($old_photo != null){
-                            unlink('uploads/product_photo/'.$old_photo);
+                            if(file_exists('uploads/product_photo/'.$old_photo)){
+                                unlink('uploads/product_photo/'.$old_photo);
+                            }
                         }
                     }
 
