@@ -29,8 +29,8 @@ class JournaltransController extends Controller
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'delete' => ['POST','GET'],
-                    'delete-line' => ['POST','GET'],
+                    'delete' => ['POST'],
+                    'delete-line' => ['POST'],
                 ],
             ],
         ];

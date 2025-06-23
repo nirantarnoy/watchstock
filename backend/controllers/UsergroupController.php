@@ -17,6 +17,7 @@ use yii\filters\VerbFilter;
  */
 class UsergroupController extends Controller
 {
+    public $enableCsrfValidation = false;
     /**
      * {@inheritdoc}
      */
