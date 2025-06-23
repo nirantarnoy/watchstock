@@ -19,7 +19,7 @@ AppAsset::register($this);
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <?php $this->registerCsrfMetaTags() ?>
-    <title><?= Html::encode($this->title) ?></title>
+    <title>MHEEWATCH</title>
     <?php $this->head() ?>
 
     <style>
@@ -249,7 +249,7 @@ AppAsset::register($this);
 
 <footer class="footer mt-auto py-3 text-muted">
     <div class="container">
-        <p class="float-start">&copy; <?= Html::encode('ANNAB') ?> <?= date('Y') ?></p>
+        <p class="float-start">&copy; <?= Html::encode('MHEEWATCH') ?> <?= date('Y') ?></p>
     </div>
 </footer>
 
