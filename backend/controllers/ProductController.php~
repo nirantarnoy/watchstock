@@ -212,7 +212,6 @@ class ProductController extends Controller
                             if(file_exists('uploads/product_photo/'.$old_photo)){
                                 unlink('uploads/product_photo/'.$old_photo);
                             }
-
                         }
                     }
 
