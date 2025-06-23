@@ -58,7 +58,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'fname',
             'lname',
             [
-                'attribute' => 'position',
+                'attribute' => 'position_d',
                 'value' => function ($data) {
                     return \backend\models\Position::findName($data->position);
                 }
