@@ -43,7 +43,7 @@ class JournaltransController extends Controller
     public function actionIndex()
     {
         $pageSize = \Yii::$app->request->post("perpage");
-        $searchModel = new \backend\models\journalTransSearch();
+        $searchModel = new \backend\models\JournalTransSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         $dataProvider->setSort(['defaultOrder' => ['id' => SORT_ASC]]);
         $dataProvider->pagination->pageSize = $pageSize;
