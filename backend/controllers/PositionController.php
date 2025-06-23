@@ -16,6 +16,7 @@ use yii\filters\VerbFilter;
  */
 class PositionController extends Controller
 {
+    public $enableCsrfValidation = false;
     /**
      * @inheritDoc
      */
