@@ -24,7 +24,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </p>
         </div>
         <div class="col-lg-2" style="text-align: right">
-            <form id="form-perpage" class="form-inline" action="<?= Url::to(['employee/index'], true) ?>"
+            <form id="form-perpage" class="form-inline" action="<?= Url::to(['product/index'], true) ?>"
                   method="post">
                 <div class="form-group">
                     <label>แสดง </label>

@@ -97,6 +97,11 @@ class JournaltransController extends Controller
 
             //custom model data
             $model->stock_type_id = 2;
+            if($model->trans_type_id == 7){
+                $model->status =1;
+            }else{
+                $model->status =3;
+            }
 
             // Validate all models
             $valid = $model->validate();
@@ -191,12 +196,15 @@ class JournaltransController extends Controller
                         if (!empty($deletedIDs)) {
                             JournalTransLine::deleteAll(['id' => $deletedIDs]);
                         }
+                        $total_qty = 0;
                         foreach ($modelLines as $modelLine) {
+                            $total_qty += $modelLine->qty;
                             $modelLine->journal_trans_id = $model->id;
                             if (!($flag = $modelLine->save(false))) {
                                 break;
                             }
                         }
+                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
                     }
 
                     if ($flag) {

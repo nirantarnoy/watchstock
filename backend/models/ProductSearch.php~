@@ -18,7 +18,7 @@ class ProductSearch extends Product
     public function rules()
     {
         return [
-            [['id', 'product_group_id', 'status','product_type_id','type_id'], 'integer'],
+            [['id', 'product_group_id', 'status','product_type_id','type_id','brand_id'], 'integer'],
             [['code', 'name', 'description'], 'safe'],
             [['globalSearch'],'string']
         ];
@@ -63,13 +63,13 @@ class ProductSearch extends Product
             'id' => $this->id,
             'product_group_id' => $this->product_group_id,
             'product_type_id' => $this->product_type_id,
+            'brand_id' => $this->brand_id,
             'type_id' => $this->type_id,
             'status' => $this->status,
         ]);
 
         if($this->globalSearch != ''){
             $query->orFilterWhere(['like', 'code', $this->globalSearch])
-                ->orFilterWhere(['like', 'sku', $this->globalSearch])
                 ->orFilterWhere(['like', 'name', $this->globalSearch])
                 ->orFilterWhere(['like', 'barcode', $this->globalSearch])
                 ->orFilterWhere(['like', 'description', $this->globalSearch]);

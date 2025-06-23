@@ -424,7 +424,7 @@ class ProductController extends Controller
 
                     $modelx = new \backend\models\Product();
                     // $modelx->code = $rowData[0];
-                    $modelx->name = $rowData[0];
+                    $modelx->name = trim($rowData[0]);
                     $modelx->description = $rowData[1];
                     $modelx->product_group_id = 1; // watch or phone or etc
                     $modelx->brand_id = $rowData[4];
@@ -433,7 +433,7 @@ class ProductController extends Controller
                     $modelx->status = 1;
                     $modelx->cost_price = 0;
                     $modelx->sale_price = 0;
-                    $modelx->stock_qty = $rowData[5];
+                    $modelx->stock_qty = 0;//$rowData[5];
                     $modelx->remark = $rowData[6];
                     //
                     if ($modelx->save(false)) {
@@ -634,9 +634,9 @@ class ProductController extends Controller
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $product_id = Yii::$app->request->post('product_id');
-        $warehouse_id = Yii::$app->request->post('warehouse_id');
-        $qty = Yii::$app->request->post('qty', 0);
+        $product_id = \Yii::$app->request->post('product_id');
+        $warehouse_id = \Yii::$app->request->post('warehouse_id');
+        $qty = \Yii::$app->request->post('qty', 0);
 
         $stockQty = $this->getProductStock($product_id, $warehouse_id);
 
@@ -657,8 +657,8 @@ class ProductController extends Controller
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $items = Yii::$app->request->post('items', []);
-        $warehouse_id = Yii::$app->request->post('warehouse_id');
+        $items = \Yii::$app->request->post('items', []);
+        $warehouse_id = \Yii::$app->request->post('warehouse_id');
 
         $results = [];
         $hasError = false;

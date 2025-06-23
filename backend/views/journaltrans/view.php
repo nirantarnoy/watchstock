@@ -81,23 +81,17 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                         'remark',
                         [
                             'attribute' => 'status',
-                            'value' => function ($model) {
-                                $statusName = $model->getStatusName();
-                                $class = '';
-                                switch ($model->status) {
-                                    case $model::STATUS_ACTIVE:
-                                        $class = 'label-success';
-                                        break;
-                                    case $model::STATUS_DRAFT:
-                                        $class = 'label-warning';
-                                        break;
-                                    case $model::STATUS_CANCELLED:
-                                        $class = 'label-danger';
-                                        break;
-                                }
-                                return Html::tag('span', $statusName, ['class' => 'label ' . $class]);
-                            },
+                            'headerOptions' => ['style' => 'text-align:center'],
+                            'contentOptions' => ['style' => 'text-align:left'],
                             'format' => 'raw',
+                            'value' => function($model) {
+                                $status_name = \backend\helpers\TransStatusType::getTypeById($model->status);
+                                $htmel_status = getBadgeStatus($model->status,$status_name);
+                                return $htmel_status;
+                            },
+                            // 'format' => 'raw',
+                            // 'filter' => JournalTrans::getStatusList(),
+                            //'headerOptions' => ['style' => 'width:100px'],
                         ],
                     ],
                 ]) ?>
@@ -187,7 +181,7 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                 </div>
                 <?php foreach ($lines as $value): ?>
                     <?php
-                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
+                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty,$model->trans_type_id);
                     // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
                     ?>
@@ -225,17 +219,73 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                 </div>
             </form>
         <?php endif; ?>
+
+        <?php if ($model->trans_type_id == 5 && $model->status != 3): ?> <!-- คืนยืม -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <h4>รับคืนยืมสินค้า</h4>
+                </div>
+            </div>
+            <form action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
+                <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-lg-3">
+                        <label for="">สินค้า</label>
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="">จำนวนเบิก</label>
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="">จำนวนคืน</label>
+                    </div>
+                    <div class="col-lg-4">
+                        <label for="">หมายเหตุ</label>
+                    </div>
+                </div>
+                <?php foreach ($lines as $value): ?>
+                    <?php
+                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty,$model->trans_type_id);
+                    // echo $check_return_qty;
+                    if ($check_return_qty == 0) continue;
+                    ?>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-lg-3">
+                            <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
+                            <input type="text" class="form-control" readonly
+                                   value="<?= \backend\models\Product::findName($value->product_id) ?>">
+                        </div>
+                        <div class="col-lg-2">
+                            <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
+                        </div>
+                        <div class="col-lg-2">
+                            <input type="number" name="return_qty[]" class="form-control"
+                                   value="<?= $check_return_qty ?>">
+                        </div>
+                        <div class="col-lg-4">
+                            <input type="text" name="return_remark[]" class="form-control">
+                        </div>
+                    </div>
+
+                <?php endforeach; ?>
+                <br/>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <button class="btn btn-success">บันทึกรายการ</button>
+                    </div>
+                </div>
+            </form>
+        <?php endif; ?>
         <br/>
 
     </div>
 <?php
-function getReturnProduct($journal_trans_id, $product_id, $original_qty)
+function getReturnProduct($journal_trans_id, $product_id, $original_qty,$trans_type_id)
 {
     $qty = 0;
     if ($product_id && $original_qty) {
         $model_ref = \backend\models\Journaltrans::find()->where(['trans_ref_id' => $journal_trans_id])->one();
         if($model_ref){
-            $model = \backend\models\Stocktrans::find()->where(['journal_trans_id' => $model_ref->id, 'product_id' => $product_id, 'trans_type_id' => 8])->one();
+            $model = \backend\models\Stocktrans::find()->where(['journal_trans_id' => $model_ref->id, 'product_id' => $product_id, 'trans_type_id' => $trans_type_id])->one();
             if ($model) {
                 $qty = $original_qty - $model->qty;
             } else {
@@ -250,4 +300,39 @@ function getReturnProduct($journal_trans_id, $product_id, $original_qty)
     return $qty;
 }
 
+function getBadgeType($status,$status_name) {
+    if ($status == 1) {
+        return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 2) {
+        return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 3) {
+        return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 4) {
+        return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
+    } else if ($status == 5) {
+        return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
+    } else if ($status == 6) {
+        return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
+    } else if ($status == 7) {
+        return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 8) {
+        return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 9) {
+        return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
+    }else {
+        return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
+    }
+}
+
+function getBadgeStatus($status,$status_name) {
+    if ($status == 1) {
+        return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 2) {
+        return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 3) {
+        return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 4) {
+        return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
+    }
+}
 ?>

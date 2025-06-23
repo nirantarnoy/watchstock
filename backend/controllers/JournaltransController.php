@@ -97,6 +97,11 @@ class JournaltransController extends Controller
 
             //custom model data
             $model->stock_type_id = 2;
+            if($model->trans_type_id == 7 || $model->trans_type_id == 5){ // ยืม และ ส่งช่าง
+                $model->status =1;
+            }else{
+                $model->status =3;
+            }
 
             // Validate all models
             $valid = $model->validate();
