@@ -33,17 +33,13 @@ $this->params['breadcrumbs'][] = $this->title;
                     return \backend\models\Warehouse::findName($data->warehouse_id);
                 }
             ],
-            [
-                    'attribute' => 'product_id',
-                'value' => function($data){
-                    return \backend\models\Product::findSku($data->product_id);
-                }
-            ],
+
             [
                 'attribute' => 'product_id',
                 'label' => 'ชื่อสินค้า',
+                'format' => 'html',
                 'value' => function ($data) {
-                    return \backend\models\Product::findName($data->product_id);
+                    return '<a href="' . Url::to(['product/view', 'id' => $data->product_id]) . '">' . \backend\models\Product::findName($data->product_id) . '</a>';
                 }
             ],
             'qty',

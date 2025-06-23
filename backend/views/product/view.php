@@ -23,68 +23,95 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
         ]) ?>
     </p>
-
-    <?= DetailView::widget([
-        'model' => $model,
-        'attributes' => [
-         //   'id',
-            'code',
-            'name',
-            'description',
-            [
-                'attribute' => 'product_group_id',
-                'value' => function ($data) {
-                    return \backend\models\Productgroup::findName($data->product_group_id);
-                }
-            ],
-            [
-                'attribute' => 'brand_id',
-                'value' => function ($data) {
-                    return \backend\models\Productbrand::findName($data->brand_id);
-                }
-            ],
-            [
-                'attribute' => 'product_type_id',
-                'value' => function ($data) {
-                    return \backend\helpers\ProductType::getTypeById($data->product_type_id);
-                }
-            ],
-            [
-                'attribute' => 'type_id',
-                'value' => function ($data) {
-                    return \backend\helpers\CatType::getTypeById($data->type_id);
-                }
-            ],
-            'cost_price',
-            'sale_price',
-            [
-                'attribute' => 'status',
-                'format' => 'raw',
-                'value' => function ($model) {
-                    return $model->status == 1 ? '<div class="badge badge-success" style="padding: 10px;">ใช้งาน</div>' : '<div class="badge badge-secondary">ไม่ใช้งาน</div>';
-                }
-            ],
-            [
-                'attribute' => 'created_at',
-                'format' => ['date', 'php:d-m-Y H:i:s'],
-            ],
-            [
-                'attribute' => 'created_by',
-                'value' => function ($model) {
-                    return \backend\models\User::findName($model->created_by);
-                }
-            ],
-            [
-                'attribute' => 'updated_at',
-                'format' => ['date', 'php:d-m-Y H:i:s'],
-            ],
-            [
-                'attribute' => 'updated_by',
-                'value' => function ($model) {
-                    return \backend\models\User::findName($model->updated_by);
-                }
-            ],
+    <?php
+    $attributes = [
+        'name',
+        'description',
+        [
+            'attribute' => 'product_group_id',
+            'value' => function ($data) {
+                return \backend\models\Productgroup::findName($data->product_group_id);
+            }
         ],
-    ]) ?>
+        [
+            'attribute' => 'brand_id',
+            'value' => function ($data) {
+                return \backend\models\Productbrand::findName($data->brand_id);
+            }
+        ],
+
+
+        [
+            'attribute' => 'status',
+            'format' => 'raw',
+            'value' => function ($model) {
+                return $model->status == 1 ? '<div class="badge badge-success" style="padding: 10px;">ใช้งาน</div>' : '<div class="badge badge-secondary">ไม่ใช้งาน</div>';
+            }
+        ],
+        [
+            'attribute' => 'created_at',
+            'format' => ['date', 'php:d-m-Y H:i:s'],
+        ],
+        [
+            'attribute' => 'created_by',
+            'value' => function ($model) {
+                return \backend\models\User::findName($model->created_by);
+            }
+        ],
+        [
+            'attribute' => 'updated_at',
+            'format' => ['date', 'php:d-m-Y H:i:s'],
+        ],
+        [
+            'attribute' => 'updated_by',
+            'value' => function ($model) {
+                return \backend\models\User::findName($model->updated_by);
+            }
+        ],
+    ];
+
+    $attributes2 = [
+        [
+            'attribute' => 'product_type_id',
+            'value' => function ($data) {
+                return \backend\helpers\ProductType::getTypeById($data->product_type_id);
+            }
+        ],
+        [
+            'attribute' => 'type_id',
+            'value' => function ($data) {
+                return \backend\helpers\CatType::getTypeById($data->type_id);
+            }
+        ],
+    ];
+    if (\Yii::$app->user->can('ViewCostPrice')) {
+        $attributes2[] = [
+            'attribute' => 'cost_price',
+            'value' => function ($model) {
+                return number_format($model->cost_price, 2);
+            }
+        ];
+    }
+    if (\Yii::$app->user->can('ViewSalePrice')) {
+        $attributes2[] = [
+            'attribute' => 'sale_price',
+            'value' => function ($model) {
+                return number_format($model->sale_price, 2);
+            }
+        ];
+    }
+
+    ?>
+    <div class="row">
+        <div class="col-lg-6">
+            <?= DetailView::widget(['model' => $model,
+                'attributes' => $attributes,]) ?>
+        </div>
+        <div class="col-lg-6">
+            <?= DetailView::widget(['model' => $model,
+                'attributes' => $attributes2,]) ?>
+        </div>
+    </div>
+
 
 </div>
