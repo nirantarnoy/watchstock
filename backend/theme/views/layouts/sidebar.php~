@@ -26,69 +26,6 @@
                     </a>
                 </li>
                 <?php endif;?>
-<!--                <li class="nav-item has-treeview has-sub">-->
-<!--                    <a href="#" class="nav-link">-->
-<!--                        <i class="nav-icon fas fa-building"></i>-->
-<!--                        <p>-->
-<!--                            ข้อมูลบริษัท-->
-<!--                            <i class="fas fa-angle-left right"></i>-->
-<!--                        </p>-->
-<!--                    </a>-->
-<!--                    <ul class="nav nav-treeview">-->
-<!--                        --><?php ////if (\Yii::$app->user->can('company/index')): ?>
-<!--                            <li class="nav-item">-->
-<!--                                <a href="index.php?r=company/index" class="nav-link company">-->
-<!--                                    <i class="far fa-circlez nav-icon"></i>-->
-<!--                                    <p>บริษัท</p>-->
-<!--                                </a>-->
-<!--                            </li>-->
-<!--                        --><?php ////endif; ?>
-<!--                    </ul>-->
-<!--                </li>-->
-                <?php if (\Yii::$app->user->can('company/index')): ?>
-                    <li class="nav-item has-treeview has-sub">
-                        <a href="#" class="nav-link">
-                            <i class="nav-icon fas fa-cog"></i>
-                            <p>
-                                ตั้งค่าทั่วไป
-                                <i class="fas fa-angle-left right"></i>
-                            </p>
-                        </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="index.php?r=company" class="nav-link company">
-                                    <i class="far fa-file-import nav-icon"></i>
-                                    <p>ข้อมูลบริษัท</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="index.php?r=paymentmethod" class="nav-link paymentmethod">
-                                    <i class="far fa-file-import nav-icon"></i>
-                                    <p>วิธีชำระเงิน</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="index.php?r=paymentterm" class="nav-link paymentterm">
-                                    <i class="far fa-file-import nav-icon"></i>
-                                    <p>เงื่อนไขชำระเงิน</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="index.php?r=bank" class="nav-link bank">
-                                    <i class="far fa-file-import nav-icon"></i>
-                                    <p>ธนาคาร</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="index.php?r=bankaccount" class="nav-link bankaccount">
-                                    <i class="far fa-file-import nav-icon"></i>
-                                    <p>บัญชีธนาคาร</p>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                <?php endif; ?>
-
 
                 <?php if(\Yii::$app->user->can('department/index') || \Yii::$app->user->can('position/index') || \Yii::$app->user->can('employee/index')):?>
                 <li class="nav-item has-treeview has-sub">
@@ -128,7 +65,7 @@
                 </li>
                 <?php endif;?>
 
-                <?php if(\Yii::$app->user->can('productgroup/index')||\Yii::$app->user->can('product/index')||\Yii::$app->user->can('warehouse/index')||\Yii::$app->user->can('product/index')||\Yii::$app->user->can('stocksum/index')||\Yii::$app->user->can('stocktrans/index')||\Yii::$app->user->can('journalissue/index')||\Yii::$app->user->can('journalreceive/index')):?>
+                <?php if(\Yii::$app->user->can('productgroup/index')||\Yii::$app->user->can('product/index')||\Yii::$app->user->can('warehouse/index')||\Yii::$app->user->can('product/index')||\Yii::$app->user->can('stocksum/index')||\Yii::$app->user->can('stocktrans/index')):?>
 
                 <li class="nav-item has-treeview has-sub">
                     <a href="#" class="nav-link">
@@ -199,32 +136,6 @@
                             </a>
                         </li>
                         <?php endif;?>
-
-                        <?php if (\Yii::$app->user->can('journalissue/index')): ?>
-                        <li class="nav-item">
-                            <a href="index.php?r=journalissue" class="nav-link journalissue">
-                                <i class="far fa-circlez nav-icon"></i>
-                                <p>
-                                    เบิกสินค้า
-                                    <!--                                <span class="right badge badge-danger">New</span>-->
-                                </p>
-                            </a>
-                        </li>
-
-                        <?php endif; ?>
-                        <?php if (\Yii::$app->user->can('journalreceive/index')): ?>
-                            <li class="nav-item">
-                                <a href="index.php?r=journalreceive" class="nav-link journalreceive">
-                                    <i class="far fa-circlez nav-icon"></i>
-                                    <p>
-                                        รับสินค้า
-                                        <!--                                <span class="right badge badge-danger">New</span>-->
-                                    </p>
-                                </a>
-                            </li>
-
-                        <?php endif; ?>
-
                     </ul>
                 </li>
                 <?php endif;?>
@@ -260,7 +171,7 @@
                         </ul>
                     </li>
                 <?php endif;?>
-                <?php //if(\Yii::$app->user->can('transreport/index')):?>
+                <?php if(\Yii::$app->user->can('salereport/crosstab')):?>
                     <li class="nav-item has-treeview has-sub">
                         <a href="#" class="nav-link">
                             <i class="nav-icon fas fa-chart-line"></i>
@@ -270,20 +181,20 @@
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <?php //if (\Yii::$app->user->can('salereport/crosstab')): ?>
+                            <?php if (\Yii::$app->user->can('salereport/crosstab')): ?>
                                 <li class="nav-item">
                                     <a href="index.php?r=salereport/crosstab" class="nav-link salereport">
                                         <i class="far fa-circlez nav-icon"></i>
                                         <p>รายงานยอดขาย</p>
                                     </a>
                                 </li>
-                            <?php //endif; ?>
+                            <?php endif; ?>
                         </ul>
                     </li>
-                <?php //endif;?>
+                <?php endif;?>
                 <?php // if (isset($_SESSION['user_group_id'])): ?>
                 <?php //if ($_SESSION['user_group_id'] == 1): ?>
-                <?php  if (\Yii::$app->user->username == 'mheeadmin'): ?>
+                <?php  if (\backend\models\User::findName(\Yii::$app->user->id) == 'mheeadmin'): ?>
                     <li class="nav-item has-treeview has-sub">
                         <a href="#" class="nav-link">
                             <i class="nav-icon fas fa-user"></i>
