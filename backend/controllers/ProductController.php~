@@ -79,7 +79,7 @@ class ProductController extends Controller
 //            $dataProvider->query->andFilterWhere(['status'=>0]);
 //        }
 
-        $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
+        $dataProvider->setSort(['defaultOrder' => ['id' => SORT_ASC]]);
         $dataProvider->pagination->pageSize = $pageSize;
 
         return $this->render('index', [

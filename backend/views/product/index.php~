@@ -198,10 +198,10 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 $this->registerJs(<<<JS
         $(document).on('pjax:start', function() {
-        $('#loading').fadeIn();
+            $('#loading').fadeIn();
         });
         $(document).on('pjax:end', function() {
-        $('#loading').fadeOut();
+           $('#loading').fadeOut();
         });
         JS
 );

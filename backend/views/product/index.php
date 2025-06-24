@@ -82,6 +82,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 ],
                 'name',
+                'description',
                 // 'product_type_id',
                 [
                     'attribute' => 'product_group_id',

@@ -415,6 +415,8 @@ class ProductController extends Controller
 
                     $model_dup = \backend\models\Product::find()->where(['name' => trim($rowData[0])])->one();
                     if ($model_dup != null) {
+                        $model_dup->description = $rowData[1];
+                        $model_dup->save(false);
                         continue;
                     }
 
