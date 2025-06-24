@@ -102,6 +102,11 @@ if (!$model->isNewRecord) {
             </div>
         </div>
         <div class="row">
+            <div class="col-lg-6">
+                <?= $form->field($model, 'remark')->textInput(['maxlength' => true]) ?>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-lg-3">
                 <input type="hidden" name="old_photo" value="<?= $model->photo ?>">
             </div>
@@ -142,7 +147,7 @@ if (!$model->isNewRecord) {
             </div>
             <div class="col-lg-6">
                 <label for="">สินค้าคงเหลือ</label>
-                <table class="table table-bordered">
+                <table class="table table-bordered table-striped">
                     <thead>
                     <tr>
                         <td>คลังจัดเก็บ</td>

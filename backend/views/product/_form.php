@@ -102,6 +102,11 @@ if (!$model->isNewRecord) {
             </div>
         </div>
         <div class="row">
+            <div class="col-lg-6">
+                <?= $form->field($model, 'remark')->textInput(['maxlength' => true])->label('หมายเหตุ') ?>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-lg-3">
                 <input type="hidden" name="old_photo" value="<?= $model->photo ?>">
             </div>
