@@ -416,6 +416,7 @@ class ProductController extends Controller
                     $model_dup = \backend\models\Product::find()->where(['name' => trim($rowData[0])])->one();
                     if ($model_dup != null) {
                         $model_dup->description = $rowData[1];
+                        $model_dup->remark = $rowData[6];
                         $model_dup->save(false);
                         continue;
                     }
@@ -430,10 +431,11 @@ class ProductController extends Controller
                     // $modelx->code = $rowData[0];
                     $modelx->name = trim($rowData[0]);
                     $modelx->description = $rowData[1];
-                    $modelx->product_group_id = 1; // watch or phone or etc
+                    $modelx->product_group_id = $rowData[2]; // watch or phone or etc
                     $modelx->brand_id = $rowData[4];
                     $modelx->product_type_id = 1; // normal or custom
                     $modelx->type_id = 1; // 1 = new 2 = second used
+                    $modelx->unit_id = 1;
                     $modelx->status = 1;
                     $modelx->cost_price = 0;
                     $modelx->sale_price = 0;

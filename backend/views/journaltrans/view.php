@@ -163,7 +163,7 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
             </div>
             <form action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
-                <input type="hidden" name="trans_type_id" value="8"> // รับสินค้าคืน
+                <input type="hidden" name="trans_type_id" value="8">
                 <div class="row" style="margin-top: 10px">
                     <div class="col-lg-3">
                         <label for="">สินค้า</label>
