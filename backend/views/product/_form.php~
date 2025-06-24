@@ -10,6 +10,20 @@ use yii\widgets\ActiveForm;
 $data_warehouse = \backend\models\Warehouse::find()->all();
 
 $yesno = [['id' => 1, 'YES'], ['id' => 0, 'NO']];
+
+$model_warehouse_product = null;
+
+if (!$model->isNewRecord) {
+    $sql = "SELECT w.name as warehouse_name,st.qty 
+            FROM product as p 
+                left join stock_sum as st on p.id = st.product_id 
+                inner join warehouse as w on st.warehouse_id = w.id 
+            where st.qty > 0 and p.id = " . $model->id;
+
+    $model_warehouse_product = Yii::$app->db->createCommand($sql)->queryAll();
+
+}
+
 ?>
 
     <div class="product-form">
@@ -73,15 +87,15 @@ $yesno = [['id' => 1, 'YES'], ['id' => 0, 'NO']];
         </div>
         <div class="row">
             <?php if (\Yii::$app->user->can('ViewCostPrice')): ?>
-            <div class="col-lg-3">
+                <div class="col-lg-3">
                     <?= $form->field($model, 'cost_price')->textInput() ?>
 
-            </div>
+                </div>
             <?php endif; ?>
             <?php if (\Yii::$app->user->can('ViewSalePrice')): ?>
-            <div class="col-lg-3">
+                <div class="col-lg-3">
                     <?= $form->field($model, 'sale_price')->textInput() ?>
-            </div>
+                </div>
             <?php endif; ?>
             <div class="col-lg-3">
                 <?= $form->field($model, 'stock_qty')->textInput(['readonly' => 'readonly']) ?>
@@ -125,6 +139,27 @@ $yesno = [['id' => 1, 'YES'], ['id' => 0, 'NO']];
                     </table>
                 <?php endif; ?>
                 <input type="file" name="product_photo" class="form-control">
+            </div>
+            <div class="col-lg-6">
+                <label for="">สินค้าคงเหลือ</label>
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <td>คลังจัดเก็บ</td>
+                        <td>จำนวน</td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($model_warehouse_product != null): ?>
+                        <?php for ($i = 0; $i <= count($model_warehouse_product) - 1; $i++): ?>
+                            <tr>
+                                <td><?= $model_warehouse_product[$i]['warehouse_name'] ?></td>
+                                <td><?= number_format($model_warehouse_product[$i]['qty'], 0) ?></td>
+                            </tr>
+                        <?php endfor; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
 
         </div>
