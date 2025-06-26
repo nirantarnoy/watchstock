@@ -4,7 +4,9 @@ use backend\models\Product;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\grid\ActionColumn;
-use kartik\grid\GridView;
+
+//use kartik\grid\GridView;
+use yii\grid\GridView;
 use yii\widgets\Pjax;
 
 //use yii\widgets\LinkPager;
@@ -57,8 +59,9 @@ $this->params['breadcrumbs'][] = $this->title;
             //     'striped' => false,
             //    'hover' => true,
             'id' => 'product-grid',
-            'pjax' => true,
-            'pjaxSettings' => ['neverTimeout' => true],
+            // 'pjax' => true,
+
+            // 'pjaxSettings' => ['neverTimeout' => true],
             //'tableOptions' => ['class' => 'table table-hover'],
             'emptyText' => '<div style="color: red;text-align: center;"> <b>ไม่พบรายการไดๆ</b> <span> เพิ่มรายการโดยการคลิกที่ปุ่ม </span><span class="text-success">"สร้างใหม่"</span></div>',
             'columns' => [
@@ -82,13 +85,14 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 ],
                 'name',
+                'description',
                 // 'product_type_id',
-                [
-                    'attribute' => 'product_group_id',
-                    'value' => function ($data) {
-                        return \backend\models\Productgroup::findName($data->product_group_id);
-                    }
-                ],
+//                [
+//                    'attribute' => 'product_group_id',
+//                    'value' => function ($data) {
+//                        return \backend\models\Productgroup::findName($data->product_group_id);
+//                    }
+//                ],
                 [
                     'attribute' => 'brand_id',
                     'value' => function ($data) {
@@ -96,25 +100,49 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 ],
                 [
-                    'attribute' => 'product_type_id',
-                    'headerOptions' => ['style' => 'text-align: center'],
-                    'contentOptions' => ['style' => 'text-align: center'],
+                    'attribute' => 'warehouse_id',
+                    'label' => 'คลัง',
                     'value' => function ($data) {
-                        return \backend\helpers\ProductType::getTypeById($data->product_type_id);
+                        $namex = \backend\models\Product::getWarehouseName($data->product_id,$data->stock_qty);
+                        return $namex;
                     }
                 ],
                 [
-                    'attribute' => 'type_id',
+                    'attribute' => 'sale_price',
                     'headerOptions' => ['style' => 'text-align: center'],
                     'contentOptions' => ['style' => 'text-align: center'],
                     'value' => function ($data) {
-                        return \backend\helpers\CatType::getTypeById($data->type_id);
+                        return number_format($data->sale_price, 0);
                     }
                 ],
+//                [
+//                    'attribute' => 'product_type_id',
+//                    'headerOptions' => ['style' => 'text-align: center'],
+//                    'contentOptions' => ['style' => 'text-align: center'],
+//                    'value' => function ($data) {
+//                        return \backend\helpers\ProductType::getTypeById($data->product_type_id);
+//                    }
+//                ],
+//                [
+//                    'attribute' => 'type_id',
+//                    'headerOptions' => ['style' => 'text-align: center'],
+//                    'contentOptions' => ['style' => 'text-align: center'],
+//                    'value' => function ($data) {
+//                        return \backend\helpers\CatType::getTypeById($data->type_id);
+//                    }
+//                ],
                 //'status',
                 //'last_price',
                 //'std_price',
                 //'company_id',
+                [
+                    'attribute' => 'stock_qty',
+                    'headerOptions' => ['style' => 'text-align: center'],
+                    'contentOptions' => ['style' => 'text-align: center'],
+                    'value' => function ($data) {
+                        return number_format($data->stock_qty, 0);
+                    }
+                ],
                 [
                     'attribute' => 'status',
                     'format' => 'raw',
@@ -128,16 +156,16 @@ $this->params['breadcrumbs'][] = $this->title;
                         }
                     }
                 ],
-                [
-                    'attribute' => 'stock_qty',
-                    'label' => 'คงเหลือ',
-                    'headerOptions' => ['style' => 'text-align: right'],
-                    'contentOptions' => ['style' => 'text-align: right'],
-                    'value' => function ($data) {
-                        // $qty = \backend\models\Product::getTotalQty($data->id);
-                        return number_format($data->stock_qty, 0);
-                    }
-                ],
+//                [
+//                    'attribute' => 'stock_qty',
+//                    'label' => 'คงเหลือ',
+//                    'headerOptions' => ['style' => 'text-align: right'],
+//                    'contentOptions' => ['style' => 'text-align: right'],
+//                    'value' => function ($data) {
+//                        // $qty = \backend\models\Product::getTotalQty($data->id);
+//                        return number_format($data->stock_qty, 0);
+//                    }
+//                ],
 
                 [
 

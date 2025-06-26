@@ -103,20 +103,6 @@ class Product extends \common\models\Product
         return $model;
     }
 
-    public static function getWarehouseName($product_id,$qty){
-        $name = '';
-        if($product_id && $qty){
-            $model = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['>=','qty',$qty])->one();
-            if($model){
-                $model_warehouse = \backend\models\Warehouse::find()->where(['id'=>$model->warehouse_id])->one();
-                if($model_warehouse){
-                    $name = $model_warehouse->name;
-                }
-            }
-        }
-        return $name;
-    }
-
 //    public static function findName($id){
 //        $model = \common\models\RoutePlan::find()->where(['id'=>$id])->one();
 //        return $model!= null?$model->name:'';

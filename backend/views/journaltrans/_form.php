@@ -195,7 +195,7 @@ if ($create_type == 7) {
             <div class="col-md-3">
                 <?= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
-                    'options' => ['placeholder' => '-- เลือกคลัง --',],
+                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct(this.value)'],
                     'pluginOptions' => [
                         'allowClear' => true,
                         'theme' => 'krajee',
@@ -548,6 +548,22 @@ $(window).on('load', function() {
         if (warehouseId) {
             $(item).find('.warehouse-line-input').val(warehouseId);
             $(item).find('.warehouse-display').val(warehouseName);
+        }
+    }
+    
+    function getWarehouseproduct(id){
+        if(id){
+            $.ajax({
+                url: '/journaltrans/getwarehouseproduct',
+                type: 'POST',
+                data: {id: id},
+                dataType: 'html',
+                success: function(data) {
+                    if(data!='' || data!=null){
+                        $('.product-select').html(data);
+                    }
+                }
+            });
         }
     }
 });
