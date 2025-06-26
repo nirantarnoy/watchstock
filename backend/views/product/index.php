@@ -36,7 +36,7 @@ $this->params['breadcrumbs'][] = $this->title;
                       method="post">
                     <div class="form-group">
                         <label>แสดง </label>
-                        <select class="form-control" name="perpage" id="perpage">
+                        <select class="form-control" name="perpage" id="perpage" onchange="$('#form-perpage').submit()">
                             <option value="20" <?= $perpage == '20' ? 'selected' : '' ?>>20</option>
                             <option value="50" <?= $perpage == '50' ? 'selected' : '' ?> >50</option>
                             <option value="100" <?= $perpage == '100' ? 'selected' : '' ?>>100</option>
