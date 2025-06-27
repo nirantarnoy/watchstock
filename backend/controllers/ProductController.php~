@@ -486,7 +486,6 @@ class ProductController extends Controller
                     if($warehouse->save(false)){
                         $warehouse_id = $warehouse->id;
                     }
-
             }
         }
 

@@ -559,7 +559,9 @@ $(window).on('load', function() {
                 data: {id: id},
                 dataType: 'html',
                 success: function(data) {
-                    $('.product-select').html(data);
+                    if(data!='' || data!=null){
+                        $('.product-select').html(data);
+                    }
                 }
             });
         }

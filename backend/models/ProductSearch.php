@@ -11,15 +11,15 @@ use backend\models\Product;
  */
 class ProductSearch extends Product
 {
-    public $globalSearch;
+    public $globalSearch,$party_id,$warehouse_id,$stock_empty;
     /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
-            [['id', 'product_group_id', 'status','product_type_id','type_id','brand_id'], 'integer'],
-            [['code', 'name', 'description'], 'safe'],
+            [['id', 'product_group_id', 'status','product_type_id','type_id','brand_id',], 'integer'],
+            [['code', 'name', 'description','party_id','warehouse_id','stock_empty'], 'safe'],
             [['globalSearch'],'string']
         ];
     }
@@ -46,6 +46,8 @@ class ProductSearch extends Product
 
         // add conditions that should always apply here
 
+        $query->joinWith(['journaltransLine.journalTrans.watchMaker']);
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
@@ -67,6 +69,20 @@ class ProductSearch extends Product
             'type_id' => $this->type_id,
             'status' => $this->status,
         ]);
+
+        if($this->party_id){
+            $query->andFilterWhere(['watchmaker.id' => $this->party_id]);
+        }
+
+        if($this->warehouse_id){
+            $query->andFilterWhere(['journal_trans_line.warehouse_id' => $this->warehouse_id]);
+        }
+        if($this->stock_empty == 1){
+            $query->andFilterWhere(['stock_qty'=>0]);
+        }
+        if($this->stock_empty == 2){
+            $query->andFilterWhere(['!=','stock_qty',0]);
+        }
 
         if($this->globalSearch != ''){
             $query->orFilterWhere(['like', 'code', $this->globalSearch])

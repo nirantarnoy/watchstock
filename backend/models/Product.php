@@ -2,8 +2,10 @@
 
 namespace backend\models;
 
+use common\models\JournalTransLine;
 use Yii;
 use yii\db\ActiveRecord;
+
 
 date_default_timezone_set('Asia/Bangkok');
 
@@ -33,7 +35,7 @@ class Product extends \common\models\Product
                 ],
                 'value' => Yii::$app->user->id,
             ],
-            'timestamuby' => [
+            'timestampcby' => [
                 'class' => \yii\behaviors\AttributeBehavior::className(),
                 'attributes' => [
                     ActiveRecord::EVENT_BEFORE_UPDATE => 'updated_by',
@@ -63,6 +65,24 @@ class Product extends \common\models\Product
             ],
         ];
     }
+
+    public function getJournaltransLine()
+    {
+        return $this->hasMany(JournalTransLine::class, ['product_id' => 'id']);
+    }
+
+    public function getJournalTrans()
+    {
+        return $this->hasMany(JournalTrans::class, ['id' => 'journal_trans_id'])
+            ->via('journaltransLine');
+    }
+
+//    public function getWatchMaker()
+//    {
+//        return $this->hasMany(Watchmaker::class, ['id' => 'party_id'])
+//            ->via('journalTrans');
+//    }
+
 
     public static function findCode($id){
         $model = Product::find()->where(['id'=>$id])->one();

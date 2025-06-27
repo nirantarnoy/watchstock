@@ -1,6 +1,7 @@
 <?php
 namespace backend\models;
 use common\models\JournalTransLine;
+
 use Yii;
 use yii\db\ActiveRecord;
 date_default_timezone_set('Asia/Bangkok');
@@ -61,6 +62,8 @@ class JournalTrans extends \common\models\JournalTrans
             ],
         ];
     }
+
+
 
     public static function getLineQty($id){
         $qty = JournalTransLine::find()->where(['journal_trans_id'=>$id])->sum('qty');

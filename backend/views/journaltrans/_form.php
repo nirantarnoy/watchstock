@@ -183,6 +183,7 @@ if ($create_type == 7) {
                        readonly="readonly">
             </div>
             <div class="col-md-3">
+                <?php $model->trans_date = $model->isNewRecord ? date('Y-m-d') : date('Y-m-d', strtotime($model->trans_date)); ?>
                 <?= $form->field($model, 'trans_date')->widget(DatePicker::classname(), [
                     'options' => ['placeholder' => 'วันที่ทำรายการ ...'],
                     'pluginOptions' => [

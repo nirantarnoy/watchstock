@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use backend\models\Watchmaker;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\behaviors\BlameableBehavior;
@@ -257,5 +258,10 @@ class JournalTrans extends \yii\db\ActiveRecord
         }
         $this->qty = $total;
         $this->save(false, ['qty']);
+    }
+
+    public function getWatchMaker()
+    {
+        return $this->hasOne(Watchmaker::class, ['id' => 'party_id']);
     }
 }
