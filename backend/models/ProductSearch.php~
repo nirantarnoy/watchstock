@@ -11,7 +11,7 @@ use backend\models\Product;
  */
 class ProductSearch extends Product
 {
-    public $globalSearch,$party_id,$warehouse_id;
+    public $globalSearch,$party_id,$warehouse_id,$stock_empty;
     /**
      * {@inheritdoc}
      */
@@ -19,7 +19,7 @@ class ProductSearch extends Product
     {
         return [
             [['id', 'product_group_id', 'status','product_type_id','type_id','brand_id',], 'integer'],
-            [['code', 'name', 'description','party_id','warehouse_id'], 'safe'],
+            [['code', 'name', 'description','party_id','warehouse_id','stock_empty'], 'safe'],
             [['globalSearch'],'string']
         ];
     }
@@ -76,6 +76,12 @@ class ProductSearch extends Product
 
         if($this->warehouse_id){
             $query->andFilterWhere(['journal_trans_line.warehouse_id' => $this->warehouse_id]);
+        }
+        if($this->stock_empty == 1){
+            $query->andFilterWhere(['stock_qty'=>0]);
+        }
+        if($this->stock_empty == 2){
+            $query->andFilterWhere(['!=','stock_qty',0]);
         }
 
         if($this->globalSearch != ''){

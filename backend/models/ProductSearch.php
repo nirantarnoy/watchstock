@@ -75,7 +75,7 @@ class ProductSearch extends Product
         }
 
         if($this->warehouse_id){
-            $query->andFilterWhere(['journal_trans_line.warehouse_id' => $this->warehouse_id]);
+            $query->andFilterWhere(['journal_trans.warehouse_id' => $this->warehouse_id]);
         }
         if($this->stock_empty == 1){
             $query->andFilterWhere(['stock_qty'=>0]);
