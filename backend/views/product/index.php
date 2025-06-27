@@ -5,8 +5,8 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\grid\ActionColumn;
 
-//use kartik\grid\GridView;
-use yii\grid\GridView;
+use kartik\grid\GridView;
+//use yii\grid\GridView;
 use yii\widgets\Pjax;
 
 //use yii\widgets\LinkPager;
@@ -46,7 +46,17 @@ $this->params['breadcrumbs'][] = $this->title;
                 </form>
             </div>
         </div>
+
         <?php echo $this->render('_search', ['model' => $searchModel, 'viewstatus' => $viewstatus]); ?>
+        <div id="div-delete-btn" style="padding: 10px;display: none">
+            <?php echo Html::button('ลบ', [
+                'class' => 'btn btn-danger',
+                'id' => 'bulk-delete-btn',
+                'data-url' => Url::to(['bulk-delete']),
+            ]);?>
+
+        </div>
+
 
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
@@ -59,12 +69,13 @@ $this->params['breadcrumbs'][] = $this->title;
             //     'striped' => false,
             //    'hover' => true,
             'id' => 'product-grid',
-            // 'pjax' => true,
+             'pjax' => true,
 
             // 'pjaxSettings' => ['neverTimeout' => true],
             //'tableOptions' => ['class' => 'table table-hover'],
             'emptyText' => '<div style="color: red;text-align: center;"> <b>ไม่พบรายการไดๆ</b> <span> เพิ่มรายการโดยการคลิกที่ปุ่ม </span><span class="text-success">"สร้างใหม่"</span></div>',
             'columns' => [
+                ['class' => 'kartik\grid\CheckboxColumn'],
                 [
                     'class' => 'yii\grid\SerialColumn',
                     'headerOptions' => ['style' => 'text-align:center;'],
@@ -231,6 +242,56 @@ $this->registerJs(<<<JS
         $(document).on('pjax:end', function() {
            $('#loading').fadeOut();
         });
-        JS
+        
+       function toggleDeleteButton() {
+           
+            let selected = $('#product-grid').yiiGridView('getSelectedRows');
+            console.log(selected.length);
+            if (selected.length > 0) {
+                $('#div-delete-btn').show();
+                $("#bulk-delete-btn").text("ลบ " + selected.length + " รายการ");
+            } else {
+                $('#div-delete-btn').hide();
+                $("#bulk-delete-btn").text("ลบ");
+            }
+        }
+        
+        // ดักทุกการเปลี่ยนแปลง checkbox
+        $('#product-grid').on('change', 'input[type="checkbox"][name="selection[]"]', function() {
+            toggleDeleteButton();
+        });
+        
+        // ถ้ามีการโหลดซ้ำด้วย PJAX
+        $(document).on('pjax:end', function() {
+            toggleDeleteButton();
+        });
+        
+        // // ดัก checkbox แต่ละแถว
+        // $('#product-grid').on('change', 'input[type="checkbox"][name="selection[]"]', function() {
+        //     let rowId = $(this).val(); // ได้ ID ของแถวนั้น
+        //     let isChecked = $(this).is(':checked');
+        //     console.log('Row ID:', rowId, 'Checked:', isChecked);
+        // });
+        //
+        // // ดัก checkbox เลือกทั้งหมด
+        // $('#product-grid').on('change', 'input[type="checkbox"][name="selection_all"]', function() {
+        //     let isChecked = $(this).is(':checked');
+        //     console.log('All checkbox clicked. Checked:', isChecked);
+        // });
+        //
+        $('#bulk-delete-btn').on('click', function() {
+            var keys = $('#product-grid').yiiGridView('getSelectedRows');
+            if (keys.length === 0) {
+                alert('กรุณาเลือกรายการที่ต้องการลบ');
+                return;
+            }
+            if (confirm('คุณแน่ใจว่าต้องการลบรายการที่เลือก?')) {
+                $.post($(this).data('url'), {ids: keys}, function(response) {
+                    $.pjax.reload({container: '#p0'}); // เปลี่ยนเป็น container id ของ PJAX ถ้าต่าง
+                });
+            }
+        });
+        
+JS
 );
 ?>

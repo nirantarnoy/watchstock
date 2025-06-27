@@ -744,4 +744,17 @@ class ProductController extends Controller
             'message' => $hasError ? 'มีสินค้าบางรายการไม่เพียงพอ' : 'สินค้าทุกรายการมีเพียงพอ'
         ];
     }
+
+    public function actionBulkDelete()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $ids = \Yii::$app->request->post('ids', []);
+        if (!empty($ids)) {
+            Product::deleteAll(['id' => $ids]);
+            return ['success' => true];
+        }
+
+        return ['success' => false, 'message' => 'No IDs received'];
+    }
 }
