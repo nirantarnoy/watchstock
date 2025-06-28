@@ -252,6 +252,7 @@ $this->registerJs(<<<JS
                 $("#bulk-delete-btn").text("ลบ " + selected.length + " รายการ");
             } else {
                 $('#div-delete-btn').hide();
+                $("#bulk-delete-btn").text("ลบ");
             }
         }
         

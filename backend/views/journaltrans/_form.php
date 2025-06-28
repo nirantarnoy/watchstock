@@ -196,7 +196,7 @@ if ($create_type == 7) {
             <div class="col-md-3">
                 <?= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
-                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct(this.value)'],
+                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'alert($(this).val())'],
                     'pluginOptions' => [
                         'allowClear' => true,
                         'theme' => 'krajee',
@@ -465,6 +465,8 @@ function updateRowNumbers() {
         $(this).find('.panel-title-address').text('รายการที่: ' + (index + 1));
     });
 }
+    
+
 JS;
 
 // Register main JavaScript
@@ -473,6 +475,7 @@ $this->registerJs($mainJs, \yii\web\View::POS_READY);
 $select2FixJs = <<<JS
 // Wait for all assets to load
 $(window).on('load', function() {
+    alert();
     // Function to properly initialize Select2
     function setupSelect2(selector) {
         $(selector).each(function() {
@@ -553,6 +556,7 @@ $(window).on('load', function() {
     }
     
     function getWarehouseproduct(id){
+        alert(id);
         if(id){
             $.ajax({
                 url: '/journaltrans/getwarehouseproduct',
@@ -566,10 +570,12 @@ $(window).on('load', function() {
                 }
             });
         }
-    }
+}
+    
+    
 });
 JS;
 
-//$this->registerJs($select2FixJs, \yii\web\View::POS_END);
+$this->registerJs($select2FixJs, \yii\web\View::POS_END);
 
 ?>

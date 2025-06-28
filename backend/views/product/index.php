@@ -240,6 +240,7 @@ $this->registerJs(<<<JS
             $('#loading').fadeIn();
         });
         $(document).on('pjax:end', function() {
+            toggleDeleteButton();
            $('#loading').fadeOut();
         });
         
@@ -262,9 +263,9 @@ $this->registerJs(<<<JS
         });
         
         // ถ้ามีการโหลดซ้ำด้วย PJAX
-        $(document).on('pjax:end', function() {
-            toggleDeleteButton();
-        });
+        // $(document).on('pjax:end', function() {
+        //     toggleDeleteButton();
+        // });
         
         // // ดัก checkbox แต่ละแถว
         // $('#product-grid').on('change', 'input[type="checkbox"][name="selection[]"]', function() {

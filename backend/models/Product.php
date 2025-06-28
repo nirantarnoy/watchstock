@@ -86,11 +86,11 @@ class Product extends \common\models\Product
 
     public static function findCode($id){
         $model = Product::find()->where(['id'=>$id])->one();
-        return $model != null ?$model->sku:'';
+        return $model != null ?$model->name:'';
     }
     public static function findSku($id){
         $model = Product::find()->where(['id'=>$id])->one();
-        return $model != null ?$model->sku:'';
+        return $model != null ?$model->name:'';
     }
     public static function findBarCode($id){
         $model = Product::find()->where(['id'=>$id])->one();
