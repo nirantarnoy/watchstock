@@ -120,7 +120,6 @@ class ProductController extends Controller
 
 
                  $model->code = $model->name;
-                 $model->is_special = 0;
                 if ($model->save(false)) {
                     $uploaded = UploadedFile::getInstanceByName('product_photo');
                     $uploaded2 = UploadedFile::getInstanceByName('product_photo_2');
@@ -353,7 +352,7 @@ class ProductController extends Controller
                 $price = 0;
                 $unit_id = $value->unit_id;
                 $unit_name = \backend\models\Unit::findName($unit_id);
-                $is_drummy  = $value->is_special;
+                $is_drummy  = '' ;// $value->is_special;
                 $html .= '<tr>';
                 $html .= '<td style="text-align: center">
                             <div class="btn btn-outline-success btn-sm" onclick="addselecteditem($(this))" data-var="' . $value->id . '">เลือก</div>
