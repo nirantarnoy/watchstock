@@ -119,7 +119,7 @@ class ProductController extends Controller
                 $line_exp_date = \Yii::$app->request->post('line_exp_date');
 
 
-                 $model->code = $model->sku;
+                 $model->code = $model->name;
                  $model->is_special = 0;
                 if ($model->save(false)) {
                     $uploaded = UploadedFile::getInstanceByName('product_photo');
@@ -348,7 +348,7 @@ class ProductController extends Controller
             $has_data = 1;
             foreach ($model as $value) {
                 $onhand_qty = $this->getProductOnhand($value->id);
-                $code = $value->sku;
+                $code = $value->name;
                 $name = $value->name;
                 $price = 0;
                 $unit_id = $value->unit_id;
