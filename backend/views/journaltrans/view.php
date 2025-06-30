@@ -16,6 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 
 $product_type = \backend\helpers\ProductType::asArrayObject();
+$warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all();
 ?>
     <div class="journal-trans-view">
 
@@ -175,6 +176,9 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                         <label for="">จำนวนคืน</label>
                     </div>
                     <div class="col-lg-2">
+                        <label for="">กลับเข้าคลัง</label>
+                    </div>
+                    <div class="col-lg-2">
                         <label for="">คืนเป็นสินค้า</label>
                     </div>
                     <div class="col-lg-2">
@@ -199,6 +203,13 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                         <div class="col-lg-2">
                             <input type="number" name="return_qty[]" class="form-control"
                                    value="<?= $check_return_qty ?>">
+                        </div>
+                        <div class="col-lg-2">
+                            <select name="return_to_warehouse[]" class="form-control">
+                                <?php foreach($warehouse_data as $value_warehouse): ?>
+                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-lg-2">
                             <select name="return_to_type[]" class="form-control">
@@ -241,7 +252,10 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                     <div class="col-lg-2">
                         <label for="">จำนวนคืน</label>
                     </div>
-                    <div class="col-lg-4">
+                    <div class="col-lg-2">
+                        <label for="">กลับเข้าคลัง</label>
+                    </div>
+                    <div class="col-lg-3">
                         <label for="">หมายเหตุ</label>
                     </div>
                 </div>
@@ -264,7 +278,14 @@ $product_type = \backend\helpers\ProductType::asArrayObject();
                             <input type="number" name="return_qty[]" class="form-control"
                                    value="<?= $check_return_qty ?>">
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-2">
+                            <select name="return_to_warehouse[]" class="form-control">
+                                <?php foreach($warehouse_data as $value_warehouse): ?>
+                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-lg-3">
                             <input type="text" name="return_remark[]" class="form-control">
                         </div>
                     </div>

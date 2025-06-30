@@ -5,6 +5,7 @@ namespace backend\controllers;
 use backend\models\Product;
 use backend\models\ProductSearch;
 use backend\models\WarehouseSearch;
+use common\models\JournalTrans;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -189,7 +190,7 @@ class ProductController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-        $model_line = \common\models\StockSum::find()->where(['product_id'=>$id])->all();
+        $model_line = \common\models\StockSum::find()->where(['product_id'=>$id])->andFilterWhere(['>','stock_qty',0])->orderBy(['id'])->all();
         $work_photo = '';
         if ($this->request->isPost && $model->load($this->request->post())) {
             $uploaded = UploadedFile::getInstanceByName('product_photo');
@@ -198,6 +199,9 @@ class ProductController extends Controller
             $line_rec_id = \Yii::$app->request->post('line_rec_id');
             $removelist = \Yii::$app->request->post('remove_list');
             $old_photo = \Yii::$app->request->post('old_photo');
+
+            $line_warehouse = \Yii::$app->request->post('warehouse_id');
+            $line_qty = \Yii::$app->request->post('line_qty');
 
             //  print_r($line_customer_rec_id);return;
 
@@ -216,12 +220,59 @@ class ProductController extends Controller
 
                 }
 
-                if($removelist!=null){
-                    $xdel = explode(',', $removelist);
-                    for($i=0;$i<count($xdel);$i++){
-                        \backend\models\Stocksum::deleteAll(['id'=>$xdel[$i]]);
+                if($line_warehouse != null){
+                    $model_journal_trans = new \common\models\JournalTrans();
+                    $model_journal_trans->trans_date = date('Y-m-d H:i:s');
+                    $model_journal_trans->journal_no = '';
+                    $model_journal_trans->remark = '';
+                    $model_journal_trans->trans_type_id = JournalTrans::TYPE_ADJUST;
+                    $model_journal_trans->status = 3; // 3 complete
+                    $model_journal_trans->stock_type_id = 0;
+                    $model_journal_trans->warehouse_id = 0;
+
+                    if($model_journal_trans->save(false)){
+                        for($i=0;$i<=count($line_warehouse)-1;$i++){
+                            if($line_warehouse[$i] == null || $line_qty[$i] == null){
+                                continue;
+                            }
+
+                            $model_trans = new \common\models\JournalTransLine();
+                            $model_trans->product_id = $model->id;
+                            $model_trans->journal_trans_id = $model_journal_trans->id;
+                            $model_trans->warehouse_id = $line_warehouse[$i];
+                            $model_trans->qty = $line_qty[$i];
+                            $model_trans->status = 1;
+                            if($model_trans->save(false)){
+                                $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
+                                if($model_sum){
+                                    $model_sum->qty = $line_qty[$i];
+                                    if($model_sum->save(false)){
+                                        $model->stock_qty = $line_qty[$i];
+                                        $model->save(false);
+                                    }
+                                }else{
+                                    $model_sum = new \backend\models\Stocksum();
+                                    $model_sum->product_id = $model->id;
+                                    $model_sum->warehouse_id = $line_warehouse[$i];
+                                    $model_sum->qty = $line_qty[$i];
+                                    if($model_sum->save(false)){
+                                        $model->stock_qty = $line_qty[$i];
+                                        $model->save(false);
+                                    }
+                                }
+                            }
+                        }
                     }
+
                 }
+
+
+//                if($removelist!=null){
+//                    $xdel = explode(',', $removelist);
+//                    for($i=0;$i<count($xdel);$i++){
+//                        \backend\models\Stocksum::deleteAll(['id'=>$xdel[$i]]);
+//                    }
+//                }
 
             }
 

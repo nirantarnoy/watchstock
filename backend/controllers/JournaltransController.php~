@@ -96,7 +96,7 @@ class JournaltransController extends Controller
             }
 
             //custom model data
-            $model->stock_type_id = 2;
+            $model->stock_type_id = 2; // 1 เข้า 2 ออก
             if($model->trans_type_id == 7 || $model->trans_type_id == 5){ // ยืม และ ส่งช่าง
                 $model->status =1;
             }else{
@@ -286,7 +286,13 @@ class JournaltransController extends Controller
                $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
                if($model){
                    $model->qty += $qty;
-                   $model->save(false);
+                   if($model->save(false)){
+                       $model_product = \backend\models\Product::findOne($product_id);
+                       if($model_product){
+                           $model_product->stock_qty += $qty; // update stock product
+                           $model_product->save(false);
+                       }
+                   }
                }else{
                    $model = new \common\models\StockSum();
                    $model->product_id = $product_id;
@@ -342,6 +348,7 @@ class JournaltransController extends Controller
          $remark = \Yii::$app->request->post('return_remark');
          $return_to_type = \Yii::$app->request->post('return_to_type');
          $trans_type_id = \Yii::$app->request->post('trans_type_id');
+         $return_to_warehouse = \Yii::$app->request->post('return_to_warehouse');
 
          if($journal_trans_id && $qty !=null && $trans_type_id != null){
              $model = new \backend\models\JournalTrans();
@@ -360,18 +367,20 @@ class JournaltransController extends Controller
                          $model_line->product_id = $product_id[$i];
                          $model_line->qty = $qty[$i];
                          $model_line->remark = $remark[$i];
-                         $model_line->warehouse_id = 1; // default
+                         $model_line->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1; // default
                          $model_line->return_to_type = $return_to_type != null ? $return_to_type[$i] : null;
                          if($model_line->save(false)){
                              $model_stock_trans = new \common\models\StockTrans();
                              $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                             $model_stock_trans->trans_type_id = 8;
+                             $model_stock_trans->trans_type_id = $trans_type_id;
                              $model_stock_trans->product_id = $product_id[$i];
                              $model_stock_trans->journal_trans_id = $model->id;
                              $model_stock_trans->qty = $qty[$i];
                              $model_stock_trans->remark = $remark[$i];
+                             $model_stock_trans->stock_type_id =1;
+                             $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
                              if($model_stock_trans->save(false)){
-                                 $this->calStock($product_id[$i],1,1,$qty[$i]); // stock in
+                                 $this->calStock($product_id[$i],1,$return_to_warehouse[$i],$qty[$i]); // stock in
                              }
                              if($return_to_type!= null){ // update product type
                              \backend\models\Product::updateAll(['product_type_id'=>$return_to_type[$i]],['id'=>$product_id[$i]]);
