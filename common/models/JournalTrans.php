@@ -139,7 +139,7 @@ class JournalTrans extends \yii\db\ActiveRecord
     public function beforeSave($insert)
     {
         if ($insert) {
-            $this->journal_no = $this->generateJournalNo();
+            $this->journal_no = $this->generateJournalNoNew();
         }
 
         return parent::beforeSave($insert);
@@ -195,6 +195,64 @@ class JournalTrans extends \yii\db\ActiveRecord
         }
 
         return $prefix . date('Ym') . str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function generateJournalNoNew()
+    {
+        $prefix = '';
+        switch ($this->trans_type_id) {
+            case self::TYPE_OPENING:
+                $prefix = 'OPN';
+                break;
+            case self::TYPE_ADJUST:
+                $prefix = 'ADJ';
+                break;
+            case self::TYPE_SALE:
+                $prefix = 'SAL';
+                break;
+            case self::TYPE_RETURN_SALE:
+                $prefix = 'RSA';
+                break;
+            case self::TYPE_LOAN:
+                $prefix = 'LOA';
+                break;
+            case self::TYPE_RETURN_LOAN:
+                $prefix = 'RLO';
+                break;
+            case self::TYPE_SEND:
+                $prefix = 'SEN';
+                break;
+            case self::TYPE_RETURN_SEND:
+                $prefix = 'RSE';
+                break;
+            case self::TYPE_DROP:
+                $prefix = 'DRO';
+                break;
+
+        }
+
+        $lastRecord = self::find()
+            ->where(['trans_type_id' => $this->trans_type_id])
+            ->andWhere(['like', 'journal_no', $prefix . date('Ym')])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+
+
+        if ($lastRecord != null) {
+            $prefix = $prefix . date('Ym');
+            $cnum = substr((string)$lastRecord, 9, strlen($lastRecord));
+            $len = strlen($cnum);
+            $clen = strlen($cnum + 1);
+            $loop = $len - $clen;
+            for ($i = 1; $i <= $loop; $i++) {
+                $prefix .= "0";
+            }
+            $prefix .= $cnum + 1;
+            return $prefix;
+        } else {
+            $prefix = $prefix.date('Ym');
+            return $prefix . '0001';
+        }
     }
 
     /**

@@ -616,9 +616,9 @@ function linecal(e){
     var row = e.closest(".row");
     var line_quantity = e.val();
     var line_product_onhand = row.find(".line-product-onhand").val();
-    alert(line_quantity);
-    alert(line_product_onhand);
-    if(line_quantity >line_product_onhand){
+    // alert(line_quantity);
+    // alert(line_product_onhand);
+    if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){
         alert('จํานวนไม่เพียงพอ');
         e.val(line_product_onhand);
     }

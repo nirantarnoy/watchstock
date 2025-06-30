@@ -190,7 +190,7 @@ class ProductController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-        $model_line = \common\models\StockSum::find()->where(['product_id'=>$id])->andFilterWhere(['>','stock_qty',0])->orderBy(['id'])->all();
+        $model_line = \common\models\StockSum::find()->where(['product_id'=>$id])->andFilterWhere(['>','qty',0])->orderBy(['id'=>SORT_ASC])->all();
         $work_photo = '';
         if ($this->request->isPost && $model->load($this->request->post())) {
             $uploaded = UploadedFile::getInstanceByName('product_photo');

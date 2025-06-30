@@ -282,7 +282,7 @@ class JournaltransController extends Controller
                    if($model->save(false)){
                        $model_product = \backend\models\Product::findOne($product_id);
                        if($model_product){
-                           $model_product->stock_qty -= $qty; // update stock product
+                           $model_product->stock_qty += $qty; // update stock product
                            $model_product->save(false);
                        }
                    }
