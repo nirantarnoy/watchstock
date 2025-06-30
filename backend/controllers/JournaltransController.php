@@ -405,4 +405,30 @@ class JournaltransController extends Controller
             }
         }
     }
+
+    function actionGetwarehouseproduct(){
+        $html = '';
+        $id = \Yii::$app->request->post('id');
+        if($id){
+            $model_stock_sum = \common\models\StockSum::find()->where(['warehouse_id'=>$id])->all();
+            if($model_stock_sum){
+                foreach($model_stock_sum as $model){
+                    $html .= '<option value="'.$model->product_id.'">'.\backend\models\Product::findName($model->product_id).'</option>';
+                }
+            }
+        }
+        echo $html;
+    }
+    function actionGetproductonhand(){
+        $onhand = 0;
+        $product_id = \Yii::$app->request->post('product_id');
+        $warehouse_id = \Yii::$app->request->post('warehouse_id');
+        if($product_id && $warehouse_id){
+            $model_stock_sum = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
+            if($model_stock_sum){
+                $onhand = $model_stock_sum->qty;
+            }
+        }
+        echo $onhand;
+    }
 }

@@ -196,7 +196,7 @@ if ($create_type == 7) {
             <div class="col-md-3">
                 <?= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
-                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'alert($(this).val())'],
+                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct($(this))'],
                     'pluginOptions' => [
                         'allowClear' => true,
                         'theme' => 'krajee',
@@ -246,6 +246,7 @@ if ($create_type == 7) {
                     'formId' => 'dynamic-form',
                     'formFields' => [
                         'product_id',
+                        'stock_qty',
                         'qty',
                         'remark',
                     ],
@@ -286,13 +287,20 @@ if ($create_type == 7) {
                                         //                                        ]) ?>
                                         <?= $form->field($modelLine, "[{$i}]product_id")->dropDownList(
                                             ArrayHelper::map(\backend\models\Product::find()->all(), 'id', 'name'),
-                                            ['prompt' => '-- เลือกสินค้า --', 'class' => 'form-control product-select']
+                                            [
+                                                    'prompt' => '-- เลือกสินค้า --',
+                                                    'class' => 'form-control product-select',
+                                                    'onchange' => 'getProductonhand($(this))']
                                         ) ?>
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01']) ?>
+                                        <label for="">ยอดคงเหลือ</label>
+                                        <input type="text" class="form-control line-product-onhand" name="stock_qty" readonly value="">
                                     </div>
-                                    <div class="col-sm-5">
+                                    <div class="col-sm-2">
+                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty','onchange' => 'linecal($(this))']) ?>
+                                    </div>
+                                    <div class="col-sm-3">
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
                                     </div>
                                     <div class="col-sm-1 text-right" style="padding-top: 25px;">
@@ -472,10 +480,12 @@ JS;
 // Register main JavaScript
 $this->registerJs($mainJs, \yii\web\View::POS_READY);
 
+$url_to_get_warehouseproduct = Url::to(['journaltrans/getwarehouseproduct'],true);
+$url_to_get_product_onhand = Url::to(['journaltrans/getproductonhand'],true);
 $select2FixJs = <<<JS
 // Wait for all assets to load
 $(window).on('load', function() {
-    alert();
+   // alert();
     // Function to properly initialize Select2
     function setupSelect2(selector) {
         $(selector).each(function() {
@@ -555,11 +565,17 @@ $(window).on('load', function() {
         }
     }
     
-    function getWarehouseproduct(id){
-        alert(id);
+    
+    
+    
+});
+
+function getWarehouseproduct(e){
+       var id = e.val();
+      // alert(id);
         if(id){
             $.ajax({
-                url: '/journaltrans/getwarehouseproduct',
+                url: '$url_to_get_warehouseproduct',
                 type: 'POST',
                 data: {id: id},
                 dataType: 'html',
@@ -570,10 +586,43 @@ $(window).on('load', function() {
                 }
             });
         }
+   }
+function getProductonhand(e){
+       var id = e.val();
+       var warehouse_id = $('#journaltrans-warehouse_id').val();
+       var row = e.closest(".row");
+        if(id){
+            // alert(warehouse_id);
+            $.ajax({
+                url: '$url_to_get_product_onhand',
+                type: 'POST',
+                data: {product_id: id, warehouse_id: warehouse_id},
+                dataType: 'html',
+                success: function(data) {
+                   // alert(data);
+                    if(data!=null){
+                       row.find(".line-product-onhand").val(data);
+                    }
+                },
+                error: function() {
+                    alert('error');
+                }
+            });
+        }
+}   
+
+function linecal(e){
+    //alert();
+    var row = e.closest(".row");
+    var line_quantity = e.val();
+    var line_product_onhand = row.find(".line-product-onhand").val();
+    // alert(line_quantity);
+    // alert(line_product_onhand);
+    if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){
+        alert('จํานวนไม่เพียงพอ');
+        e.val(line_product_onhand);
+    }
 }
-    
-    
-});
 JS;
 
 $this->registerJs($select2FixJs, \yii\web\View::POS_END);
