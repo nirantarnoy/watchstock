@@ -232,6 +232,7 @@ class JournalTrans extends \yii\db\ActiveRecord
         }
 
         $lastRecord = self::find()
+            ->select(['journal_no'])
             ->where(['trans_type_id' => $this->trans_type_id])
             ->andWhere(['like', 'journal_no', $prefix . date('Ym')])
             ->orderBy(['id' => SORT_DESC])
@@ -240,7 +241,7 @@ class JournalTrans extends \yii\db\ActiveRecord
 
         if ($lastRecord != null) {
             $prefix = $prefix . date('Ym');
-            $cnum = substr((string)$lastRecord, 9, strlen($lastRecord));
+            $cnum = substr((string)$lastRecord->journal_no, 9, strlen($lastRecord->journal_no));
             $len = strlen($cnum);
             $clen = strlen($cnum + 1);
             $loop = $len - $clen;

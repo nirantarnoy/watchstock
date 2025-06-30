@@ -197,7 +197,7 @@ class JournalTrans extends \yii\db\ActiveRecord
         return $prefix . date('Ym') . str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 
-    public static function generateJournalNoNew()
+    private function generateJournalNoNew()
     {
         $prefix = '';
         switch ($this->trans_type_id) {

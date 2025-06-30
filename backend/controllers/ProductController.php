@@ -247,8 +247,9 @@ class ProductController extends Controller
                                 if($model_sum){
                                     $model_sum->qty = $line_qty[$i];
                                     if($model_sum->save(false)){
-                                        $model->stock_qty = $line_qty[$i];
-                                        $model->save(false);
+//                                        $model->stock_qty = $line_qty[$i];
+//                                        $model->save(false);
+                                        $this->updateProductStock($model->id);
                                     }
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
@@ -256,8 +257,9 @@ class ProductController extends Controller
                                     $model_sum->warehouse_id = $line_warehouse[$i];
                                     $model_sum->qty = $line_qty[$i];
                                     if($model_sum->save(false)){
-                                        $model->stock_qty = $line_qty[$i];
-                                        $model->save(false);
+//                                        $model->stock_qty = $line_qty[$i];
+//                                        $model->save(false);
+                                        $this->updateProductStock($model->id);
                                     }
                                 }
                             }
@@ -285,6 +287,20 @@ class ProductController extends Controller
             'model_line' => $model_line,
             'model_customer_line'=>null,
         ]);
+    }
+
+    function updateProductStock($product_id){
+      if($product_id){
+          $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->all();
+          if($model_stock){
+              $all_stock = 0;
+              foreach($model_stock as $model){
+                  $all_stock += $model->qty;
+              }
+
+              \backend\models\Product::updateAll(['stock_qty'=>$all_stock],['id'=>$product_id]);
+          }
+      }
     }
 
     /**
