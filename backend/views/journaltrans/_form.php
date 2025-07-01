@@ -193,16 +193,16 @@ if ($create_type == 7) {
                     ]
                 ]) ?>
             </div>
-            <div class="col-md-3">
-                <?= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
-                    'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
-                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct($(this))'],
-                    'pluginOptions' => [
-                        'allowClear' => true,
-                        'theme' => 'krajee',
-                    ],
-                ]) ?>
-            </div>
+<!--            <div class="col-md-3">-->
+<!--                --><?php //= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
+//                    'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
+//                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct($(this))'],
+//                    'pluginOptions' => [
+//                        'allowClear' => true,
+//                        'theme' => 'krajee',
+//                    ],
+//                ]) ?>
+<!--            </div>-->
             <div class="col-md-3">
                 <?= $form->field($model, 'party_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Watchmaker::find()->all(), 'id', 'name'),
@@ -246,7 +246,9 @@ if ($create_type == 7) {
                     'formId' => 'dynamic-form',
                     'formFields' => [
                         'product_id',
+                        'warehouse_id',
                         'stock_qty',
+                        'sale_price',
                         'qty',
                         'remark',
                     ],
@@ -290,23 +292,35 @@ if ($create_type == 7) {
                                             [
                                                     'prompt' => '-- เลือกสินค้า --',
                                                     'class' => 'form-control product-select',
-                                                    'onchange' => 'getProductonhand($(this))']
+                                                    'onchange' => 'getWarehouseproduct($(this))']
                                         ) ?>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <?= $form->field($modelLine, "[{$i}]warehouse_id")->dropDownList(
+                                            ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
+                                            [
+                                                    'prompt' => '-- เลือกคลัง --',
+                                                    'class' => 'form-control warehouse-id',
+                                                    'onchange' => 'getProductonhand($(this))']
+                                        )?>
                                     </div>
                                     <div class="col-sm-2">
                                         <label for="">ยอดคงเหลือ</label>
                                         <input type="text" class="form-control line-product-onhand" name="stock_qty" readonly value="">
                                     </div>
                                     <div class="col-sm-2">
+                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true,'readonly'=>'readonly','class' => 'form-control line-sale-price']) ?>
+                                    </div>
+                                    <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty','onchange' => 'linecal($(this))']) ?>
                                     </div>
-                                    <div class="col-sm-3">
+                                    <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
                                     </div>
-                                    <div class="col-sm-1 text-right" style="padding-top: 25px;">
-                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i
-                                                    class="fa fa-trash"></i></button>
-                                    </div>
+<!--                                    <div class="col-sm-1 text-right" style="padding-top: 25px;">-->
+<!--                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i-->
+<!--                                                    class="fa fa-trash"></i></button>-->
+<!--                                    </div>-->
                                 </div>
                             </div>
                         </div>
@@ -572,6 +586,7 @@ $(window).on('load', function() {
 
 function getWarehouseproduct(e){
        var id = e.val();
+       var row = e.closest(".row");
       // alert(id);
         if(id){
             $.ajax({
@@ -581,27 +596,29 @@ function getWarehouseproduct(e){
                 dataType: 'html',
                 success: function(data) {
                     if(data!='' || data!=null){
-                        $('.product-select').html(data);
+                        row.find('.warehouse-id').html(data);
                     }
                 }
             });
         }
    }
 function getProductonhand(e){
-       var id = e.val();
-       var warehouse_id = $('#journaltrans-warehouse_id').val();
+       var warehouse_id = e.val();
+     //  var warehouse_id = $('#journaltrans-warehouse_id').val();
        var row = e.closest(".row");
-        if(id){
-            // alert(warehouse_id);
+       var product_id = row.find(".product-select").val();
+        if(warehouse_id && product_id){
+             //alert(warehouse_id);
             $.ajax({
                 url: '$url_to_get_product_onhand',
                 type: 'POST',
-                data: {product_id: id, warehouse_id: warehouse_id},
-                dataType: 'html',
+                data: {product_id: product_id, warehouse_id: warehouse_id},
+                dataType: 'json',
                 success: function(data) {
-                   // alert(data);
+                  //  alert(data[0]['stock_qty']);
                     if(data!=null){
-                       row.find(".line-product-onhand").val(data);
+                       row.find(".line-product-onhand").val(data[0]['stock_qty']);
+                       row.find(".line-sale-price").val(data[0]['sale_price']);
                     }
                 },
                 error: function() {

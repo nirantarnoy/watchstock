@@ -125,7 +125,7 @@ class JournaltransController extends Controller
                         foreach ($modelLines as $modelLine) {
                             $total_qty += $modelLine->qty;
                             $model_stock_trans = new \common\models\StockTrans();
-                            $model_stock_trans->trans_date = $model->trans_date;
+                            $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                             $model_stock_trans->journal_trans_id = $model->id;
                             $model_stock_trans->trans_type_id = $model->trans_type_id;
                             $model_stock_trans->product_id = $modelLine->product_id;
@@ -429,29 +429,44 @@ class JournaltransController extends Controller
         }
     }
 
+//    function actionGetwarehouseproduct(){
+//        $html = '';
+//        $id = \Yii::$app->request->post('id');
+//        if($id){
+//            $model_stock_sum = \common\models\StockSum::find()->where(['warehouse_id'=>$id])->all();
+//            if($model_stock_sum){
+//                foreach($model_stock_sum as $model){
+//                    $html .= '<option value="'.$model->product_id.'">'.\backend\models\Product::findName($model->product_id).'</option>';
+//                }
+//            }
+//        }
+//        echo $html;
+//    }
     function actionGetwarehouseproduct(){
         $html = '';
         $id = \Yii::$app->request->post('id');
         if($id){
-            $model_stock_sum = \common\models\StockSum::find()->where(['warehouse_id'=>$id])->all();
+            $model_stock_sum = \common\models\StockSum::find()->where(['product_id'=>$id])->all();
             if($model_stock_sum){
+                $html .= '<option value="-1">--เลือกคลัง--</option>';
                 foreach($model_stock_sum as $model){
-                    $html .= '<option value="'.$model->product_id.'">'.\backend\models\Product::findName($model->product_id).'</option>';
+                    $html .= '<option value="'.$model->warehouse_id.'">'.\backend\models\Warehouse::findName($model->warehouse_id).'</option>';
                 }
             }
         }
         echo $html;
     }
     function actionGetproductonhand(){
-        $onhand = 0;
+        $onhand = [];
         $product_id = \Yii::$app->request->post('product_id');
         $warehouse_id = \Yii::$app->request->post('warehouse_id');
         if($product_id && $warehouse_id){
             $model_stock_sum = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
             if($model_stock_sum){
-                $onhand = $model_stock_sum->qty;
+                $product_sale_price = \backend\models\Product::findSalePrice($product_id);
+                array_push($onhand,['stock_qty'=>$model_stock_sum->qty,'sale_price'=>$product_sale_price]);
             }
         }
-        echo $onhand;
+        return json_encode($onhand);
     }
 }

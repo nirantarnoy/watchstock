@@ -118,6 +118,11 @@ class Product extends \common\models\Product
         return $model != null ?$model->unit_id:0;
     }
 
+    public static function findSalePrice($id){
+        $model = Product::find()->where(['id'=>$id])->one();
+        return $model != null ?$model->sale_price:0;
+    }
+
     public static function getTotalQty($id){
         $model = \backend\models\Stocksum::find()->where(['product_id'=>$id])->sum('qty');
         return $model;

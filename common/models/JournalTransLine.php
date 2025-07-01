@@ -39,7 +39,7 @@ class JournalTransLine extends \yii\db\ActiveRecord
         return [
             [['journal_trans_id', 'product_id', 'warehouse_id'], 'required'],
             [['journal_trans_id', 'product_id', 'warehouse_id', 'status'], 'integer'],
-            [['qty'], 'number'],
+            [['qty','sale_price'], 'number'],
             [['qty'], 'compare', 'compareValue' => 0, 'operator' => '>', 'message' => 'จำนวนต้องมากกว่า 0'],
             [['remark'], 'string', 'max' => 255],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
@@ -60,6 +60,7 @@ class JournalTransLine extends \yii\db\ActiveRecord
             'qty' => 'จำนวน',
             'remark' => 'หมายเหตุ',
             'status' => 'สถานะ',
+            'sale_price' => 'ราคาขาย',
         ];
     }
 
