@@ -134,7 +134,7 @@ class JournaltransController extends Controller
                             $model_stock_trans->remark = $modelLine->remark;
                             $model_stock_trans->created_by = $model->created_by;
                             if($model_stock_trans->save(false)){
-                                $this->calStock($modelLine->product_id,$model->stock_type_id,$model->warehouse_id,$modelLine->qty);
+                                $this->calStock($modelLine->product_id,$model->stock_type_id,$modelLine->warehouse_id,$modelLine->qty);
                             }
                         }
                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
@@ -175,7 +175,7 @@ class JournaltransController extends Controller
 
             $oldIDs = ArrayHelper::map($modelLines, 'id', 'id');
             $modelLines = $this->createMultiple(JournalTransLine::class, $modelLines);
-            JournalTransLine::loadMultiple($modelLines, Yii::$app->request->post());
+            JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
             $deletedIDs = array_diff($oldIDs, array_filter(ArrayHelper::map($modelLines, 'id', 'id')));
 
             // Ajax validation
