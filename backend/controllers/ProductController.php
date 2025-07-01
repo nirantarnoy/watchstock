@@ -166,6 +166,7 @@ class ProductController extends Controller
                                 }
                             }
                         }
+                        $this->updateProductStock($model->id);
                     }
                 }
 
