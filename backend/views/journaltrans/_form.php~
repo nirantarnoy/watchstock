@@ -312,7 +312,7 @@ if ($create_type == 7) {
                                         <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true,'readonly'=>'readonly','class' => 'form-control line-sale-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty','onchange' => 'checkOverQty($(this))']) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
@@ -635,6 +635,16 @@ function linecal(e){
     var line_product_onhand = row.find(".line-product-onhand").val();
     // alert(line_quantity);
     // alert(line_product_onhand);
+    if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){
+        alert('จํานวนไม่เพียงพอ');
+        e.val(line_product_onhand);
+    }
+}
+
+function checkOverQty(e){
+    var row = e.closest(".row");
+    var line_quantity = e.val();
+    var line_product_onhand = row.find(".line-product-onhand").val();
     if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){
         alert('จํานวนไม่เพียงพอ');
         e.val(line_product_onhand);

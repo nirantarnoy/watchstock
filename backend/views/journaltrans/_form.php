@@ -404,7 +404,7 @@ function initializeDynamicForm() {
             .addClass('btn btn-sm btn-success main-add-button')
             .html('<i class="fa fa-plus"></i> เพิ่มรายการ');
 
-       // $('.form-buttons-container').append(addButton);
+        $('.form-buttons-container').append(addButton);
 
         // Add click handler
         $(document).on('click', '.main-add-button', function(e) {
