@@ -291,12 +291,7 @@ class JournaltransController extends Controller
                if($model){
                    $model->qty -= $qty;
                    if($model->save(false)){
-                       $model_product = \backend\models\Product::findOne($product_id);
-                       if($model_product){
-//                           $model_product->stock_qty -= $qty; // update stock product
-//                           $model_product->save(false);
-                           $this->updateProductStock($product_id);
-                       }
+                       $this->updateProductStock($product_id);
                    }
                }
            }
@@ -333,10 +328,12 @@ class JournaltransController extends Controller
 
     function updateProductStock($product_id){
         if($product_id){
-            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['!=','warehouse_id',new Expression('null')])->all();
+        //    $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['is not','warehouse_id',new Expression('null')])->all();
+            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->all();
             if($model_stock){
                 $all_stock = 0;
                 foreach($model_stock as $model){
+                    if($model->warehouse_id == null || $model->warehouse_id == '')continue;
                     $all_stock += $model->qty;
                 }
 
