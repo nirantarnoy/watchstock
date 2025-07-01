@@ -149,7 +149,7 @@ class ProductController extends Controller
                             $model_trans = new \backend\models\Stocktrans();
                             $model_trans->product_id = $model->id;
                             $model_trans->trans_date = date('Y-m-d H:i:s');
-                            $model_trans->activity_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
+                            $model_trans->_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
                             $model_trans->qty = $line_qty[$i];
                             $model_trans->status = 1;
                             if($model_trans->save(false)){
@@ -274,6 +274,8 @@ class ProductController extends Controller
                     for($i=0;$i<count($xdel);$i++){
                         \backend\models\Stocksum::deleteAll(['id'=>$xdel[$i]]);
                     }
+
+                    $this->updateProductStock($model->id);
                 }
 
             }
