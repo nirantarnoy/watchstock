@@ -467,6 +467,6 @@ class JournaltransController extends Controller
                 array_push($onhand,['stock_qty'=>$model_stock_sum->qty,'sale_price'=>$product_sale_price]);
             }
         }
-        echo $onhand;
+        return json_encode($onhand);
     }
 }

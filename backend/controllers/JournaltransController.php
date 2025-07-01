@@ -113,7 +113,6 @@ class JournaltransController extends Controller
                     if ($flag = $model->save(false)) {
                         foreach ($modelLines as $modelLine) {
                             $modelLine->journal_trans_id = $model->id;
-                            $modelLine->warehouse_id = $model->warehouse_id;
                             if (!($flag = $modelLine->save(false))) {
                                 break;
                             }
@@ -130,7 +129,7 @@ class JournaltransController extends Controller
                             $model_stock_trans->trans_type_id = $model->trans_type_id;
                             $model_stock_trans->product_id = $modelLine->product_id;
                             $model_stock_trans->qty = $modelLine->qty;
-                            $model_stock_trans->warehouse_id = $model->warehouse_id;
+                            $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
                             $model_stock_trans->stock_type_id = $model->stock_type_id;
                             $model_stock_trans->remark = $modelLine->remark;
                             $model_stock_trans->created_by = $model->created_by;
