@@ -317,10 +317,10 @@ if ($create_type == 7) {
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
                                     </div>
-<!--                                    <div class="col-sm-1 text-right" style="padding-top: 25px;">-->
-<!--                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i-->
-<!--                                                    class="fa fa-trash"></i></button>-->
-<!--                                    </div>-->
+                                    <div class="col-sm-1 text-right" style="padding-top: 25px;">
+                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i
+                                                    class="fa fa-trash"></i></button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -615,7 +615,7 @@ function getProductonhand(e){
                 data: {product_id: product_id, warehouse_id: warehouse_id},
                 dataType: 'json',
                 success: function(data) {
-                    alert(data[0]['stock_qty']);
+                  //  alert(data[0]['stock_qty']);
                     if(data!=null){
                        row.find(".line-product-onhand").val(data[0]['stock_qty']);
                        row.find(".line-sale-price").val(data[0]['sale_price']);

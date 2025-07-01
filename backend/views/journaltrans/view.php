@@ -40,7 +40,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                         'journal_no',
                         [
                             'attribute' => 'trans_date',
-                            'format' => ['datetime', 'php:d/m/Y H:i:s'],
+                            'format' => ['datetime', 'php:d/m/Y'],
                         ],
                         [
                             'attribute' => 'trans_type_id',
@@ -145,10 +145,10 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <p><strong>สร้างโดย:</strong> <?= \backend\models\User::findName($model->created_by) ?>
-                            เมื่อ <?= Yii::$app->formatter->asDatetime($model->created_at) ?></p>
+                            เมื่อ <?=date('d-m-Y H:i:s',$model->created_at) ?></p>
                         <?php if ($model->updated_at): ?>
                             <p><strong>แก้ไขโดย:</strong> <?= $model->updated_by ?>
-                                เมื่อ <?= Yii::$app->formatter->asDatetime($model->updated_at) ?></p>
+                                เมื่อ <?= date('d-m-Y H:i:s',$model->updated_at) ?></p>
                         <?php endif; ?>
                     </div>
                 </div>

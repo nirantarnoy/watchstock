@@ -312,15 +312,15 @@ if ($create_type == 7) {
                                         <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true,'readonly'=>'readonly','class' => 'form-control line-sale-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty','onchange' => 'linecal($(this))']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty']) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
                                     </div>
-<!--                                    <div class="col-sm-1 text-right" style="padding-top: 25px;">-->
-<!--                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i-->
-<!--                                                    class="fa fa-trash"></i></button>-->
-<!--                                    </div>-->
+                                    <div class="col-sm-1 text-right" style="padding-top: 25px;">
+                                        <button type="button" class="remove-item btn btn-danger btn-sm"><i
+                                                    class="fa fa-trash"></i></button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

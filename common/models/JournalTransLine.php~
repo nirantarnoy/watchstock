@@ -40,10 +40,10 @@ class JournalTransLine extends \yii\db\ActiveRecord
             [['journal_trans_id', 'product_id'], 'required'],
             [['journal_trans_id', 'product_id', 'warehouse_id', 'status'], 'integer'],
             [['qty','sale_price'], 'number'],
-            [['qty'], 'compare', 'compareValue' => 0, 'operator' => '>', 'message' => 'จำนวนต้องมากกว่า 0'],
+           // [['qty'], 'compare', 'compareValue' => 0, 'operator' => '>', 'message' => 'จำนวนต้องมากกว่า 0'],
             [['remark'], 'string', 'max' => 255],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
-            [['journal_trans_id'], 'exist', 'skipOnError' => true, 'targetClass' => JournalTrans::class, 'targetAttribute' => ['journal_trans_id' => 'id']],
+           // [['journal_trans_id'], 'exist', 'skipOnError' => true, 'targetClass' => JournalTrans::class, 'targetAttribute' => ['journal_trans_id' => 'id']],
         ];
     }
 

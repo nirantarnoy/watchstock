@@ -7,6 +7,7 @@ use Yii;
 use backend\models\JournalTrans;
 use backend\models\journalTransSearch;
 use common\models\JournalTransLine;
+use yii\db\Expression;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -86,6 +87,7 @@ class JournaltransController extends Controller
             $modelLines = $this->createMultiple(JournalTransLine::class);
             JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
 
+
             // Ajax validation
             if (\Yii::$app->request->isAjax) {
                 \Yii::$app->response->format = Response::FORMAT_JSON;
@@ -94,6 +96,8 @@ class JournaltransController extends Controller
                     ActiveForm::validate($model)
                 );
             }
+
+
 
             //custom model data
             $model->stock_type_id = 2; // 1 เข้า 2 ออก
@@ -108,18 +112,20 @@ class JournaltransController extends Controller
            // $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
 
             if ($valid) {
-                $transaction = \Yii::$app->db->beginTransaction();
-                try {
+                //$transaction = \Yii::$app->db->beginTransaction();
+               // try {
                     if ($flag = $model->save(false)) {
+                       // echo "ok";return;
                         foreach ($modelLines as $modelLine) {
                             $modelLine->journal_trans_id = $model->id;
-                            if (!($flag = $modelLine->save(false))) {
+                            if (!($flag = $modelLine->save())) {
                                 break;
                             }
                         }
                     }
 
                     if($flag) {
+
                         $total_qty = 0;
                         foreach ($modelLines as $modelLine) {
                             $total_qty += $modelLine->qty;
@@ -138,17 +144,23 @@ class JournaltransController extends Controller
                             }
                         }
                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
-                    }
 
-                    if ($flag) {
-                        $transaction->commit();
-                        Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
+                       // $transaction->commit();
+
+                        \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
                         return $this->redirect(['view', 'id' => $model->id]);
                     }
-                } catch (Exception $e) {
-                    $transaction->rollBack();
-                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
-                }
+
+//                    if ($flag) {
+//                        print_r($model);return;
+//
+//                    }
+//                } catch (Exception $e) {
+//                   // $transaction->rollBack();
+//                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+//                }
+            }else{
+
             }
         }
 
@@ -321,7 +333,7 @@ class JournaltransController extends Controller
 
     function updateProductStock($product_id){
         if($product_id){
-            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['not','warehouse_id',yii\db\Expression ('NULL')])->all();
+            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['not','warehouse_id',new Expression('null')])->all();
             if($model_stock){
                 $all_stock = 0;
                 foreach($model_stock as $model){

@@ -87,7 +87,7 @@ class JournalTrans extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['trans_type_id', 'trans_date'], 'required'],
+            [['trans_type_id'], 'required'],
            // [['trans_date'], 'safe'],
             [['trans_type_id', 'stock_type_id', 'customer_id', 'status', 'created_at', 'created_by', 'updated_at', 'updated_by', 'party_id', 'party_type_id', 'warehouse_id'], 'integer'],
             [['qty'], 'number'],

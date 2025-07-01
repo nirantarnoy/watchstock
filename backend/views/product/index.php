@@ -69,7 +69,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //     'striped' => false,
             //    'hover' => true,
             'id' => 'product-grid',
-             'pjax' => true,
+            'pjax' => true,
 
             // 'pjaxSettings' => ['neverTimeout' => true],
             //'tableOptions' => ['class' => 'table table-hover'],
@@ -236,63 +236,62 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 <?php
 $this->registerJs(<<<JS
-        $(document).on('pjax:start', function() {
-            $('#loading').fadeIn();
+
+function toggleDeleteButton() {
+    let selected = $('#product-grid').yiiGridView('getSelectedRows');
+    if (selected.length > 0) {
+        $('#div-delete-btn').show();
+        $("#bulk-delete-btn").text("ลบ " + selected.length + " รายการ");
+    } else {
+        $('#div-delete-btn').hide();
+        $("#bulk-delete-btn").text("ลบ");
+    }
+}
+
+// ฟังก์ชัน bind checkbox ภายใน grid
+function bindCheckboxEvent() {
+    $('#product-grid').off('change', 'input[name="selection[]"]').on('change', 'input[name="selection[]"]', function () {
+        toggleDeleteButton();
+    });
+
+    // กรณีคลิก checkbox ทั้งหมด
+    $('#product-grid').off('change', 'input[name="selection_all"]').on('change', 'input[name="selection_all"]', function () {
+        setTimeout(toggleDeleteButton, 100); // ต้องหน่วงเวลาเล็กน้อยให้ checkbox อัปเดตก่อน
+    });
+}
+
+// โหลดครั้งแรก
+$(document).ready(function () {
+    bindCheckboxEvent();
+    toggleDeleteButton(); // เช็ค checkbox เดิมด้วย
+});
+
+// ตอน PJAX เริ่มโหลด
+$(document).on('pjax:start', function() {
+    $('#loading').fadeIn();
+});
+
+// ตอน PJAX โหลดเสร็จ
+$(document).on('pjax:end', function() {
+    $('#loading').fadeOut();
+    bindCheckboxEvent(); // bind ใหม่หลัง PJAX
+    toggleDeleteButton(); // อัปเดตสถานะปุ่มลบ
+});
+
+// ปุ่มลบหลายรายการ
+$('#bulk-delete-btn').on('click', function() {
+    var keys = $('#product-grid').yiiGridView('getSelectedRows');
+    if (keys.length === 0) {
+        alert('กรุณาเลือกรายการที่ต้องการลบ');
+        return;
+    }
+    if (confirm('คุณแน่ใจว่าต้องการลบรายการที่เลือก?')) {
+        $.post($(this).data('url'), {ids: keys}, function(response) {
+            $.pjax.reload({container: '#p0'}); // แก้ให้ตรง container ID ของคุณ
         });
-        $(document).on('pjax:end', function() {
-            toggleDeleteButton();
-           $('#loading').fadeOut();
-        });
-        
-       function toggleDeleteButton() {
-           
-            let selected = $('#product-grid').yiiGridView('getSelectedRows');
-            console.log(selected.length);
-            if (selected.length > 0) {
-                $('#div-delete-btn').show();
-                $("#bulk-delete-btn").text("ลบ " + selected.length + " รายการ");
-            } else {
-                $('#div-delete-btn').hide();
-                $("#bulk-delete-btn").text("ลบ");
-            }
-        }
-        
-        // ดักทุกการเปลี่ยนแปลง checkbox
-        $('#product-grid').on('change', 'input[type="checkbox"][name="selection[]"]', function() {
-            toggleDeleteButton();
-        });
-        
-        // ถ้ามีการโหลดซ้ำด้วย PJAX
-        // $(document).on('pjax:end', function() {
-        //     toggleDeleteButton();
-        // });
-        
-        // // ดัก checkbox แต่ละแถว
-        // $('#product-grid').on('change', 'input[type="checkbox"][name="selection[]"]', function() {
-        //     let rowId = $(this).val(); // ได้ ID ของแถวนั้น
-        //     let isChecked = $(this).is(':checked');
-        //     console.log('Row ID:', rowId, 'Checked:', isChecked);
-        // });
-        //
-        // // ดัก checkbox เลือกทั้งหมด
-        // $('#product-grid').on('change', 'input[type="checkbox"][name="selection_all"]', function() {
-        //     let isChecked = $(this).is(':checked');
-        //     console.log('All checkbox clicked. Checked:', isChecked);
-        // });
-        //
-        $('#bulk-delete-btn').on('click', function() {
-            var keys = $('#product-grid').yiiGridView('getSelectedRows');
-            if (keys.length === 0) {
-                alert('กรุณาเลือกรายการที่ต้องการลบ');
-                return;
-            }
-            if (confirm('คุณแน่ใจว่าต้องการลบรายการที่เลือก?')) {
-                $.post($(this).data('url'), {ids: keys}, function(response) {
-                    $.pjax.reload({container: '#p0'}); // เปลี่ยนเป็น container id ของ PJAX ถ้าต่าง
-                });
-            }
-        });
-        
-JS
-);
+    }
+});
+
+JS);
+
 ?>
