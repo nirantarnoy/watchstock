@@ -118,7 +118,7 @@ class JournaltransController extends Controller
                        // echo "ok";return;
                         foreach ($modelLines as $modelLine) {
                             $modelLine->journal_trans_id = $model->id;
-                            if (!($flag = $modelLine->save())) {
+                            if (!($flag = $modelLine->save(false))) {
                                 break;
                             }
                         }

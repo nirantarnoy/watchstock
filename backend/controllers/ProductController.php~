@@ -250,7 +250,7 @@ class ProductController extends Controller
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
-                                      //  $this->updateProductStock($model->id);
+                                        $this->updateProductStock($model->id);
                                     }
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
@@ -260,10 +260,9 @@ class ProductController extends Controller
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
-                                       // $this->updateProductStock($model->id);
+                                        $this->updateProductStock($model->id);
                                     }
                                 }
-                                $this->updateProductStock($model->id);
                             }
                         }
                     }
