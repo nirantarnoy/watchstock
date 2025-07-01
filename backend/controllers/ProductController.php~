@@ -247,8 +247,9 @@ class ProductController extends Controller
                                 if($model_sum){
                                     $model_sum->qty = $line_qty[$i];
                                     if($model_sum->save(false)){
-                                        $model->stock_qty = $line_qty[$i];
-                                        $model->save(false);
+//                                        $model->stock_qty = $line_qty[$i];
+//                                        $model->save(false);
+                                        $this->updateProductStock($model->id);
                                     }
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
@@ -256,8 +257,9 @@ class ProductController extends Controller
                                     $model_sum->warehouse_id = $line_warehouse[$i];
                                     $model_sum->qty = $line_qty[$i];
                                     if($model_sum->save(false)){
-                                        $model->stock_qty = $line_qty[$i];
-                                        $model->save(false);
+//                                        $model->stock_qty = $line_qty[$i];
+//                                        $model->save(false);
+                                        $this->updateProductStock($model->id);
                                     }
                                 }
                             }

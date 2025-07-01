@@ -232,7 +232,7 @@ class ProductController extends Controller
 
                     if($model_journal_trans->save(false)){
                         for($i=0;$i<=count($line_warehouse)-1;$i++){
-                            if($line_warehouse[$i] == null || $line_qty[$i] == null){
+                            if($line_warehouse[$i] == null || $line_qty[$i] == null || $line_warehouse[$i] <= 0){
                                 continue;
                             }
 

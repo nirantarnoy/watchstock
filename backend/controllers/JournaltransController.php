@@ -7,6 +7,7 @@ use Yii;
 use backend\models\JournalTrans;
 use backend\models\journalTransSearch;
 use common\models\JournalTransLine;
+use yii\db\Expression;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -321,7 +322,7 @@ class JournaltransController extends Controller
 
     function updateProductStock($product_id){
         if($product_id){
-            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->all();
+            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['not','warehouse_id',new Expression('null')])->all();
             if($model_stock){
                 $all_stock = 0;
                 foreach($model_stock as $model){
