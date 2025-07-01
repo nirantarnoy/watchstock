@@ -269,12 +269,14 @@ class ProductController extends Controller
                 }
 
 
-//                if($removelist!=null){
-//                    $xdel = explode(',', $removelist);
-//                    for($i=0;$i<count($xdel);$i++){
-//                        \backend\models\Stocksum::deleteAll(['id'=>$xdel[$i]]);
-//                    }
-//                }
+                if($removelist!=null){
+                    $xdel = explode(',', $removelist);
+                    for($i=0;$i<count($xdel);$i++){
+                        \backend\models\Stocksum::deleteAll(['id'=>$xdel[$i]]);
+                    }
+
+                    $this->updateProductStock($model->id);
+                }
 
             }
 
