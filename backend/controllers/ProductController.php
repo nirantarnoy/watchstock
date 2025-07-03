@@ -156,12 +156,14 @@ class ProductController extends Controller
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
                                 if($model_sum){
                                     $model_sum->qty = $line_qty[$i];
+                                    $model_sum->reserv_qty = 0;
                                     $model_sum->save(false);
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
                                     $model_sum->product_id = $model->id;
                                     $model_sum->warehouse_id = $line_warehouse[$i];
                                     $model_sum->qty = $line_qty[$i];
+                                    $model_sum->reserv_qty = 0;
                                     $model_sum->save(false);
                                 }
                             }
@@ -299,7 +301,8 @@ class ProductController extends Controller
           if($model_stock){
               $all_stock = 0;
               foreach($model_stock as $model){
-                  $all_stock += $model->qty;
+                  $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
+                  $all_stock += ($model->qty + $res_qty);
               }
 
               \backend\models\Product::updateAll(['stock_qty'=>$all_stock],['id'=>$product_id]);

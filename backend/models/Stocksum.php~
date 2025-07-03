@@ -78,16 +78,6 @@ class Stocksum extends \common\models\StockSum
         return $model != null ?date('d/m/Y',strtotime($model->expired_date)):'';
     }
 
-    static function getResQty($product_id)
-    {
-        $qty = 0;
-        $model = Stocksum::find()->where(['product_id'=>$product_id])->sum('reserv_qty');
-        if($model){
-            $qty = $model;
-        }
-        return $qty;
-    }
-
 //    public static function findName($id){
 //        $model = \common\models\RoutePlan::find()->where(['id'=>$id])->one();
 //        return $model!= null?$model->name:'';

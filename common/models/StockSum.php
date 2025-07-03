@@ -30,7 +30,7 @@ class StockSum extends \yii\db\ActiveRecord
     {
         return [
             [['product_id', 'warehouse_id', 'updated_at'], 'integer'],
-            [['qty'], 'number'],
+            [['qty','reserv_qty'], 'number'],
         ];
     }
 
@@ -44,6 +44,7 @@ class StockSum extends \yii\db\ActiveRecord
             'product_id' => 'สินค้า',
             'warehouse_id' => 'คลังจัดเก็บ',
             'qty' => 'จำนวน',
+            'reserv_qty' => 'จำนวนจอง/ยืม',
             'updated_at' => 'อัพเดทเมื่อ',
         ];
     }

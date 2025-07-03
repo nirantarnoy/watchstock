@@ -140,7 +140,7 @@ class JournaltransController extends Controller
                             $model_stock_trans->remark = $modelLine->remark;
                             $model_stock_trans->created_by = $model->created_by;
                             if($model_stock_trans->save(false)){
-                                $this->calStock($modelLine->product_id,$model->stock_type_id,$modelLine->warehouse_id,$modelLine->qty);
+                                $this->calStock($modelLine->product_id,$model->stock_type_id,$modelLine->warehouse_id,$modelLine->qty,$model->trans_type_id);
                             }
                         }
                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
@@ -284,12 +284,15 @@ class JournaltransController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
 
-    public function calStock($product_id,$stock_type_id,$warehouse_id,$qty){
+    public function calStock($product_id,$stock_type_id,$warehouse_id,$qty,$activity_type){
         if($product_id && $stock_type_id && $qty){
            if($stock_type_id == 2){ // stock out
                $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->andWhere(['>=','qty',$qty])->one();
                if($model){
                    $model->qty -= $qty;
+                   if($activity_type == 5) { // ยืม
+                       $model->reserv_qty += $qty;
+                   }
                    if($model->save(false)){
                        $this->updateProductStock($product_id);
                    }
@@ -299,27 +302,21 @@ class JournaltransController extends Controller
                $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
                if($model){
                    $model->qty += $qty;
+                   if($activity_type == 6) { // คืน
+                       $model->reserv_qty -= $qty;
+                   }
                    if($model->save(false)){
-                       $model_product = \backend\models\Product::findOne($product_id);
-                       if($model_product){
-//                           $model_product->stock_qty += $qty; // update stock product
-//                           $model_product->save(false);
-                           $this->updateProductStock($product_id);
-                       }
+                       $this->updateProductStock($product_id);
                    }
                }else{
                    $model = new \common\models\StockSum();
                    $model->product_id = $product_id;
                    $model->warehouse_id = $warehouse_id;
                    $model->qty = $qty;
+                   $model->reserv_qty = 0;
                    $model->updated_at = date('Y-m-d H:i:s');
                    if($model->save(false)){
-                       $model_product = \backend\models\Product::findOne($product_id);
-                       if($model_product){
-//                           $model_product->stock_qty += $qty; // update stock product
-//                           $model_product->save(false);
-                           $this->updateProductStock($product_id);
-                       }
+                       $this->updateProductStock($product_id);
                    }
                }
            }
@@ -334,7 +331,8 @@ class JournaltransController extends Controller
                 $all_stock = 0;
                 foreach($model_stock as $model){
                     if($model->warehouse_id == null || $model->warehouse_id == '')continue;
-                    $all_stock += $model->qty;
+                    $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
+                    $all_stock += ($model->qty + $res_qty); // รวมจํานวน + จํานวนจอง
                 }
 
                 \backend\models\Product::updateAll(['stock_qty'=>$all_stock],['id'=>$product_id]);
@@ -411,7 +409,7 @@ class JournaltransController extends Controller
                              $model_stock_trans->stock_type_id =1;
                              $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
                              if($model_stock_trans->save(false)){
-                                 $this->calStock($product_id[$i],1,$return_to_warehouse[$i],$qty[$i]); // stock in
+                                 $this->calStock($product_id[$i],1,$return_to_warehouse[$i],$qty[$i],$trans_type_id); // stock in
                              }
                              if($return_to_type!= null){ // update product type
                              \backend\models\Product::updateAll(['product_type_id'=>$return_to_type[$i]],['id'=>$product_id[$i]]);
@@ -472,7 +470,7 @@ class JournaltransController extends Controller
             $model_stock_sum = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
             if($model_stock_sum){
                 $product_sale_price = \backend\models\Product::findSalePrice($product_id);
-                array_push($onhand,['stock_qty'=>$model_stock_sum->qty,'sale_price'=>$product_sale_price]);
+                array_push($onhand,['stock_qty'=>$model_stock_sum->qty,'sale_price'=>$product_sale_price]); // stock ตัดได้แค่ยอดที่มีคงเหลือ ไม่รวมยอดจอง
             }
         }
         return json_encode($onhand);

@@ -74,6 +74,10 @@ class JournalTransLine extends \yii\db\ActiveRecord
         return $this->hasOne(JournalTrans::class, ['id' => 'journal_trans_id']);
     }
 
+    public function getProduct(){
+        return $this->hasOne(Product::class, ['id' => 'product_id']);
+    }
+
     /**
      * Get status list
      */

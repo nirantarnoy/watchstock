@@ -152,6 +152,7 @@ if (!$model->isNewRecord) {
                     <tr>
                         <td>คลังจัดเก็บ</td>
                         <td>จำนวน</td>
+                        <td>จำนวนยืม/จอง</td>
                     </tr>
                     </thead>
                     <tbody>
@@ -160,6 +161,7 @@ if (!$model->isNewRecord) {
                             <tr>
                                 <td><?= $model_warehouse_product[$i]['warehouse_name'] ?></td>
                                 <td><?= number_format($model_warehouse_product[$i]['qty'], 0) ?></td>
+                                <td><?= number_format($model_warehouse_product[$i]['reserv_qty'], 0) ?></td>
                             </tr>
                         <?php endfor; ?>
                     <?php endif; ?>
@@ -226,7 +228,7 @@ if (!$model->isNewRecord) {
                                 </select>
                             </td>
                             <td>
-                                <input type="text" class="form-control line-qty" name="line_qty[]" value="">
+                                <input type="number" class="form-control line-qty" name="line_qty[]" value="">
                             </td>
                             <td>
                                 <div class="btn btn-danger" onclick="removeline($(this))"><i class="fa fa-trash"></i></div>

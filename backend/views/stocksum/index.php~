@@ -43,7 +43,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             ],
             'qty',
-            'reserv_qty',
 
         ],
     ]); ?>

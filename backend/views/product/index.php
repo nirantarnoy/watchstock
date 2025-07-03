@@ -155,6 +155,16 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 ],
                 [
+                    'attribute' => 'reserv_qty',
+                    'label' => 'จอง/ยืม',
+                    'headerOptions' => ['style' => 'text-align: center'],
+                    'contentOptions' => ['style' => 'text-align: center'],
+                    'value' => function ($data) {
+                        $res_qty = \backend\models\Stocksum::getResQty($data->id);
+                        return number_format($res_qty, 0);
+                    }
+                ],
+                [
                     'attribute' => 'status',
                     'format' => 'raw',
                     'headerOptions' => ['style' => 'text-align: center'],

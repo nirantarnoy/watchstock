@@ -14,7 +14,7 @@ $yesno = [['id' => 1, 'YES'], ['id' => 0, 'NO']];
 $model_warehouse_product = null;
 
 if (!$model->isNewRecord) {
-    $sql = "SELECT w.name as warehouse_name,st.qty 
+    $sql = "SELECT w.name as warehouse_name,st.qty,st.reserv_qty 
             FROM product as p 
                 left join stock_sum as st on p.id = st.product_id 
                 inner join warehouse as w on st.warehouse_id = w.id 
@@ -152,6 +152,7 @@ if (!$model->isNewRecord) {
                     <tr>
                         <td>คลังจัดเก็บ</td>
                         <td>จำนวน</td>
+                        <td>จำนวนยืม/จอง</td>
                     </tr>
                     </thead>
                     <tbody>
@@ -160,6 +161,7 @@ if (!$model->isNewRecord) {
                             <tr>
                                 <td><?= $model_warehouse_product[$i]['warehouse_name'] ?></td>
                                 <td><?= number_format($model_warehouse_product[$i]['qty'], 0) ?></td>
+                                <td><?= number_format($model_warehouse_product[$i]['reserv_qty'], 0) ?></td>
                             </tr>
                         <?php endfor; ?>
                     <?php endif; ?>

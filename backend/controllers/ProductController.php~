@@ -156,12 +156,14 @@ class ProductController extends Controller
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
                                 if($model_sum){
                                     $model_sum->qty = $line_qty[$i];
+                                    $model_sum->reserv_qty = 0;
                                     $model_sum->save(false);
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
                                     $model_sum->product_id = $model->id;
                                     $model_sum->warehouse_id = $line_warehouse[$i];
                                     $model_sum->qty = $line_qty[$i];
+                                    $model_sum->reserv_qty = 0;
                                     $model_sum->save(false);
                                 }
                             }
@@ -250,7 +252,7 @@ class ProductController extends Controller
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
-                                        $this->updateProductStock($model->id);
+                                      //  $this->updateProductStock($model->id);
                                     }
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
@@ -260,9 +262,10 @@ class ProductController extends Controller
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
-                                        $this->updateProductStock($model->id);
+                                       // $this->updateProductStock($model->id);
                                     }
                                 }
+                                $this->updateProductStock($model->id);
                             }
                         }
                     }
