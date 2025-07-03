@@ -107,8 +107,6 @@ class JournaltransController extends Controller
                 $model->status =3;
             }
 
-            $model->trans_date = date('Y-m-d H:i:s');
-
             // Validate all models
             $valid = $model->validate();
            // $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
