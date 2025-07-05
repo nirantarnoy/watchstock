@@ -93,7 +93,8 @@ class JournalTrans extends \yii\db\ActiveRecord
             [['qty'], 'number'],
             [['journal_no', 'customer_name', 'remark'], 'string', 'max' => 255],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
-            [['trans_date'], 'default', 'value' => date('Y-m-d H:i:s')],
+            [['trans_date'],'safe'],
+           // [['trans_date'], 'default', 'value' => date('Y-m-d H:i:s')],
         ];
     }
 

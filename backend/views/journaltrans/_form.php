@@ -288,7 +288,9 @@ if ($create_type == 7) {
                                         //                                            ],
                                         //                                        ]) ?>
                                         <?= $form->field($modelLine, "[{$i}]product_id")->dropDownList(
-                                            ArrayHelper::map(\backend\models\Product::find()->all(), 'id', 'name'),
+                                            ArrayHelper::map(\backend\models\Product::find()->where(['status' => 1])->all(), 'id', function ($model) {
+                                                return $model->name . '  ' . $model->description;
+                                            }),
                                             [
                                                     'prompt' => '-- เลือกสินค้า --',
                                                     'class' => 'form-control product-select',

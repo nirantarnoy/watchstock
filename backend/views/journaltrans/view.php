@@ -166,13 +166,13 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="8">
                 <div class="row" style="margin-top: 10px">
-                    <div class="col-lg-3">
+                    <div class="col-lg-2">
                         <label for="">สินค้า</label>
                     </div>
-                    <div class="col-lg-2">
+                    <div class="col-lg-1">
                         <label for="">จำนวนเบิก</label>
                     </div>
-                    <div class="col-lg-2">
+                    <div class="col-lg-1">
                         <label for="">จำนวนคืน</label>
                     </div>
                     <div class="col-lg-2">
@@ -181,7 +181,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                     <div class="col-lg-2">
                         <label for="">คืนเป็นสินค้า</label>
                     </div>
-                    <div class="col-lg-2">
+                    <div class="col-lg-4">
                         <label for="">หมายเหตุ</label>
                     </div>
                 </div>
@@ -192,15 +192,15 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                     if ($check_return_qty == 0) continue;
                     ?>
                     <div class="row" style="margin-top: 10px">
-                        <div class="col-lg-3">
+                        <div class="col-lg-2">
                             <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
                             <input type="text" class="form-control" readonly
                                    value="<?= \backend\models\Product::findName($value->product_id) ?>">
                         </div>
-                        <div class="col-lg-2">
+                        <div class="col-lg-1">
                             <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
                         </div>
-                        <div class="col-lg-2">
+                        <div class="col-lg-1">
                             <input type="number" name="return_qty[]" class="form-control"
                                    value="<?= $check_return_qty ?>">
                         </div>
@@ -218,7 +218,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                                 <?php endfor; ?>
                             </select>
                         </div>
-                        <div class="col-lg-2">
+                        <div class="col-lg-4">
                             <input type="text" name="return_remark[]" class="form-control">
                         </div>
                     </div>

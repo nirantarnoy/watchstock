@@ -49,7 +49,12 @@ $this->params['breadcrumbs'][] = $this->title;
                     return \backend\models\JournalTrans::findJournalNoFromStockTransId($data->journal_trans_id);
                 }
             ],
-            'trans_date',
+            [
+                'attribute' => 'trans_date',
+                'value' => function ($data) {
+                    return date('d/m/Y H:i:s', strtotime($data->trans_date));
+                }
+            ],
             [
                 'attribute' => 'product_id',
                 'value' => function ($data) {

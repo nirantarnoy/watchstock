@@ -289,7 +289,21 @@ $(document).on('pjax:end', function() {
 });
 
 // ปุ่มลบหลายรายการ
-$('#bulk-delete-btn').on('click', function() {
+// $('#bulk-delete-btn').on('click', function() {
+//     var keys = $('#product-grid').yiiGridView('getSelectedRows');
+//     if (keys.length === 0) {
+//         alert('กรุณาเลือกรายการที่ต้องการลบ');
+//         return;
+//     }
+//     if (confirm('คุณแน่ใจว่าต้องการลบรายการที่เลือก?')) {
+//         $.post($(this).data('url'), {ids: keys}, function(response) {
+//             $.pjax.reload({container: '#p0'}); // แก้ให้ตรง container ID ของคุณ
+//         });
+//     }
+// });
+
+// ใช้ delegation เพื่อให้รองรับ DOM ใหม่จาก PJAX
+$(document).on('click', '#bulk-delete-btn', function() {
     var keys = $('#product-grid').yiiGridView('getSelectedRows');
     if (keys.length === 0) {
         alert('กรุณาเลือกรายการที่ต้องการลบ');
@@ -297,7 +311,7 @@ $('#bulk-delete-btn').on('click', function() {
     }
     if (confirm('คุณแน่ใจว่าต้องการลบรายการที่เลือก?')) {
         $.post($(this).data('url'), {ids: keys}, function(response) {
-            $.pjax.reload({container: '#p0'}); // แก้ให้ตรง container ID ของคุณ
+            $.pjax.reload({container: '#p0'}); // หรือ container id จริงของ PJAX
         });
     }
 });

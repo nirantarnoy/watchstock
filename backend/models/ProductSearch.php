@@ -46,7 +46,7 @@ class ProductSearch extends Product
 
         // add conditions that should always apply here
 
-        $query->joinWith(['journaltransLine.journalTrans.watchMaker']);
+        $query->joinWith(['journaltransLine.journalTrans.watchMaker'])->distinct();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

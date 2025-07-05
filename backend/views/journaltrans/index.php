@@ -14,6 +14,10 @@ use yii\helpers\Url;
 
 $this->title = 'Stock Transaction';
 $this->params['breadcrumbs'][] = $this->title;
+
+//echo date_default_timezone_get();  // ควรได้ Asia/Bangkok
+//echo date('Y-m-d H:i:s');          // ควรเป็นเวลาปัจจุบันประเทศไทย
+
 ?>
 <div id="loading"
      style="display:none; position: fixed; top: 0; left: 0; z-index: 9999; width: 100%; height: 100%; background-color: rgba(255,255,255,0.7); text-align: center; padding-top: 20%;">
@@ -81,7 +85,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'trans_date',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center'],
-                'format' => ['datetime', 'php:d/m/Y H:i'],
+               // 'format' => ['datetime', 'php:d/m/Y H:i'],
+                'value' => function($model) {
+                    return date('d/m/Y H:i:s', strtotime($model->trans_date));
+                }
               //  'headerOptions' => ['style' => 'width:150px'],
             ],
             [

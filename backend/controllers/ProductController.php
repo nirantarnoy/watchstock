@@ -14,6 +14,8 @@ use yii\web\UploadedFile;
 use yii\web\ForbiddenHttpException;
 use yii\filters\AccessControl;
 
+date_default_timezone_set('Asia/Bangkok');
+
 /**
  * ProductController implements the CRUD actions for Product model.
  */
@@ -71,17 +73,17 @@ class ProductController extends Controller
         }
 
         $pageSize = \Yii::$app->request->post("perpage");
+        if ($pageSize == null) {
+            $pageSize = 20;
+        }
+       // echo $pageSize;
         $searchModel = new ProductSearch();
         $dataProvider = $searchModel->search(\Yii::$app->request->queryParams);
-//        if($viewstatus ==1){
-//            $dataProvider->query->andFilterWhere(['status'=>$viewstatus]);
-//        }
-//        if($viewstatus == 2){
-//            $dataProvider->query->andFilterWhere(['status'=>0]);
-//        }
 
         $dataProvider->setSort(['defaultOrder' => ['name' => SORT_ASC]]);
         $dataProvider->pagination->pageSize = $pageSize;
+
+      //  print_r($dataProvider->query->createCommand()->rawSql);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
