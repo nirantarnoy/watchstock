@@ -301,26 +301,60 @@ class JournaltransController extends Controller
                }
            }
            if($stock_type_id == 1){ // stock in
-               $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
-               if($model){
-                   $model->qty += $qty;
-                   if($activity_type == 6) { // คืน
-                       $model->reserv_qty -= $qty;
-                   }
-                   if($model->save(false)){
-                       $this->updateProductStock($product_id);
+
+               if($activity_type == 6){ // คืนยืม
+                   $model = \common\models\StockSum::find()->where(['product_id'=>$product_id])->andWhere(['>=','reserv_qty',$qty])->one();
+                   if($model){
+                     if($model->warehouse_id == $warehouse_id){ // same warehouse
+                         $model->qty += $qty;
+                         $model->reserv_qty -= $qty;
+                         if($model->save(false)){
+                             $this->updateProductStock($product_id);
+                         }
+                     }else{ // diff warehouse
+                         $model->reserv_qty -= $qty; // remove reserve qty
+                         if($model->save(false)){
+                             $modelx = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one(); // find new warehouse
+                             if($modelx){
+                                 $modelx->qty += $qty;
+                                 if($modelx->save(false)){
+                                     $this->updateProductStock($product_id);
+                                 }
+                             }else{
+                                 $modelx = new \common\models\StockSum();
+                                 $modelx->product_id = $product_id;
+                                 $modelx->warehouse_id = $warehouse_id;
+                                 $modelx->qty = $qty;
+                                 $modelx->reserv_qty = 0;
+                                 $modelx->updated_at = date('Y-m-d H:i:s');
+                                 if($modelx->save(false)){
+                                     $this->updateProductStock($product_id);
+                                 }
+                             }
+                         }
+                     }
                    }
                }else{
-                   $model = new \common\models\StockSum();
-                   $model->product_id = $product_id;
-                   $model->warehouse_id = $warehouse_id;
-                   $model->qty = $qty;
-                   $model->reserv_qty = 0;
-                   $model->updated_at = date('Y-m-d H:i:s');
-                   if($model->save(false)){
-                       $this->updateProductStock($product_id);
+                   $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
+                   if($model){
+                       $model->qty += $qty;
+                       if($model->save(false)){
+                           $this->updateProductStock($product_id);
+                       }
+                   }else{
+                       $model = new \common\models\StockSum();
+                       $model->product_id = $product_id;
+                       $model->warehouse_id = $warehouse_id;
+                       $model->qty = $qty;
+                       $model->reserv_qty = 0;
+                       $model->updated_at = date('Y-m-d H:i:s');
+                       if($model->save(false)){
+                           $this->updateProductStock($product_id);
+                       }
                    }
                }
+
+
            }
         }
     }
@@ -386,7 +420,7 @@ class JournaltransController extends Controller
              $model->trans_date = date('Y-m-d H:i:s');
              $model->journal_no = '';
              $model->remark = '';
-             $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง 5 = คืนยืม
+             $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง 6 = คืนยืม
              $model->status = 3;
              $model->stock_type_id = 1; // 1 เข้า 2 ออก
              $model->trans_ref_id = $journal_trans_id;
