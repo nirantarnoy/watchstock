@@ -23,29 +23,9 @@ $this->params['breadcrumbs'][] = $this->title;
          style="display:none; position: fixed; top: 0; left: 0; z-index: 9999; width: 100%; height: 100%; background-color: rgba(255,255,255,0.7); text-align: center; padding-top: 20%;">
         <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><br>กำลังโหลดข้อมูล...
     </div>
-    <div class="employee-index">
+    <div class="product-index">
         <?php Pjax::begin(); ?>
-        <div class="row">
-            <div class="col-lg-10">
-                <p>
-                    <?= Html::a(Yii::t('app', '<i class="fa fa-plus"></i> สร้างใหม่'), ['create'], ['class' => 'btn btn-success']) ?>
-                </p>
-            </div>
-            <div class="col-lg-2" style="text-align: right">
-                <form id="form-perpage" class="form-inline" action="<?= Url::to(['product/index'], true) ?>"
-                      method="post">
-                    <div class="form-group">
-                        <label>แสดง </label>
-                        <select class="form-control" name="perpage" id="perpage" onchange="$('#form-perpage').submit()">
-                            <option value="20" <?= $perpage == '20' ? 'selected' : '' ?>>20</option>
-                            <option value="50" <?= $perpage == '50' ? 'selected' : '' ?> >50</option>
-                            <option value="100" <?= $perpage == '100' ? 'selected' : '' ?>>100</option>
-                        </select>
-                        <label> รายการ</label>
-                    </div>
-                </form>
-            </div>
-        </div>
+
 
         <?php echo $this->render('_search', ['model' => $searchModel, 'viewstatus' => $viewstatus]); ?>
         <div id="div-delete-btn" style="padding: 10px;display: none">

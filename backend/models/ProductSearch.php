@@ -11,7 +11,7 @@ use backend\models\Product;
  */
 class ProductSearch extends Product
 {
-    public $globalSearch,$party_id,$warehouse_id,$stock_empty;
+    public $globalSearch,$party_id,$warehouse_id,$stock_empty,$perpage;
     /**
      * {@inheritdoc}
      */
@@ -19,8 +19,9 @@ class ProductSearch extends Product
     {
         return [
             [['id', 'product_group_id', 'status','product_type_id','type_id','brand_id',], 'integer'],
-            [['code', 'name', 'description','party_id','warehouse_id','stock_empty'], 'safe'],
-            [['globalSearch'],'string']
+            [['code', 'name', 'description','party_id','warehouse_id','stock_empty',], 'safe'],
+            [['globalSearch'],'string'],
+            [['perpage'],'integer']
         ];
     }
 
@@ -50,9 +51,15 @@ class ProductSearch extends Product
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => isset($params['perpage']) ? (int)$params['perpage'] : 20,
+                'params' => $params, // สำคัญ: ส่ง params ทั้งหมด
+            ],
         ]);
 
         $this->load($params);
+
+      //  print_r($params);
 
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails

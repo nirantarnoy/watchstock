@@ -38,7 +38,7 @@ class JournalTransLine extends \yii\db\ActiveRecord
     {
         return [
             [['journal_trans_id', 'product_id'], 'required'],
-            [['journal_trans_id', 'product_id', 'warehouse_id', 'status'], 'integer'],
+            [['journal_trans_id', 'product_id', 'warehouse_id', 'status','journal_trans_ref_id'], 'integer'],
             [['qty','sale_price'], 'number'],
             [['qty'], 'compare', 'compareValue' => 0, 'operator' => '>', 'message' => 'จำนวนต้องมากกว่า 0'],
             [['remark'], 'string', 'max' => 255],

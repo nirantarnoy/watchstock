@@ -1,5 +1,6 @@
 <?php
 
+use http\Url;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
@@ -20,7 +21,25 @@ $stockEmptyOptions = ArrayHelper::map($stock_empty_data, 'id', 'name');
             'data-pjax' => 1
         ],
     ]); ?>
+    <div class="row">
+        <div class="col-lg-10">
+            <p>
+                <?= Html::a(Yii::t('app', '<i class="fa fa-plus"></i> สร้างใหม่'), ['create'], ['class' => 'btn btn-success']) ?>
+            </p>
+        </div>
+        <div class="col-lg-2" style="text-align: right">
 
+            <div class="form-group d-flex align-items-center">
+                <label class="mr-2 mb-0">แสดง</label>
+                    <select class="form-control" name="perpage" id="perpage" onchange="$(this).submit()">
+                        <option value="20" <?= \Yii::$app->request->get('perpage') == '20' ? 'selected' : '' ?>>20</option>
+                        <option value="50" <?= \Yii::$app->request->get('perpage') == '50' ? 'selected' : '' ?> >50</option>
+                        <option value="100" <?= \Yii::$app->request->get('perpage') == '100' ? 'selected' : '' ?>>100</option>
+                    </select>
+                <label class="ml-2 mb-0">รายการ</label>
+                </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-lg-2">
             <!--         <span class="input-group-addon" id="basic-addon1"><i class="fa fa-search"></i></span>-->

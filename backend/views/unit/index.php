@@ -19,12 +19,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php Pjax::begin(); ?>
     <div class="row">
-        <div class="col-lg-10">
+        <div class="col-lg-8">
             <p>
                 <?= Html::a(Yii::t('app', '<i class="fa fa-plus"></i> สร้างใหม่'), ['create'], ['class' => 'btn btn-success']) ?>
             </p>
         </div>
-        <div class="col-lg-2" style="text-align: right">
+        <div class="col-lg-4" style="text-align: right">
             <form id="form-perpage" class="form-inline" action="<?= Url::to(['warehouse/index'], true) ?>"
                   method="post">
                 <div class="form-group">

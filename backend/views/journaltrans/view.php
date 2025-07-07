@@ -187,6 +187,9 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                 </div>
                 <?php foreach ($lines as $value): ?>
                     <?php
+                    if($value->status == 1)continue; // คืนสินค้าแล้ว
+                    ?>
+                    <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty,$model->trans_type_id);
                     // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
@@ -194,6 +197,8 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                     <div class="row" style="margin-top: 10px">
                         <div class="col-lg-2">
                             <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
+                            <input type="hidden" name="warehouse_id[]" value="<?= $value->warehouse_id ?>">
+                            <input type="hidden" name="journal_trans_line_id[]" value="<?= $value->id ?>">
                             <input type="text" class="form-control" readonly
                                    value="<?= \backend\models\Product::findName($value->product_id) ?>">
                         </div>
@@ -219,7 +224,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                             </select>
                         </div>
                         <div class="col-lg-4">
-                            <input type="text" name="return_remark[]" class="form-control">
+                            <input type="text" name="return_remark[]" class="form-control" value="">
                         </div>
                     </div>
 
@@ -232,6 +237,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                 </div>
             </form>
         <?php endif; ?>
+
 
         <?php if ($model->trans_type_id == 5 && $model->status != 3): ?> <!-- คืนยืม -->
             <div class="row">
@@ -259,7 +265,15 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                         <label for="">หมายเหตุ</label>
                     </div>
                 </div>
+                <?php $has_line = 0;?>
                 <?php foreach ($lines as $value): ?>
+                    <?php
+                        if($value->status == 1){
+                            continue;
+                        }else{
+                            $has_line +=1;
+                        }
+                    ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty,$model->trans_type_id);
                     // echo $check_return_qty;
@@ -293,9 +307,11 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                 <?php endforeach; ?>
                 <br/>
                 <div class="row">
+                    <?php if($has_line >0): ?>
                     <div class="col-lg-3">
                         <button class="btn btn-success">บันทึกรายการ</button>
                     </div>
+                    <?php endif; ?>
                 </div>
             </form>
         <?php endif; ?>

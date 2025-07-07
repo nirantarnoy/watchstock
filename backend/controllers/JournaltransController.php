@@ -296,7 +296,7 @@ class JournaltransController extends Controller
                 $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', $qty])->one();
                 if ($model) {
                     $model->qty -= $qty;
-                    if ($activity_type == 5) { // ยืม
+                    if ($activity_type == 5 || $activity_type == 7) { // ยืม
                         $model->reserv_qty += $qty;
                     }
                     if ($model->save(false)) {
@@ -306,7 +306,7 @@ class JournaltransController extends Controller
             }
             if ($stock_type_id == 1) { // stock in
 
-                if ($activity_type == 6) { // คืนยืม
+                if ($activity_type == 6 ) { // คืนยืม
                     $model = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', $qty])->one();
                     if ($model) {
                         if ($model->warehouse_id == $warehouse_id) { // same warehouse
@@ -420,11 +420,13 @@ class JournaltransController extends Controller
         $return_to_type = \Yii::$app->request->post('return_to_type');
         $trans_type_id = \Yii::$app->request->post('trans_type_id');
         $return_to_warehouse = \Yii::$app->request->post('return_to_warehouse');
+        $original_warehouse = \Yii::$app->request->post('warehouse_id');
+//        $journal_trans_line_id = \Yii::$app->request->post('journal_trans_line_id');
 
         if ($journal_trans_id && $qty != null && $trans_type_id != null) {
             $model = new \backend\models\JournalTrans();
             $model->trans_date = date('Y-m-d H:i:s');
-            $model->journal_no = '';
+            $model->journal_no = $model::generateJournalNoNew($trans_type_id);
             $model->remark = '';
             $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง 6 = คืนยืม
             $model->status = 3;
@@ -433,7 +435,7 @@ class JournaltransController extends Controller
             if ($model->save(false)) {
                 if ($product_id != null) {
                     for ($i = 0; $i < count($product_id); $i++) {
-
+                        if($qty[$i] == null || $qty[$i] == '' || $qty[$i] == '0' || $qty[$i] == 0)continue;
                             $model_line = new \common\models\JournalTransLine();
                             $model_line->journal_trans_id = $model->id;
                             $model_line->product_id = $product_id[$i];
@@ -441,6 +443,7 @@ class JournaltransController extends Controller
                             $model_line->remark = $remark[$i];
                             $model_line->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1; // default
                             $model_line->return_to_type = $return_to_type != null ? $return_to_type[$i] : null;
+                            $model_line->journal_trans_ref_id = $journal_trans_id;
                             if ($model_line->save(false)) {
                                 $model_stock_trans = new \common\models\StockTrans();
                                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
@@ -452,14 +455,18 @@ class JournaltransController extends Controller
                                 $model_stock_trans->stock_type_id = 1;
                                 $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
                                 if ($model_stock_trans->save(false)) {
-                                    $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id); // stock in
+                                    \common\models\JournalTransLine::updateAll(['status' => 1], ['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id[$i]]); // update status
 
-                                    if($remark[$i] !== null || $remark[$i] !== ''){ // create new product from watch maker
-                                        $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i]);
+                                    if ($trans_type_id == 6){
+                                        $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id); // stock in from return borrow
+                                    }
+
+                                    if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
+                                        $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i],$original_warehouse[$i]);
                                     }else{
-                                        if ($return_to_type != null) { // update product type
-                                            \backend\models\Product::updateAll(['product_type_id' => $return_to_type[$i]], ['id' => $product_id[$i]]);
-                                        }
+//                                        if ($return_to_type != null) { // update product type
+//                                            \backend\models\Product::updateAll(['product_type_id' => $return_to_type[$i]], ['id' => $product_id[$i]]);
+//                                        }
                                     }
                                 }
 
@@ -478,8 +485,8 @@ class JournaltransController extends Controller
     function calForcomplete($journal_trans_origin_id, $journal_return_id)
     {
         if ($journal_trans_origin_id && $journal_return_id) {
-            $return_sum = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_return_id])->sum('qty');
-            $trans_sum = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_origin_id])->sum('qty');
+            $return_sum = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_origin_id])->sum('qty'); // จำนวนคืนทั้งหมด
+            $trans_sum = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_origin_id])->sum('qty'); // จำนวนยืมทั้งหมด
             if ($return_sum == $trans_sum) {
                 $model = \backend\models\JournalTrans::findOne($journal_trans_origin_id);
                 $model->status = 3; // trans complete
@@ -532,7 +539,7 @@ class JournaltransController extends Controller
         return json_encode($onhand);
     }
 
-    public function crateNewProductFromWatchMaker($product_id, $new_description, $warehouse_id, $qty)
+    public function crateNewProductFromWatchMaker($product_id, $new_description, $warehouse_id, $qty, $original_warehouse)
     {
 
         $model = \backend\models\Product::findOne($product_id);
@@ -559,21 +566,68 @@ class JournaltransController extends Controller
                     $model_trans->status = 1;
                     if ($model_trans->save(false)) {
                         $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_new->id, 'warehouse_id' => $warehouse_id])->one();
-                        if ($model_sum) {
+                        if ($model_sum) { // กลับเข้าคลังเดิม
                             $model_sum->qty = $qty;
                             $model_sum->reserv_qty = 0;
-                            $model_sum->save(false);
-                        } else {
+                            if($model_sum->save(false)){
+                                $model_delete_reserve = \backend\models\Stocksum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$original_warehouse])->andWhere(['>=','reserv_qty','0'])->one();
+                                if($model_delete_reserve){
+                                    $model_delete_reserve->reserv_qty = 0; // remove reserve and crate new warehouse stock
+                                    $model_delete_reserve->save(false);
+                                }
+                            }
+                        } else { // กลับเข้าคลังใหม่ และเคลียร์ยอดจองคลังเดิม
                             $model_sum = new \backend\models\Stocksum();
                             $model_sum->product_id = $model_new->id;
                             $model_sum->warehouse_id = $warehouse_id;
                             $model_sum->qty = $qty;
                             $model_sum->reserv_qty = 0;
-                            $model_sum->save(false);
+                            if($model_sum->save(false)){
+                                $model_delete_reserve = \backend\models\Stocksum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$original_warehouse])->andWhere(['>=','reserv_qty','0'])->one();
+                                if($model_delete_reserve){
+                                    $model_delete_reserve->reserv_qty = 0; // remove reserve and crate new warehouse stock
+                                    $model_delete_reserve->save(false);
+                                }
+                            }
                         }
+
+//                        $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', $qty])->one();
+//                        if($model_stock) {
+//                            if ($model_stock->warehouse_id == $warehouse_id) { // same warehouse
+//                                $model_stock->qty += $qty;
+//                                $model_stock->reserv_qty -= $qty;
+//                                if ($model_stock->save(false)) {
+//                                    $this->updateProductStock($product_id);
+//                                }
+//                            } else { // diff warehouse
+//                                $model_stock->reserv_qty -= $qty; // remove reserve qty
+//                                if ($model_stock->save(false)) {
+//                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // find new warehouse
+//                                    if ($modelx) {
+//                                        $modelx->qty += $qty;
+//                                        if ($modelx->save(false)) {
+//                                            $this->updateProductStock($product_id);
+//                                        }
+//                                    } else {
+//                                        $modelx = new \common\models\StockSum();
+//                                        $modelx->product_id = $product_id;
+//                                        $modelx->warehouse_id = $warehouse_id;
+//                                        $modelx->qty = $qty;
+//                                        $modelx->reserv_qty = 0;
+//                                        $modelx->updated_at = date('Y-m-d H:i:s');
+//                                        if ($modelx->save(false)) {
+//                                            $this->updateProductStock($product_id);
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+
                     }
 
-                    $this->updateProductStock($model_new->id);
+                    $this->updateProductStock($model_new->id); // update new product stock
+
+                    $this->updateProductStock($product_id); // update old product stock
 
                 }
             }

@@ -72,23 +72,18 @@ class ProductController extends Controller
             $viewstatus = \Yii::$app->request->get('viewstatus');
         }
 
-        $pageSize = \Yii::$app->request->post("perpage");
-        if ($pageSize == null) {
-            $pageSize = 20;
-        }
-       // echo $pageSize;
         $searchModel = new ProductSearch();
         $dataProvider = $searchModel->search(\Yii::$app->request->queryParams);
 
         $dataProvider->setSort(['defaultOrder' => ['name' => SORT_ASC]]);
-        $dataProvider->pagination->pageSize = $pageSize;
+       // $dataProvider->pagination->pageSize = $pageSize;
 
       //  print_r($dataProvider->query->createCommand()->rawSql);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-            'perpage' => $pageSize,
+          //  'perpage' => $pageSize,
             'viewstatus' => $viewstatus,
         ]);
     }

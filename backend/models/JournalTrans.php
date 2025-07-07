@@ -8,6 +8,17 @@ date_default_timezone_set('Asia/Bangkok');
 
 class JournalTrans extends \common\models\JournalTrans
 {
+    // Transaction Types
+
+    const TYPE_OPENING = 1;     // ปรับยอดยกมา
+    const TYPE_ADJUST = 2;     // ปรับยอด
+    const TYPE_SALE = 3;       // ขาย
+    const TYPE_RETURN_SALE = 4; // คืนขาย
+    const TYPE_LOAN = 5;       // ยืม
+    const TYPE_RETURN_LOAN = 6; // คืนยืม
+    const TYPE_SEND = 7;       // เบิกส่งช่าง
+    const TYPE_RETURN_SEND = 8; // คืนส่งช่าง
+    const TYPE_DROP = 9;       // ขาย Dropship
     public function behaviors()
     {
         return [
@@ -73,6 +84,65 @@ class JournalTrans extends \common\models\JournalTrans
     public static function findJournalNoFromStockTransId($id) {
         $journal_no = JournalTrans::find()->where(['id'=>$id])->one();
         return $journal_no != null ? $journal_no->journal_no : '';
+    }
+
+    public static function generateJournalNoNew($trans_type_id)
+    {
+        $prefix = '';
+        switch ($trans_type_id) {
+            case self::TYPE_OPENING:
+                $prefix = 'OPN';
+                break;
+            case self::TYPE_ADJUST:
+                $prefix = 'ADJ';
+                break;
+            case self::TYPE_SALE:
+                $prefix = 'SAL';
+                break;
+            case self::TYPE_RETURN_SALE:
+                $prefix = 'RSA';
+                break;
+            case self::TYPE_LOAN:
+                $prefix = 'LOA';
+                break;
+            case self::TYPE_RETURN_LOAN:
+                $prefix = 'RLO';
+                break;
+            case self::TYPE_SEND:
+                $prefix = 'SEN';
+                break;
+            case self::TYPE_RETURN_SEND:
+                $prefix = 'RSE';
+                break;
+            case self::TYPE_DROP:
+                $prefix = 'DRO';
+                break;
+
+        }
+
+        $lastRecord = self::find()
+            ->select(['journal_no'])
+            ->where(['trans_type_id' => $trans_type_id])
+            ->andWhere(['like', 'journal_no', $prefix . date('Ym')])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+
+
+        if ($lastRecord != null) {
+            $prefix = $prefix . date('Ym');
+            $cnum = substr((string)$lastRecord->journal_no, 9, strlen($lastRecord->journal_no));
+            $len = strlen($cnum);
+            $clen = strlen($cnum + 1);
+            $loop = $len - $clen;
+            for ($i = 1; $i <= $loop; $i++) {
+                $prefix .= "0";
+            }
+            $prefix .= $cnum + 1;
+            return $prefix;
+        } else {
+            $prefix = $prefix.date('Ym');
+            return $prefix . '0001';
+        }
     }
 
 

@@ -98,7 +98,7 @@ class Product extends \common\models\Product
     }
     public static function findName($id){
         $model = Product::find()->where(['id'=>$id])->one();
-        return $model != null ?$model->name:'';
+        return $model != null ?$model->name.' '.$model->description:'';
     }
     public static function findPrice($id){
         $model = Product::find()->where(['id'=>$id])->one();
@@ -128,10 +128,23 @@ class Product extends \common\models\Product
         return $model;
     }
 
-    public static function getWarehouseName($product_id,$qty){
+    public static function getWarehouseNamex($product_id,$qty){
         $name = '';
         if($product_id && $qty){
             $model = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['>=','qty',$qty])->one();
+            if($model){
+                $model_warehouse = \backend\models\Warehouse::find()->where(['id'=>$model->warehouse_id])->one();
+                if($model_warehouse){
+                    $name = $model_warehouse->name;
+                }
+            }
+        }
+        return $name;
+    }
+    public static function getWarehouseName($product_id,$qty){
+        $name = '';
+        if($product_id && $qty){
+            $model = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['>=','qty',0])->one();
             if($model){
                 $model_warehouse = \backend\models\Warehouse::find()->where(['id'=>$model->warehouse_id])->one();
                 if($model_warehouse){
