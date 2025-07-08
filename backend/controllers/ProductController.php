@@ -827,4 +827,22 @@ class ProductController extends Controller
 
         return ['success' => false, 'message' => 'No IDs received'];
     }
+
+    public function actionGetmakerproduct(){
+        $id = \Yii::$app->request->post('id');
+        $html = '';
+        if ($id) {
+            $model = \common\models\ViewProductMakerOnhand::find()->where(['product_id' => $id])->andFilterWhere(['!=','status',1])->orderBy(['party_id' => SORT_ASC])->all();
+            if ($model) {
+                foreach ($model as $value) {
+                    $html .= '<tr>';
+                    $html .= '<td>' . $value->watchmaker_name . '</td>';
+                    $html .= '<td>' . $value->product_name.' '.$value->description . '</td>';
+                    $html .= '<td>' . $value->qty . '</td>';
+                    $html .= '</tr>';
+                }
+            }
+        }
+        echo $html;
+    }
 }
