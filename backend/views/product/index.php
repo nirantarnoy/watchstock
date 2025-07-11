@@ -93,7 +93,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'warehouse_id',
                     'label' => 'คลัง',
-                    'format' => 'html',
+                    'format' => 'raw',
                     'value' => function ($data) {
                       //  $namex = \backend\models\Product::getWarehouseName($data->id,$data->stock_qty);
                         $namex = \backend\models\Product::getWarehouseNames($data->id);
