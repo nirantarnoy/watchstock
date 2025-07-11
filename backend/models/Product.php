@@ -172,7 +172,7 @@ class Product extends \common\models\Product
                 foreach ($model as $value) {
                     $model_warehouse = \backend\models\Warehouse::find()->where(['id'=>$value->warehouse_id])->one();
                     if($model_warehouse){
-                        $html .= $model_warehouse->name.'<br />';
+                        $html .= '<div class="badge badge-pill badge-info" style="margin-right: 1px;>'. $model_warehouse->name.'</div>'.'<br />';
                     }
                 }
             }
