@@ -164,6 +164,22 @@ class Product extends \common\models\Product
 //        return count($model)>0?$model->id:0;
 //    }
 
+  public static function getWarehouseNames($id){
+        $html = '';
+        if($id){
+            $model = \backend\models\Stocksum::find()->where(['product_id'=>$id])->andFilterWhere(['>=','qty',0])->all();
+            if($model){
+                foreach ($model as $value) {
+                    $model_warehouse = \backend\models\Warehouse::find()->where(['id'=>$value->warehouse_id])->one();
+                    if($model_warehouse){
+                        $html .= $model_warehouse->name.'<br />';
+                    }
+                }
+            }
+            return $html;
+        }
+  }
+
 
 
 }
