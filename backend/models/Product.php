@@ -170,6 +170,9 @@ class Product extends \common\models\Product
             $model = \backend\models\Stocksum::find()->where(['product_id'=>$id])->andFilterWhere(['>=','qty',0])->all();
             if($model){
                 foreach ($model as $value) {
+                    if($value->qty == 0) {
+                        continue;
+                    }
                     $model_warehouse = \backend\models\Warehouse::find()->where(['id'=>$value->warehouse_id])->one();
                     if($model_warehouse){
                         $html .= '<div class="badge badge-pill badge-info">'. $model_warehouse->name.'</div>'.'<br />';
