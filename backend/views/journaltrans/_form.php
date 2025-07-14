@@ -193,16 +193,16 @@ if ($create_type == 7) {
                     ]
                 ]) ?>
             </div>
-<!--            <div class="col-md-3">-->
-<!--                --><?php //= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
-//                    'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
-//                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct($(this))'],
-//                    'pluginOptions' => [
-//                        'allowClear' => true,
-//                        'theme' => 'krajee',
-//                    ],
-//                ]) ?>
-<!--            </div>-->
+            <!--            <div class="col-md-3">-->
+            <!--                --><?php //= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
+            //                    'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
+            //                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct($(this))'],
+            //                    'pluginOptions' => [
+            //                        'allowClear' => true,
+            //                        'theme' => 'krajee',
+            //                    ],
+            //                ]) ?>
+            <!--            </div>-->
             <div class="col-md-3">
                 <?= $form->field($model, 'party_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Watchmaker::find()->all(), 'id', 'name'),
@@ -292,29 +292,30 @@ if ($create_type == 7) {
                                                 return $model->name . '  ' . $model->description;
                                             }),
                                             [
-                                                    'prompt' => '-- เลือกสินค้า --',
-                                                    'class' => 'form-control product-select',
-                                                    'onchange' => 'getWarehouseproduct($(this))']
+                                                'prompt' => '-- เลือกสินค้า --',
+                                                'class' => 'form-control product-select',
+                                                'onchange' => 'getWarehouseproduct($(this))']
                                         ) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]warehouse_id")->dropDownList(
                                             ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
                                             [
-                                                    'prompt' => '-- เลือกคลัง --',
-                                                    'class' => 'form-control warehouse-id',
-                                                    'onchange' => 'getProductonhand($(this))']
-                                        )?>
+                                                'prompt' => '-- เลือกคลัง --',
+                                                'class' => 'form-control warehouse-id',
+                                                'onchange' => 'getProductonhand($(this))']
+                                        ) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <label for="">ยอดคงเหลือ</label>
-                                        <input type="text" class="form-control line-product-onhand" name="stock_qty" readonly value="">
+                                        <input type="text" class="form-control line-product-onhand" name="stock_qty"
+                                               readonly value="">
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true,'readonly'=>'readonly','class' => 'form-control line-sale-price']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'readonly' => 'readonly', 'class' => 'form-control line-sale-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty','onchange' => 'checkOverQty($(this))']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty', 'onchange' => 'checkOverQty($(this))']) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]remark")->textInput(['maxlength' => true]) ?>
@@ -332,18 +333,38 @@ if ($create_type == 7) {
             </div>
         </div>
 
-        <?php if ($model->status != 3): ?>
+
+
+        <?php if ($model->isNewRecord): ?>
             <div class="form-group">
                 <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
                 <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
             </div>
+        <?php else:?>
+            <?php
+            $has_line = checkHasTransLine($model->id);
+            //echo $has_line;
+            ?>
+            <?php if ($model->status != 3 && $has_line == 0): ?>
+                <div class="form-group">
+                    <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+                    <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
+
 
         <?php ActiveForm::end(); ?>
 
     </div>
 
 <?php
+
+function checkHasTransLine($id)
+{
+    $has_line = \backend\models\JournalTrans::find()->where(['trans_ref_id' => $id])->count();
+    return $has_line;
+}
 
 // Main JavaScript for dynamic form handling
 $mainJs = <<<JS
@@ -496,8 +517,8 @@ JS;
 // Register main JavaScript
 $this->registerJs($mainJs, \yii\web\View::POS_READY);
 
-$url_to_get_warehouseproduct = Url::to(['journaltrans/getwarehouseproduct'],true);
-$url_to_get_product_onhand = Url::to(['journaltrans/getproductonhand'],true);
+$url_to_get_warehouseproduct = Url::to(['journaltrans/getwarehouseproduct'], true);
+$url_to_get_product_onhand = Url::to(['journaltrans/getproductonhand'], true);
 $select2FixJs = <<<JS
 // Wait for all assets to load
 $(window).on('load', function() {
