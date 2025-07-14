@@ -17,6 +17,8 @@ $this->params['breadcrumbs'][] = $this->title;
 
 $product_type = \backend\helpers\ProductType::asArrayObject();
 $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all();
+
+$yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
 ?>
     <div class="journal-trans-view">
 
@@ -181,7 +183,10 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                     <div class="col-lg-2">
                         <label for="">คืนเป็นสินค้า</label>
                     </div>
-                    <div class="col-lg-4">
+                    <div class="col-lg-1">
+                        <label for="">เป็นสินค้าใหม่</label>
+                    </div>
+                    <div class="col-lg-3">
                         <label for="">หมายเหตุ</label>
                     </div>
                 </div>
@@ -190,7 +195,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                     if($value->status == 1)continue; // คืนสินค้าแล้ว
                     ?>
                     <?php
-                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty,$model->trans_type_id);
+                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
                     // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
                     ?>
@@ -207,7 +212,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                         </div>
                         <div class="col-lg-1">
                             <input type="number" name="return_qty[]" class="form-control"
-                                   value="<?= $check_return_qty ?>">
+                                   value="<?= $check_return_qty ?>" data-var="<?=$check_return_qty?>" onchange="checkReturnQty($(this))">
                         </div>
                         <div class="col-lg-2">
                             <select name="return_to_warehouse[]" class="form-control">
@@ -223,7 +228,14 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                                 <?php endfor; ?>
                             </select>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-1">
+                            <select name="is_return_new[]" class="form-control">
+                                <?php for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
+                                    <option value="<?= $yes_no[$i]['id'] ?>"><?= $yes_no[$i]['name'] ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="col-lg-3">
                             <input type="text" name="return_remark[]" class="form-control" value="">
                         </div>
                     </div>
@@ -275,7 +287,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                         }
                     ?>
                     <?php
-                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty,$model->trans_type_id);
+                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
                     // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
                     ?>
@@ -290,7 +302,7 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
                         </div>
                         <div class="col-lg-2">
                             <input type="number" name="return_qty[]" class="form-control"
-                                   value="<?= $check_return_qty ?>">
+                                   value="<?= $check_return_qty ?>" data-var="<?=$check_return_qty?>" onchange="checkReturnQty($(this))">
                         </div>
                         <div class="col-lg-2">
                             <select name="return_to_warehouse[]" class="form-control">
@@ -319,23 +331,14 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all()
 
     </div>
 <?php
-function getReturnProduct($journal_trans_id, $product_id, $original_qty,$trans_type_id)
+function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 {
     $qty = 0;
     if ($product_id && $original_qty) {
-        $model_ref = \backend\models\Journaltrans::find()->where(['trans_ref_id' => $journal_trans_id])->one();
-        if($model_ref){
-            $model = \backend\models\Stocktrans::find()->where(['journal_trans_id' => $model_ref->id, 'product_id' => $product_id, 'trans_type_id' => $trans_type_id])->one();
-            if ($model) {
-                $qty = $original_qty - $model->qty;
-            } else {
-                $qty = $original_qty;
-            }
-        }else{
-            $qty = $original_qty;
-        }
-
-
+       $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
+       if ($return_qty <= $original_qty) {
+           $qty = $original_qty - $return_qty;
+       }
     }
     return $qty;
 }
@@ -375,4 +378,16 @@ function getBadgeStatus($status,$status_name) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }
 }
+?>
+<?php
+$js=<<<JS
+function checkReturnQty(e){
+    var remain_qty = e.attr('data-var');
+    var return_qty = e.val();
+    if(return_qty > remain_qty){
+        e.val(remain_qty);
+    }
+}
+JS;
+$this->registerJs($js,static::POS_END);
 ?>

@@ -342,6 +342,9 @@ class JournaltransController extends Controller
                     $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
                     if ($model) {
                         $model->qty += $qty;
+                        if($model->reserv_qty >= ($qty)) { // remove reserve qty
+                            $model->reserv_qty = ($model->reserv_qty - $qty);
+                        }
                         if ($model->save(false)) {
                             $this->updateProductStock($product_id);
                         }
@@ -353,6 +356,16 @@ class JournaltransController extends Controller
                         $model->reserv_qty = 0;
                         $model->updated_at = date('Y-m-d H:i:s');
                         if ($model->save(false)) {
+                            $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
+                            if ($model_update_reserve) {
+                                foreach ($model_update_reserve as $model_reserve) {
+                                    if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
+                                        $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
+                                        $model_reserve->save(false);
+                                        break;
+                                    }
+                                }
+                            }
                             $this->updateProductStock($product_id);
                         }
                     }
@@ -421,6 +434,7 @@ class JournaltransController extends Controller
         $trans_type_id = \Yii::$app->request->post('trans_type_id');
         $return_to_warehouse = \Yii::$app->request->post('return_to_warehouse');
         $original_warehouse = \Yii::$app->request->post('warehouse_id');
+        $is_return_new = \Yii::$app->request->post('is_return_new');
 //        $journal_trans_line_id = \Yii::$app->request->post('journal_trans_line_id');
 
         if ($journal_trans_id && $qty != null && $trans_type_id != null) {
@@ -455,18 +469,23 @@ class JournaltransController extends Controller
                                 $model_stock_trans->stock_type_id = 1;
                                 $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
                                 if ($model_stock_trans->save(false)) {
-                                    \common\models\JournalTransLine::updateAll(['status' => 1], ['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id[$i]]); // update status
-
-                                    if ($trans_type_id == 6){
+                                    if ($trans_type_id == 6){ // คือยืม
                                         $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id); // stock in from return borrow
+                                        $this->calForupdateTransLine($journal_trans_id, $model_line,$product_id[$i]);
                                     }
 
-                                    if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
-                                        $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i],$original_warehouse[$i]);
-                                    }else{
-//                                        if ($return_to_type != null) { // update product type
-//                                            \backend\models\Product::updateAll(['product_type_id' => $return_to_type[$i]], ['id' => $product_id[$i]]);
-//                                        }
+                                    if($trans_type_id == 8) { // คือส่งช่าง
+                                        if($is_return_new != null){
+                                            //   if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
+                                            if ($is_return_new[$i] == 1) { // create new product from watch maker
+                                                $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
+                                                $this->calForupdateTransLine($journal_trans_id, $model_line,$product_id[$i]);
+                                            }else if($is_return_new[$i] == 0){ // return but not create new product
+                                                $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
+                                                $this->calForupdateTransLine($journal_trans_id, $model_line,$product_id[$i]);
+                                            }
+                                        }
+
                                     }
                                 }
 
@@ -480,6 +499,18 @@ class JournaltransController extends Controller
 
         }
         return $this->redirect(['journaltrans/view', 'id' => $journal_trans_id]);
+    }
+
+    function calForupdateTransLine($journal_trans_id, $trans_line_new_id,$product_id){
+        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id,'product_id' => $product_id])->one();
+        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id,'product_id' => $product_id])->sum('qty');
+        if($return_qty >= $borrow_qty->qty){
+            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id,'product_id' => $product_id])->one();
+            if($trans_line){
+                $trans_line->status = 1; // line trans complete
+                $trans_line->save(false);
+            }
+        }
     }
 
     function calForcomplete($journal_trans_origin_id, $journal_return_id)
