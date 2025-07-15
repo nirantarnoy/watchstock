@@ -71,7 +71,10 @@ $this->params['breadcrumbs'][] = $this->title;
                         return Html::a(
                             Html::img($url, ['style' => 'max-width:50px']),
                             $url,
-                            ['target' => '_blank']
+                            [
+                              'target' => '_blank',
+                              'data-pjax' => '0',
+                            ]
                         );
                     }
                 ],
