@@ -13,24 +13,27 @@ $this->title = $model->journal_no;
 $this->params['breadcrumbs'][] = ['label' => 'รายการ Stock Transaction', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
+
+$product_can_return = null;
+
 \yii\web\YiiAsset::register($this);
 
 $product_type = \backend\helpers\ProductType::asArrayObject();
-$warehouse_data = \backend\models\Warehouse::find()->where(['status'=>1])->all();
+$warehouse_data = \backend\models\Warehouse::find()->where(['status' => 1])->all();
 
-$yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
+$yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
 ?>
     <div class="journal-trans-view">
 
         <p>
             <?= Html::a('แก้ไข', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-            <?= $model->status != 3? Html::a('ลบ', ['delete', 'id' => $model->id], [
+            <?= $model->status != 3 ? Html::a('ลบ', ['delete', 'id' => $model->id], [
                 'class' => 'btn btn-danger',
                 'data' => [
                     'confirm' => 'คุณแน่ใจหรือไม่ที่จะลบรายการนี้?',
                     'method' => 'post',
                 ],
-            ]):'' ?>
+            ]) : '' ?>
             <?= Html::a('สร้างรายการใหม่', ['create'], ['class' => 'btn btn-success']) ?>
         </p>
 
@@ -87,9 +90,9 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                             'headerOptions' => ['style' => 'text-align:center'],
                             'contentOptions' => ['style' => 'text-align:left'],
                             'format' => 'raw',
-                            'value' => function($model) {
+                            'value' => function ($model) {
                                 $status_name = \backend\helpers\TransStatusType::getTypeById($model->status);
-                                $htmel_status = getBadgeStatus($model->status,$status_name);
+                                $htmel_status = getBadgeStatus($model->status, $status_name);
                                 return $htmel_status;
                             },
                             // 'format' => 'raw',
@@ -147,10 +150,10 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <p><strong>สร้างโดย:</strong> <?= \backend\models\User::findName($model->created_by) ?>
-                            เมื่อ <?=date('d-m-Y H:i:s',$model->created_at) ?></p>
+                            เมื่อ <?= date('d-m-Y H:i:s', $model->created_at) ?></p>
                         <?php if ($model->updated_at): ?>
                             <p><strong>แก้ไขโดย:</strong> <?= $model->updated_by ?>
-                                เมื่อ <?= date('d-m-Y H:i:s',$model->updated_at) ?></p>
+                                เมื่อ <?= date('d-m-Y H:i:s', $model->updated_at) ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -177,14 +180,17 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                     <div class="col-lg-1">
                         <label for="">จำนวนคืน</label>
                     </div>
-                    <div class="col-lg-2">
+                    <div class="col-lg-1">
                         <label for="">กลับเข้าคลัง</label>
                     </div>
-                    <div class="col-lg-2">
+                    <div class="col-lg-1">
                         <label for="">คืนเป็นสินค้า</label>
                     </div>
                     <div class="col-lg-1">
                         <label for="">เป็นสินค้าใหม่</label>
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="">เป็นสินค้าเดิม</label>
                     </div>
                     <div class="col-lg-3">
                         <label for="">หมายเหตุ</label>
@@ -192,12 +198,14 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                 </div>
                 <?php foreach ($lines as $value): ?>
                     <?php
-                    if($value->status == 1)continue; // คืนสินค้าแล้ว
+                    if ($value->status == 1) continue; // คืนสินค้าแล้ว
                     ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
                     // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
+
+                    $product_can_return = getCanreturnProduct($value->product_id);
                     ?>
                     <div class="row" style="margin-top: 10px">
                         <div class="col-lg-2">
@@ -212,16 +220,17 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                         </div>
                         <div class="col-lg-1">
                             <input type="number" name="return_qty[]" class="form-control"
-                                   value="<?= $check_return_qty ?>" data-var="<?=$check_return_qty?>" onchange="checkReturnQty($(this))">
+                                   value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
+                                   onchange="checkReturnQty($(this))">
                         </div>
-                        <div class="col-lg-2">
+                        <div class="col-lg-1">
                             <select name="return_to_warehouse[]" class="form-control">
-                                <?php foreach($warehouse_data as $value_warehouse): ?>
-                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name?></option>
+                                <?php foreach ($warehouse_data as $value_warehouse): ?>
+                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-lg-2">
+                        <div class="col-lg-1">
                             <select name="return_to_type[]" class="form-control">
                                 <?php for ($i = 0; $i <= count($product_type) - 1; $i++): ?>
                                     <option value="<?= $product_type[$i]['id'] ?>"><?= $product_type[$i]['name'] ?></option>
@@ -229,10 +238,22 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                             </select>
                         </div>
                         <div class="col-lg-1">
-                            <select name="is_return_new[]" class="form-control">
+                            <select name="is_return_new[]" class="form-control" onchange="checkReturnNew($(this))">
                                 <?php for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
                                     <option value="<?= $yes_no[$i]['id'] ?>"><?= $yes_no[$i]['name'] ?></option>
                                 <?php endfor; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <select name="return_to_product[]" class="form-control line-return-to-product">
+                                <option value="0">เลือกสินค้า</option>
+                                <?php if ($product_can_return != null): ?>
+                                    <?php for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
+                                        <option value="<?= $product_can_return[$m]['id'] ?>"><?= $product_can_return[$m]['name'] ?></option>
+                                    <?php endfor; ?>
+                                <?php endif; ?>
+
                             </select>
                         </div>
                         <div class="col-lg-3">
@@ -277,14 +298,15 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                         <label for="">หมายเหตุ</label>
                     </div>
                 </div>
-                <?php $has_line = 0;?>
+                <?php $has_line = 0; ?>
                 <?php foreach ($lines as $value): ?>
                     <?php
-                        if($value->status == 1){
-                            continue;
-                        }else{
-                            $has_line +=1;
-                        }
+                    if ($value->status == 1) {
+                        continue;
+                    } else {
+                        $has_line += 1;
+                    }
+
                     ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
@@ -302,12 +324,14 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                         </div>
                         <div class="col-lg-2">
                             <input type="number" name="return_qty[]" class="form-control"
-                                   value="<?= $check_return_qty ?>" data-var="<?=$check_return_qty?>" onchange="checkReturnQty($(this))">
+                                   value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
+                                   onchange="checkReturnQty($(this))">
                         </div>
                         <div class="col-lg-2">
-                            <select name="return_to_warehouse[]" class="form-control">
-                                <?php foreach($warehouse_data as $value_warehouse): ?>
-                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name?></option>
+                            <select name="return_to_warehouse[]" class="form-control" required>
+                                <option value="">--เลือกคลัง--</option>
+                                <?php foreach ($warehouse_data as $value_warehouse): ?>
+                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -319,10 +343,10 @@ $yes_no = [['id' => 1, 'name' => 'YES'], ['id' => 0, 'name' => 'NO']];
                 <?php endforeach; ?>
                 <br/>
                 <div class="row">
-                    <?php if($has_line >0): ?>
-                    <div class="col-lg-3">
-                        <button class="btn btn-success">บันทึกรายการ</button>
-                    </div>
+                    <?php if ($has_line > 0): ?>
+                        <div class="col-lg-3">
+                            <button class="btn btn-success">บันทึกรายการ</button>
+                        </div>
                     <?php endif; ?>
                 </div>
             </form>
@@ -335,22 +359,38 @@ function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 {
     $qty = 0;
     if ($product_id && $original_qty) {
-       $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
-       if ($return_qty <= $original_qty) {
-           $qty = $original_qty - $return_qty;
-       }
+        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
+        if ($return_qty <= $original_qty) {
+            $qty = $original_qty - $return_qty;
+        }
     }
     return $qty;
 }
 
-function getBadgeType($status,$status_name) {
+function getCanreturnProduct($product_id)
+{
+    $product_data = [];
+    $product_name = \backend\models\Product::findSku($product_id);
+    if ($product_name != '' || $product_name != null) {
+        $model = \common\models\Product::find()->where(['name' => trim($product_name)])->all();
+        if ($model) {
+            foreach ($model as $value) {
+                array_push($product_data, ['id' => $value->id, 'name' => $value->name . ' ' . $value->description]);
+            }
+        }
+    }
+    return $product_data;
+}
+
+function getBadgeType($status, $status_name)
+{
     if ($status == 1) {
         return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 2) {
+    } else if ($status == 2) {
         return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 3) {
+    } else if ($status == 3) {
         return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 4) {
+    } else if ($status == 4) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
     } else if ($status == 5) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
@@ -358,29 +398,31 @@ function getBadgeType($status,$status_name) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
     } else if ($status == 7) {
         return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 8) {
+    } else if ($status == 8) {
         return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 9) {
+    } else if ($status == 9) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
-    }else {
+    } else {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }
 }
 
-function getBadgeStatus($status,$status_name) {
+function getBadgeStatus($status, $status_name)
+{
     if ($status == 1) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 2) {
+    } else if ($status == 2) {
         return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 3) {
+    } else if ($status == 3) {
         return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 4) {
+    } else if ($status == 4) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }
 }
+
 ?>
 <?php
-$js=<<<JS
+$js = <<<JS
 function checkReturnQty(e){
     var remain_qty = e.attr('data-var');
     var return_qty = e.val();
@@ -388,6 +430,16 @@ function checkReturnQty(e){
         e.val(remain_qty);
     }
 }
+
+function checkReturnNew(e){
+    var type = e.val();
+    
+    if(type == 1){
+        e.closest("div.row").find(".line-return-to-product").prop("disabled", true);
+    }else{
+        e.closest("div.row").find(".line-return-to-product").prop("disabled", false);
+    }
+}
 JS;
-$this->registerJs($js,static::POS_END);
+$this->registerJs($js, static::POS_END);
 ?>
