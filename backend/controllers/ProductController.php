@@ -13,6 +13,13 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use yii\web\ForbiddenHttpException;
 use yii\filters\AccessControl;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Yii;
 
 date_default_timezone_set('Asia/Bangkok');
 
@@ -647,7 +654,9 @@ class ProductController extends Controller
                 $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
                 if($model){
                     $model->qty = $qty; // initial stock
-                    $model->save(false);
+                    if($model->save(false)){
+                       $this->calUpdateProductStock($product_id);
+                    }
                 }else{
                     $model = new \common\models\StockSum();
                     $model->product_id = $product_id;
@@ -655,13 +664,29 @@ class ProductController extends Controller
                     $model->qty = $qty;
                     $model->updated_at = date('Y-m-d H:i:s');
                     if($model->save(false)){
-                        $model_product = \backend\models\Product::findOne($product_id);
-                        if($model_product){
-                            $model_product->stock_qty = $qty; // update stock product
-                            $model_product->save(false);
-                        }
+                        $this->calUpdateProductStock($product_id);
+//                        $model_product = \backend\models\Product::findOne($product_id);
+//                        if($model_product){
+//                            $model_product->stock_qty = $qty; // update stock product
+//                            $model_product->save(false);
+//                        }
                     }
                 }
+            }
+        }
+    }
+
+    public function calUpdateProductStock($product_id){
+        if($product_id){
+            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->all();
+            if($model_stock){
+                $all_stock = 0;
+                foreach($model_stock as $model){
+                    $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
+                    $all_stock += ($model->qty + $res_qty);
+                }
+
+                \backend\models\Product::updateAll(['stock_qty'=>$all_stock],['id'=>$product_id]);
             }
         }
     }
@@ -927,5 +952,128 @@ class ProductController extends Controller
             }
         }
         echo $html;
+    }
+
+    public function actionExportProducts()
+    {
+        // Get data from your model
+       // $users = Product::find()->joinWith('stocksum')->all();
+
+        $users = null;
+        $sql = "SELECT w.name as warehouse_name,st.qty,p.name,p.description,p.product_group_id,p.unit_id,p.brand_id,p.remark
+                FROM product as p 
+                    left join stock_sum as st on p.id = st.product_id 
+                    left join warehouse as w on st.warehouse_id = w.id ORDER BY p.name ASC";
+        $users = Yii::$app->db->createCommand($sql)->queryAll();
+
+        // Create new Spreadsheet object
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set document properties
+        $spreadsheet->getProperties()
+            ->setCreator('Your App Name')
+            ->setLastModifiedBy('Your App Name')
+            ->setTitle('Product Export')
+            ->setSubject('Product Data')
+            ->setDescription('Exported product data from the application');
+
+        // Set column headers
+        $headers = [
+            'A1' => 'Name',
+            'B1' => 'Description',
+            'C1' => 'Product Type',
+            'D1' => 'Unit',
+            'E1' => 'Brand',
+            'F1' => 'Qty',
+            'G1' => 'Note',
+            'H1' => 'Warehouse',
+        ];
+
+        // Apply headers
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Style the header row
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'size' => 12,
+                'color' => ['rgb' => 'FFFFFF']
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ];
+
+        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+
+        // Set column widths
+        $sheet->getColumnDimension('A')->setWidth(10);
+        $sheet->getColumnDimension('B')->setWidth(20);
+        $sheet->getColumnDimension('C')->setWidth(30);
+        $sheet->getColumnDimension('D')->setWidth(15);
+        $sheet->getColumnDimension('E')->setWidth(20);
+        $sheet->getColumnDimension('F')->setWidth(20);
+        $sheet->getColumnDimension('G')->setWidth(20);
+        $sheet->getColumnDimension('H')->setWidth(20);
+
+        // Fill data rows
+        $row = 2;
+//        foreach ($users as $user) {
+//            $sheet->setCellValue('A' . $row, $user->name);
+//            $sheet->setCellValue('B' . $row, $user->description);
+//            $sheet->setCellValue('C' . $row, $user->product_group_id);
+//            $sheet->setCellValue('D' . $row, $user->unit_id);
+//            $sheet->setCellValue('E' . $row, $user->brand_id);
+//            $sheet->setCellValue('F' . $row, $user->stock_qty);
+//            $sheet->setCellValue('G' . $row, $user->remark);
+//            $sheet->setCellValue('H' . $row, $user->stocksum->warehouse_id);
+//            $row++;
+//        }
+        for ($i = 0; $i < count($users); $i++) {
+            $sheet->setCellValue('A' . $row, $users[$i]['name']);
+            $sheet->setCellValue('B' . $row, $users[$i]['description']);
+            $sheet->setCellValue('C' . $row, $users[$i]['product_group_id']);
+            $sheet->setCellValue('D' . $row, $users[$i]['unit_id']);
+            $sheet->setCellValue('E' . $row, $users[$i]['brand_id']);
+            $sheet->setCellValue('F' . $row, $users[$i]['qty']==null?0:$users[$i]['qty']);
+            $sheet->setCellValue('G' . $row, $users[$i]['remark']);
+            $sheet->setCellValue('H' . $row, $users[$i]['warehouse_name']);
+            $row++;
+        }
+
+        // Apply borders to data
+        $dataRange = 'A1:H' . ($row - 1);
+        $sheet->getStyle($dataRange)->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN)
+            ->getColor()->setRGB('CCCCCC');
+
+        // Set response headers for download
+        \Yii::$app->response->format = Response::FORMAT_RAW;
+        \Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        \Yii::$app->response->headers->add('Content-Disposition', 'attachment;filename="users_export_' . date('Y-m-d_H-i-s') . '.xlsx"');
+        \Yii::$app->response->headers->add('Cache-Control', 'max-age=0');
+
+        // Write file to output
+        $writer = new Xlsx($spreadsheet);
+
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        return $content;
     }
 }

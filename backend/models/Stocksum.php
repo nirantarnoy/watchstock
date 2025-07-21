@@ -96,7 +96,9 @@ class Stocksum extends \common\models\StockSum
 //        $model = Unit::find()->where(['name'=>$code])->one();
 //        return count($model)>0?$model->id:0;
 //    }
-
+    public function getWarehouse(){
+        return $this->hasOne(Warehouse::className(), ['id' => 'warehouse_id']);
+    }
 
 
 }

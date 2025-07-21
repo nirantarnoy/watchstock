@@ -186,9 +186,9 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     <div class="col-lg-1">
                         <label for="">คืนเป็นสินค้า</label>
                     </div>
-                    <div class="col-lg-1">
-                        <label for="">เป็นสินค้าใหม่</label>
-                    </div>
+<!--                    <div class="col-lg-1">-->
+<!--                        <label for="">เป็นสินค้าใหม่</label>-->
+<!--                    </div>-->
                     <div class="col-lg-2">
                         <label for="">เป็นสินค้าเดิม</label>
                     </div>
@@ -237,13 +237,13 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                 <?php endfor; ?>
                             </select>
                         </div>
-                        <div class="col-lg-1">
-                            <select name="is_return_new[]" class="form-control" onchange="checkReturnNew($(this))">
-                                <?php for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
-                                    <option value="<?= $yes_no[$i]['id'] ?>"><?= $yes_no[$i]['name'] ?></option>
-                                <?php endfor; ?>
-                            </select>
-                        </div>
+<!--                        <div class="col-lg-1">-->
+<!--                            <select name="is_return_new[]" class="form-control" onchange="checkReturnNew($(this))">-->
+<!--                                --><?php //for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
+<!--                                    <option value="--><?php //= $yes_no[$i]['id'] ?><!--">--><?php //= $yes_no[$i]['name'] ?><!--</option>-->
+<!--                                --><?php //endfor; ?>
+<!--                            </select>-->
+<!--                        </div>-->
 
                         <div class="col-lg-2">
                             <select name="return_to_product[]" class="form-control line-return-to-product">

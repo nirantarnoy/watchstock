@@ -183,6 +183,10 @@ class Product extends \common\models\Product
         }
   }
 
+  public function getStocksum(){
+        return $this->hasMany(Stocksum::class, ['product_id' => 'id']);
+  }
+
 
 
 }
