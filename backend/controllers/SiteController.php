@@ -331,8 +331,8 @@ class SiteController extends Controller
                 'p.code',
                 'p.name',
                 'SUM(jtl.qty) as total_qty',
-                'SUM(jtl.qty * jtl.line_price) as total_sales',
-                'AVG(jtl.line_price) as avg_price',
+                'SUM(jtl.qty * jtl.sale_price) as total_sales',
+                'AVG(jtl.sale_price) as avg_price',
                 'AVG(p.cost_price) as cost_price',
                 'SUM(jtl.qty * jtl.line_price) - SUM(jtl.qty * p.cost_price) as profit'
             ])
@@ -356,7 +356,7 @@ class SiteController extends Controller
             ->select([
                 'p.name',
                 'p.cost_price',
-                'AVG(jtl.line_price) as avg_sale_price',
+                'AVG(jtl.sale_price) as avg_sale_price',
                 'SUM(jtl.qty) as total_qty'
             ])
             ->from(['jtl' => 'journal_trans_line'])
