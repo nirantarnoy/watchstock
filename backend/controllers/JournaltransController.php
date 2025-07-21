@@ -546,7 +546,22 @@ class JournaltransController extends Controller
                                 }
 
                                 if ($trans_type_id == 8) { // คืนส่งช่าง
-//                                    //if ($is_return_new != null) {
+
+                                        if ($return_to_product[$i] == '0' && $remark[$i] != '') { // create new product from watch maker
+                                            $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
+                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+                                        } else { // return but not create new product
+                                            if ($return_to_product[$i] != '0') { // return to product by specific
+                                                $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
+                                                $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
+                                            } else {
+                                                $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
+                                                $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+                                            }
+                                        }
+
+
+//                                    if ($is_return_new != null) {
 //                                        //   if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
 //                                        if ($is_return_new[$i] == 1) { // create new product from watch maker
 //                                            $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
@@ -561,24 +576,7 @@ class JournaltransController extends Controller
 //                                                $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
 //                                            }
 //                                        }
-//                                    //}
-
-                                    if ($is_return_new != null) {
-                                        //   if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
-                                        if ($is_return_new[$i] == 1) { // create new product from watch maker
-                                            $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
-                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-                                        } else if ($is_return_new[$i] == 0) { // return but not create new product
-
-                                            if ($return_to_product[$i] != '0') { // return to product by specific
-                                                $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
-                                                $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
-                                            } else {
-                                                $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
-                                                $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-                                            }
-                                        }
-                                    }
+//                                    }
 
                                 }
                             }
