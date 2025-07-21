@@ -572,7 +572,7 @@ class ProductController extends Controller
                         if($rowData[5] != null || $rowData[5] != ''){
                             $new_stock_qty = $rowData[5];
                         }
-                        $model_dup->description = $rowData[1];
+                        $model_dup->description = trim($rowData[1]);
                         $model_dup->remark = $rowData[6];
                         $model_dup->stock_qty = $new_stock_qty;
                         if($model_dup->save(false)){
