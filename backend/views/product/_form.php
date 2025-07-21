@@ -260,6 +260,7 @@ if (!$model->isNewRecord) {
         <form action="<?= \yii\helpers\Url::to(['product/importproduct'], true) ?>" method="post"
               enctype="multipart/form-data">
             <input type="file" name="file_product" class="form-control">
+            <div style="height: 10px;"></div>
             <button class="btn btn-success">Import</button>
         </form>
     </div>
