@@ -1064,7 +1064,7 @@ class ProductController extends Controller
         // Set response headers for download
         \Yii::$app->response->format = Response::FORMAT_RAW;
         \Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        \Yii::$app->response->headers->add('Content-Disposition', 'attachment;filename="users_export_' . date('Y-m-d_H-i-s') . '.xlsx"');
+        \Yii::$app->response->headers->add('Content-Disposition', 'attachment;filename="products_export_' . date('Y-m-d_H-i-s') . '.xlsx"');
         \Yii::$app->response->headers->add('Cache-Control', 'max-age=0');
 
         // Write file to output
