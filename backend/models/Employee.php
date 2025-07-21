@@ -76,7 +76,7 @@ class Employee extends \common\models\Employee
     public static function findCode($id)
     {
         $model = Employee::find()->where(['id' => $id])->one();
-        return $model != null ? $model->code : '';
+        return $model != null ? $model->emp_code : '';
     }
 
     public static function findIdFromUserId($user_id){

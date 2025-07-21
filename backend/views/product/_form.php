@@ -255,6 +255,7 @@ if (!$model->isNewRecord) {
         <?php ActiveForm::end(); ?>
 
     </div>
+    <br />
     <div class="row" style="display: none;">
         <form action="<?= \yii\helpers\Url::to(['product/importproduct'], true) ?>" method="post"
               enctype="multipart/form-data">

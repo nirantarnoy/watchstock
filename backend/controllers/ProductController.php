@@ -495,10 +495,93 @@ class ProductController extends Controller
                         if($model_dup->save(false)){
                             $this->calStock($model_dup->id,1,$rowData[7],$rowData[5]);
                             $res+=1;
+                        }                        continue;
+                    }else{
+                        //    echo "must new";
+                        $modelx = new \backend\models\Product();
+                        // $modelx->code = $rowData[0];
+                        $modelx->name = trim($rowData[0]);
+                        $modelx->description = trim($rowData[1]);
+                        $modelx->product_group_id = $rowData[2]; // watch or phone or etc
+                        $modelx->brand_id = $rowData[4];
+                        $modelx->product_type_id = 1; // normal or custom
+                        $modelx->type_id = 1; // 1 = new 2 = second used
+                        $modelx->unit_id = 1;
+                        $modelx->status = 1;
+                        $modelx->cost_price = 0;
+                        $modelx->sale_price = 0;
+                        $modelx->stock_qty = 0;//$rowData[5];
+                        $modelx->remark = $rowData[6];
+                        //
+                        if ($modelx->save(false)) {
+                            $this->calStock($modelx->id,1,$rowData[7],$rowData[5]);
+                            $res += 1;
+                        }
+                    }
+                }
+                //    print_r($qty_text);return;
+
+                if ($res > 0) {
+                    $session = \Yii::$app->session;
+                    $session->setFlash('msg', 'นำเข้าข้อมูลเรียบร้อย');
+                    return $this->redirect(['index']);
+                } else {
+                    $session = \Yii::$app->session;
+                    $session->setFlash('msg-error', 'พบข้อมผิดพลาดนะ');
+                    return $this->redirect(['index']);
+                }
+                // }
+                fclose($file);
+//            }
+//        }
+            }
+        }
+    }
+
+    public function actionImportupdatestock()
+    {
+        $uploaded = UploadedFile::getInstanceByName('file_product');
+        if (!empty($uploaded)) {
+            //echo "ok";return;
+            $upfiles = time() . "." . $uploaded->getExtension();
+            // if ($uploaded->saveAs(Yii::$app->request->baseUrl . '/uploads/files/' . $upfiles)) {
+            if ($uploaded->saveAs('../web/uploads/files/products/' . $upfiles)) {
+                //  echo "okk";return;
+                // $myfile = Yii::$app->request->baseUrl . '/uploads/files/' . $upfiles;
+                $myfile = '../web/uploads/files/products/' . $upfiles;
+                $file = fopen($myfile, "r+");
+                fwrite($file, "\xEF\xBB\xBF");
+
+                setlocale(LC_ALL, 'th_TH.TIS-620');
+                $i = -1;
+                $res = 0;
+                $data = [];
+                while (($rowData = fgetcsv($file, 10000, ",")) !== FALSE) {
+                    $i += 1;
+                    $catid = 0;
+                    $qty = 0;
+                    $price = 0;
+                    $cost = 0;
+                    if ($rowData[2] == '' || $i == 0) {
+                        continue;
+                    }
+
+                    $model_dup = \backend\models\Product::find()->where(['name' => trim($rowData[0]),'description'=>trim($rowData[1])])->one();
+                    if ($model_dup != null) {
+                        $new_stock_qty = 0;
+                        if($rowData[5] != null || $rowData[5] != ''){
+                            $new_stock_qty = $rowData[5];
+                        }
+                        $model_dup->description = $rowData[1];
+                        $model_dup->remark = $rowData[6];
+                        $model_dup->stock_qty = $new_stock_qty;
+                        if($model_dup->save(false)){
+                            $this->calStock($model_dup->id,1,$rowData[7],$rowData[5]);
+                            $res+=1;
                         }
                         continue;
                     }else{
-                    //    echo "must new";
+                        //    echo "must new";
                         $modelx = new \backend\models\Product();
                         // $modelx->code = $rowData[0];
                         $modelx->name = trim($rowData[0]);

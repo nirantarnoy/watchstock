@@ -16,7 +16,7 @@ class EmployeeSearch extends Employee
     {
         return [
             [['id','status', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
-            [['code', 'fname', 'lname', 'description', 'photo'], 'safe'],
+            [['emp_code', 'fname', 'lname', 'description', 'photo'], 'safe'],
             [['globalSearch'],'string']
         ];
     }
@@ -73,7 +73,7 @@ class EmployeeSearch extends Employee
         }
 
         if($this->globalSearch != ''){
-            $query->orFilterWhere(['like', 'code', $this->globalSearch])
+            $query->orFilterWhere(['like', 'emp_code', $this->globalSearch])
                 ->orFilterWhere(['like', 'fname', $this->globalSearch])
                 ->orFilterWhere(['like', 'lname', $this->globalSearch])
                 ->orFilterWhere(['like', 'description', $this->globalSearch])
