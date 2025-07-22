@@ -167,7 +167,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     <h4>รับสินค้าคืนช่าง</h4>
                 </div>
             </div>
-            <form action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
+            <form onsubmit="return validateForm();" action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="8">
                 <div class="row" style="margin-top: 10px">
@@ -224,14 +224,15 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                    onchange="checkReturnQty($(this))">
                         </div>
                         <div class="col-lg-1">
-                            <select name="return_to_warehouse[]" class="form-control">
+                            <select name="return_to_warehouse[]" class="form-control line-return-to-warehouse">
+                                <option value="-1">-- เลือกคลัง --</option>
                                 <?php foreach ($warehouse_data as $value_warehouse): ?>
                                     <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-lg-1">
-                            <select name="return_to_type[]" class="form-control">
+                            <select name="return_to_type[]" class="form-control line-return-to-type">
                                 <?php for ($i = 0; $i <= count($product_type) - 1; $i++): ?>
                                     <option value="<?= $product_type[$i]['id'] ?>"><?= $product_type[$i]['name'] ?></option>
                                 <?php endfor; ?>
@@ -246,8 +247,8 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
 <!--                        </div>-->
 
                         <div class="col-lg-2">
-                            <select name="return_to_product[]" class="form-control line-return-to-product">
-                                <option value="0">เลือกสินค้า</option>
+                            <select name="return_to_product[]" class="form-control line-return-to-product" required>
+                                <option value="-1"> -- เลือกสินค้า -- </option>
                                 <?php if ($product_can_return != null): ?>
                                     <?php for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
                                         <option value="<?= $product_can_return[$m]['id'] ?>"><?= $product_can_return[$m]['name'] ?></option>
@@ -257,7 +258,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                             </select>
                         </div>
                         <div class="col-lg-3">
-                            <input type="text" name="return_remark[]" class="form-control" value="">
+                            <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">
                         </div>
                     </div>
 
@@ -370,13 +371,19 @@ function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 function getCanreturnProduct($product_id)
 {
     $product_data = [];
-    $product_name = \backend\models\Product::findSku($product_id);
-    if ($product_name != '' || $product_name != null) {
-        $model = \common\models\Product::find()->where(['name' => trim($product_name)])->all();
-        if ($model) {
-            foreach ($model as $value) {
-                array_push($product_data, ['id' => $value->id, 'name' => $value->name . ' ' . $value->description]);
-            }
+//    $product_name = \backend\models\Product::findSku($product_id);
+//    if ($product_name != '' || $product_name != null) {
+//        $model = \common\models\Product::find()->where(['name' => trim($product_name)])->all();
+//        if ($model) {
+//            foreach ($model as $value) {
+//                array_push($product_data, ['id' => $value->id, 'name' => $value->name . ' ' . $value->description]);
+//            }
+//        }
+//    }
+    $model = \common\models\Product::find()->where(['status' => 1])->all();
+    if ($model) {
+        foreach ($model as $value) {
+            array_push($product_data, ['id' => $value->id, 'name' => $value->name . ' ' . $value->description]);
         }
     }
     return $product_data;
@@ -439,6 +446,32 @@ function checkReturnNew(e){
     }else{
         e.closest("div.row").find(".line-return-to-product").prop("disabled", false);
     }
+}
+
+function validateForm() {
+     let select_warehouses = document.querySelectorAll('.line-return-to-warehouse');
+    for (let i = 0; i < select_warehouses.length; i++) {
+        if (select_warehouses[i].value === '-1') {
+            alert('กรุณาเลือกคลังให้ครบถ้วน');
+            select_warehouses[i].focus();
+            return false;
+        }
+    }
+    
+    let line_remark = document.querySelectorAll('.line-return-remark');
+    
+    let selects = document.querySelectorAll('.line-return-to-product');
+    for (let i = 0; i < selects.length; i++) {
+        if (selects[i].value === '-1' && line_remark[i].value === '') {
+            alert('กรุณาตรวจสอบสินค้าให้ครบถ้วน');
+            selects[i].focus();
+            return false;
+        }
+    }
+    
+   
+    
+    return true;
 }
 JS;
 $this->registerJs($js, static::POS_END);
