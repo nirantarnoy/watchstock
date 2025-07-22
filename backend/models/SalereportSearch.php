@@ -79,6 +79,7 @@ class SalereportSearch extends Model
                 p.id as product_id,
                 p.name as product_name,
                 p.code as product_code,
+                p.description as product_description,
                 DAY(jt.trans_date) as day_of_month,
                 DATE(jt.trans_date) as trans_date,
                 SUM(jtl.qty * jtl.line_price) as total_amount,
@@ -154,7 +155,7 @@ class SalereportSearch extends Model
             if (!isset($productData[$productId])) {
                 $productData[$productId] = [
                     'product_id' => $productId,
-                    'product_name' => $row['product_name'],
+                    'product_name' => $row['product_name'].' '.$row['product_description'],
                     'product_code' => $row['product_code'],
                     'daily_sales' => [],
                     'total_amount' => 0,

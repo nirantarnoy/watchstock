@@ -158,10 +158,13 @@ $grandTotal = array_sum(array_column($crosstabData['products'], 'total_amount'))
                                 </tr>
                             <?php else: ?>
                                 <?php
-                                   $total_qty = 0;
+//                                   $total_qty = 0;
                                    $total_amount = 0;
                                 ?>
                                 <?php foreach ($crosstabData['products'] as $product): ?>
+                                    <?php
+                                    $total_qty = 0;
+                                    ?>
                                     <tr>
 <!--                                        <td class="text-center">--><?php //= Html::encode($product['product_code']) ?><!--</td>-->
                                         <td><?= Html::encode($product['product_name']) ?></td>
