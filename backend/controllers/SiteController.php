@@ -3,6 +3,8 @@
 namespace backend\controllers;
 
 use common\models\LoginForm;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -437,6 +439,42 @@ class SiteController extends Controller
     /**
      * Export ข้อมูลเป็น Excel (optional)
      */
+//    public function actionExport()
+//    {
+//        $fromDate = Yii::$app->request->get('from_date', date('Y-m-d', strtotime('-30 days')));
+//        $toDate = Yii::$app->request->get('to_date', date('Y-m-d'));
+//
+//        $fromTimestamp = strtotime($fromDate);
+//        $toTimestamp = strtotime($toDate . ' 23:59:59');
+//
+//        $salesData = $this->getSalesByProduct($fromTimestamp, $toTimestamp);
+//
+//        // สร้าง CSV
+//        $filename = 'sales_report_' . date('Y-m-d') . '.csv';
+//        header('Content-Type: text/csv');
+//        header('Content-Disposition: attachment; filename="' . $filename . '"');
+//
+//        $output = fopen('php://output', 'w');
+//
+//        // Header
+//        fputcsv($output, ['รหัสสินค้า', 'ชื่อสินค้า', 'จำนวนขาย', 'ยอดขาย', 'ราคาเฉลี่ย', 'ต้นทุน', 'กำไร']);
+//
+//        // Data
+//        foreach ($salesData as $row) {
+//            fputcsv($output, [
+//                $row['code'],
+//                $row['name'],
+//                $row['total_qty'],
+//                number_format($row['total_sales'], 2),
+//                number_format($row['avg_price'], 2),
+//                number_format($row['cost_price'], 2),
+//                number_format($row['profit'], 2)
+//            ]);
+//        }
+//
+//        fclose($output);
+//        exit;
+//    }
     public function actionExport()
     {
         $fromDate = Yii::$app->request->get('from_date', date('Y-m-d', strtotime('-30 days')));
@@ -447,19 +485,18 @@ class SiteController extends Controller
 
         $salesData = $this->getSalesByProduct($fromTimestamp, $toTimestamp);
 
-        // สร้าง CSV
-        $filename = 'sales_report_' . date('Y-m-d') . '.csv';
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
 
-        $output = fopen('php://output', 'w');
+        // ตั้งชื่อหัวตาราง
+        $sheet->fromArray([
+            ['รหัสสินค้า', 'ชื่อสินค้า', 'จำนวนขาย', 'ยอดขาย', 'ราคาเฉลี่ย', 'ต้นทุน', 'กำไร']
+        ]);
 
-        // Header
-        fputcsv($output, ['รหัสสินค้า', 'ชื่อสินค้า', 'จำนวนขาย', 'ยอดขาย', 'ราคาเฉลี่ย', 'ต้นทุน', 'กำไร']);
-
-        // Data
+        // เพิ่มข้อมูลลงตาราง
+        $rowNum = 2;
         foreach ($salesData as $row) {
-            fputcsv($output, [
+            $sheet->fromArray([
                 $row['code'],
                 $row['name'],
                 $row['total_qty'],
@@ -467,10 +504,18 @@ class SiteController extends Controller
                 number_format($row['avg_price'], 2),
                 number_format($row['cost_price'], 2),
                 number_format($row['profit'], 2)
-            ]);
+            ], null, 'A' . $rowNum);
+            $rowNum++;
         }
 
-        fclose($output);
+        // สร้างไฟล์ Excel
+        $filename = 'sales_report_' . date('Y-m-d') . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"{$filename}\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
         exit;
     }
 

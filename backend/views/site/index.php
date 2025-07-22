@@ -47,7 +47,7 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
                                 <label>&nbsp;</label>
                                 <div>
                                     <?= Html::submitButton('ค้นหา', ['class' => 'btn btn-primary']) ?>
-                                    <?= Html::a('Export CSV', ['export', 'from_date' => $fromDate, 'to_date' => $toDate], ['class' => 'btn btn-success']) ?>
+                                    <?= Html::a('Export Excel', ['export', 'from_date' => $fromDate, 'to_date' => $toDate], ['class' => 'btn btn-success']) ?>
                                 </div>
                             </div>
                         </div>
