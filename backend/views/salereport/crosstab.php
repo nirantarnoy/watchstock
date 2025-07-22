@@ -180,7 +180,7 @@ $grandTotal = array_sum(array_column($crosstabData['products'], 'total_amount'))
                                             <td class="text-right <?= $amount > 0 ? 'text-success' : 'text-muted' ?>">
                                                 <?php if ($qty > 0): ?>
                                                     <span title="ยอดเงินรวม: <?= number_format($amount, 0) ?> บาท">
-                                        <?= number_format($qty, 2) ?>
+                                        <?= number_format($qty, 0) ?>
                                     </span>
                                                 <?php else: ?>
                                                     <span title="ยอดเงินรวม: <?= number_format($qty, 0) ?> บาท">
@@ -192,7 +192,7 @@ $grandTotal = array_sum(array_column($crosstabData['products'], 'total_amount'))
 
                                         <td class="text-right">
                                     <span title="ยอดเงินรวม: <?= number_format($total_amount, 0) ?> บาท">
-                                        <?= number_format($total_qty, 2) ?>
+                                        <?= number_format($total_qty, 0) ?>
                                     </span>
                                         </td>
                                     </tr>
