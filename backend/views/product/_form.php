@@ -256,8 +256,8 @@ if (!$model->isNewRecord) {
 
     </div>
     <br />
-    <div class="row" style="display: nonex;">
-        <form action="<?= \yii\helpers\Url::to(['product/importproduct'], true) ?>" method="post"
+    <div class="row" style="display: none;">
+        <form action="<?= \yii\helpers\Url::to(['product/importupdatestock'], true) ?>" method="post"
               enctype="multipart/form-data">
             <input type="file" name="file_product" class="form-control">
             <div style="height: 10px;"></div>
