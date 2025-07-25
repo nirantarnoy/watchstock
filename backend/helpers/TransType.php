@@ -14,6 +14,7 @@ class TransType
         '7' => 'เบิกส่งช่าง',
         '8' => 'คืนส่งช่าง',
         '9' => 'ขาย Dropship',
+        '10' => 'ปรับสต๊อกเข้า',
     ];
 
     private static $dataobj = [
@@ -26,6 +27,7 @@ class TransType
         ['id'=>'7','name' => 'เบิกส่งช่าง'],
         ['id'=>'8','name' => 'คืนส่งช่าง'],
         ['id'=>'9','name' => 'ขาย Dropship'],
+        ['id'=>'10','name' => 'ปรับสต๊อกเข้า'],
     ];
     public static function asArray()
     {

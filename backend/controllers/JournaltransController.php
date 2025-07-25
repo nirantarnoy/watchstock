@@ -103,7 +103,11 @@ class JournaltransController extends Controller
 
 
             //custom model data
-            $model->stock_type_id = 2; // 1 เข้า 2 ออก
+            if($type == 10){
+                $model->stock_type_id = 1; // 1 เข้า 2 ออก
+            }else {
+                $model->stock_type_id = 2; // 1 เข้า 2 ออก
+            }
             if ($model->trans_type_id == 7 || $model->trans_type_id == 5) { // ยืม และ ส่งช่าง
                 $model->status = 1;
             } else {
@@ -336,6 +340,24 @@ class JournaltransController extends Controller
                                     }
                                 }
                             }
+                        }
+                    }
+                } else if($activity_type == 10){ // รับสินค้าอัพเดทคลัง
+                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
+                    if ($model) {
+                        $model->qty += $qty;
+                        if ($model->save(false)) {
+                            $this->updateProductStock($product_id);
+                        }
+                    } else {
+                        $model = new \common\models\StockSum();
+                        $model->product_id = $product_id;
+                        $model->warehouse_id = $warehouse_id;
+                        $model->qty = $qty;
+                        $model->reserv_qty = 0;
+                        $model->updated_at = date('Y-m-d H:i:s');
+                        if ($model->save(false)) {
+                            $this->updateProductStock($product_id);
                         }
                     }
                 } else {
@@ -770,4 +792,5 @@ class JournaltransController extends Controller
             }
         }
     }
+
 }

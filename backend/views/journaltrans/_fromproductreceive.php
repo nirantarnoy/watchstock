@@ -163,7 +163,7 @@ if ($create_type == 7) {
 ?>
 
     <div class="journal-trans-form">
-        <input type="hidden" id="create-type" value="<?= $create_type ?>">
+
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
         <?php $model->trans_type_id = $model->isNewRecord ? $create_type : $model->trans_type_id ?>
         <?= $form->field($model, 'trans_type_id')->hiddenInput()->label(false) ?>
@@ -261,9 +261,9 @@ if ($create_type == 7) {
                                 <h3 class="panel-title pull-left panel-title-address">รายการที่: <?= ($i + 1) ?></h3>
                                 <div class="pull-right">
                                     <button type="button" class="add-item btn btn-success btn-xs"><i
-                                                class="glyphicon glyphicon-plus"></i></button>
+                                            class="glyphicon glyphicon-plus"></i></button>
                                     <button type="button" class="remove-item btn btn-danger btn-xs"><i
-                                                class="glyphicon glyphicon-minus"></i></button>
+                                            class="glyphicon glyphicon-minus"></i></button>
                                 </div>
                                 <div class="clearfix"></div>
                             </div>
@@ -312,7 +312,7 @@ if ($create_type == 7) {
                                                readonly value="">
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty', 'onchange' => 'checkOverQty($(this))']) ?>
@@ -322,7 +322,7 @@ if ($create_type == 7) {
                                     </div>
                                     <div class="col-sm-1 text-right" style="padding-top: 25px;">
                                         <button type="button" class="remove-item btn btn-danger btn-sm"><i
-                                                    class="fa fa-trash"></i></button>
+                                                class="fa fa-trash"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -666,17 +666,12 @@ function linecal(e){
 
 function checkOverQty(e){
     var row = e.closest(".row");
-    var create_type = $("#create-type").val();
-  //  alert(create_type);
-    if(create_type != '10'){
-        var line_quantity = e.val();
-        var line_product_onhand = row.find(".line-product-onhand").val();
-        if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){
-            alert('จํานวนไม่เพียงพอ');
-            e.val(line_product_onhand);
-        }
+    var line_quantity = e.val();
+    var line_product_onhand = row.find(".line-product-onhand").val();
+    if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){
+        alert('จํานวนไม่เพียงพอ');
+        e.val(line_product_onhand);
     }
-    
 }
 JS;
 
