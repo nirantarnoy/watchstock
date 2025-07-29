@@ -1,6 +1,7 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\DetailView;
 use yii\grid\GridView;
 use yii\data\ArrayDataProvider;
@@ -12,6 +13,335 @@ use yii\data\ArrayDataProvider;
 $this->title = $model->journal_no;
 $this->params['breadcrumbs'][] = ['label' => 'รายการ Stock Transaction', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
+
+
+// URL สำหรับ AJAX
+$ajax_url = Url::to(['get-product-info']);
+
+// CSS สำหรับ autocomplete และ alerts
+$autocompleteCSS = <<<CSS
+.autocomplete-dropdown {
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.autocomplete-item:hover {
+    background-color: #f5f5f5;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item.highlighted {
+    background-color: #007bff;
+    color: white;
+}
+
+.product-code {
+    color: #666;
+    font-size: 12px;
+}
+
+.product-field-container {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+    display: none;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.item-number {
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.dynamicform_wrapper .btn-success {
+    margin-right: 5px;
+}
+
+.table-responsive {
+    overflow: visible !important;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.table-responsive .table {
+    overflow: visible !important;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.stock-alert {
+    position: relative;
+}
+
+.stock-warning {
+    background-color: #fff3cd !important;
+    border-color: #ffeaa7 !important;
+    color: #856404;
+}
+
+.stock-error {
+    background-color: #f8d7da !important;
+    border-color: #f5c6cb !important;
+    color: #721c24;
+}
+
+.warehouse-option-with-stock {
+    display: flex;
+    justify-content: space-between;
+}
+
+.warehouse-stock-info {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.alert-message {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    font-size: 11px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: none;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+CSS;
+
+$this->registerCss($autocompleteCSS);
+
+// JavaScript สำหรับ autocomplete และ stock management
+$autocompleteJs = <<<JS
+// ตัวแปรเก็บข้อมูลสินค้า
+var productsData = [];
+var productStockData = {};
+var isProductsLoaded = false;
+
+// ฟังก์ชันโหลดข้อมูลสินค้า
+function loadProductsData() {
+    if (isProductsLoaded) return;
+    //alert('กําลังโหลดข้อมูลสินค้า...');
+    $.ajax({
+        url: '$ajax_url',
+        type: 'GET',
+        data: { action: 'get-all-products' },
+        dataType: 'json',
+        success: function(data) {
+            productsData = data;
+            isProductsLoaded = true;
+        },
+        error: function() {
+            console.log('Error loading products data');
+            productsData = [];
+        }
+    });
+}
+
+// ฟังก์ชันค้นหาสินค้า
+function searchProducts(query) {
+    if (!query || query.length < 1) return [];
+    
+    query = query.toLowerCase();
+    return productsData.filter(function(product) {
+        return product.name.toLowerCase().includes(query) || 
+               product.code.toLowerCase().includes(query) ||
+               product.display.toLowerCase().includes(query);
+    }).slice(0, 10);
+}
+
+// ฟังก์ชันแสดงผลลัพธ์
+function showAutocompleteResults(input, results) {
+    var index = input.attr('data-index');
+    var dropdown = $('.autocomplete-dropdown[data-index="' + index + '"]');
+    
+    dropdown.empty();
+    
+    if (results.length === 0) {
+        dropdown.hide();
+        return;
+    }
+    
+    results.forEach(function(product) {
+        var item = $('<div class="autocomplete-item">')
+            .html('<div>' + product.code + '</div><div class="product-code">' + product.name + '</div>')
+            .data('product', product);
+        dropdown.append(item);
+    });
+    
+    dropdown.show();
+}
+
+// ฟังก์ชันซ่อน dropdown
+function hideAutocomplete(index) {
+    setTimeout(function() {
+        $('.autocomplete-dropdown[data-index="' + index + '"]').hide();
+    }, 200);
+}
+
+// ฟังก์ชันเลือกสินค้า
+function selectProduct(input, product) {
+    var index = input.attr('data-index');
+    
+    // อัพเดตค่า
+    input.val(product.display);
+    $('.product-id-hidden[data-index="' + index + '"]').val(product.id);
+    
+    // โหลดข้อมูลสต็อกและอัพเดตคลังสินค้า
+    // alert(product.id);
+    loadProductStock(product.id, index);
+    // ซ่อน dropdown
+    $('.autocomplete-dropdown[data-index="' + index + '"]').hide();
+    
+}
+
+
+$(document).ready(function() {
+    
+    // โหลดข้อมูลสินค้าตอนเริ่มต้น
+    loadProductsData();
+    
+    // Event สำหรับ autocomplete
+    $(document).on('input', '.product-autocomplete', function() {
+        var input = $(this);
+        var query = input.val();
+        
+        if (!isProductsLoaded) {
+            loadProductsData();
+            return;
+        }
+        
+        var results = searchProducts(query);
+        showAutocompleteResults(input, results);
+    });
+    
+    $(document).on('focus', '.product-autocomplete', function() {
+        var input = $(this);
+        var query = input.val();
+        
+        if (!isProductsLoaded) {
+            loadProductsData();
+            return;
+        }
+        
+        if (query) {
+            var results = searchProducts(query);
+            showAutocompleteResults(input, results);
+        }
+    });
+    
+    $(document).on('blur', '.product-autocomplete', function() {
+        var index = $(this).attr('data-index');
+        hideAutocomplete(index);
+    });
+    
+    $(document).on('click', '.autocomplete-item', function() {
+        var product = $(this).data('product');
+        var dropdown = $(this).closest('.autocomplete-dropdown');
+        var index = dropdown.attr('data-index');
+        var input = $('.product-autocomplete[data-index="' + index + '"]');
+        selectProduct(input, product);
+    });
+    
+    // Event navigation ด้วย keyboard
+    $(document).on('keydown', '.product-autocomplete', function(e) {
+        var index = $(this).attr('data-index');
+        var dropdown = $('.autocomplete-dropdown[data-index="' + index + '"]');
+        var items = dropdown.find('.autocomplete-item');
+        var highlighted = items.filter('.highlighted');
+        
+        if (e.keyCode === 40) { // Arrow Down
+            e.preventDefault();
+            if (highlighted.length === 0) {
+                items.first().addClass('highlighted');
+            } else {
+                highlighted.removeClass('highlighted');
+                var next = highlighted.next('.autocomplete-item');
+                if (next.length) {
+                    next.addClass('highlighted');
+                } else {
+                    items.first().addClass('highlighted');
+                }
+            }
+        } else if (e.keyCode === 38) { // Arrow Up
+            e.preventDefault();
+            if (highlighted.length === 0) {
+                items.last().addClass('highlighted');
+            } else {
+                highlighted.removeClass('highlighted');
+                var prev = highlighted.prev('.autocomplete-item');
+                if (prev.length) {
+                    prev.addClass('highlighted');
+                } else {
+                    items.last().addClass('highlighted');
+                }
+            }
+        } else if (e.keyCode === 13) { // Enter
+            e.preventDefault();
+            if (highlighted.length) {
+                var product = highlighted.data('product');
+                selectProduct($(this), product);
+            }
+        } else if (e.keyCode === 27) { // Escape
+            dropdown.hide();
+        }
+    });
+});
+JS;
+
+$this->registerJs($autocompleteJs, \yii\web\View::POS_READY);
 
 
 $product_can_return = null;
@@ -247,15 +577,25 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
 <!--                        </div>-->
 
                         <div class="col-lg-2">
-                            <select name="return_to_product[]" class="form-control line-return-to-product" required>
-                                <option value="-1"> -- เลือกสินค้า -- </option>
-                                <?php if ($product_can_return != null): ?>
-                                    <?php for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
-                                        <option value="<?= $product_can_return[$m]['id'] ?>"><?= $product_can_return[$m]['name'] ?></option>
-                                    <?php endfor; ?>
-                                <?php endif; ?>
-
-                            </select>
+<!--                            <select name="return_to_product[]" data-index="--><?php //=$i?><!--" class="form-control line-return-to-product" required>-->
+<!--                                <option value="-1"> -- เลือกสินค้า -- </option>-->
+<!--                                --><?php //if ($product_can_return != null): ?>
+<!--                                    --><?php //for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
+<!--                                        <option value="--><?php //= $product_can_return[$m]['id'] ?><!--">--><?php //= $product_can_return[$m]['name'] ?><!--</option>-->
+<!--                                    --><?php //endfor; ?>
+<!--                                --><?php //endif; ?>
+<!---->
+<!--                            </select>-->
+                            <input type="text"
+                                   name="return_to_product_name[]"
+                            class ='form-control product-autocomplete'
+                            placeholder = 'พิมพ์ชื่อสินค้าหรือรหัสสินค้า...'
+                            data-index = '<?=$i?>'
+                            autocomplete = 'off'
+                            required >
+                            <input type="hidden" name="return_to_product[]" class = 'product-id-hidden'
+                            data-index = "<?=$i?>">
+                            <div class="autocomplete-dropdown" data-index="<?= $i ?>"></div>
                         </div>
                         <div class="col-lg-3">
                             <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">

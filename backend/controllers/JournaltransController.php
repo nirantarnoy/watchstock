@@ -530,6 +530,8 @@ class JournaltransController extends Controller
         $return_to_product = \Yii::$app->request->post('return_to_product');
 //        $journal_trans_line_id = \Yii::$app->request->post('journal_trans_line_id');
 
+       // print_r($return_to_product);return;
+
         if ($journal_trans_id && $qty != null && $trans_type_id != null) {
             $model = new \backend\models\JournalTrans();
             $model->trans_date = date('Y-m-d H:i:s');
@@ -791,6 +793,53 @@ class JournaltransController extends Controller
                 }
             }
         }
+    }
+
+    public function actionGetProductInfo()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $request = \Yii::$app->request;
+
+        // ถ้าขอข้อมูลสินค้าทั้งหมดสำหรับ autocomplete
+        if ($request->get('action') === 'get-all-products') {
+            $products = \backend\models\Product::find()
+                ->where(['status' => 1])
+                ->all();
+
+            $result = [];
+            foreach ($products as $product) {
+                $result[] = [
+                    'id' => $product->id,
+                    'name' => $product->description,
+                    'code' => $product->name ?? '',
+                    'price' => $product->sale_price ?? 0,
+                    'display' => $product->name . ($product->description ? ' (' . $product->description . ')' : ''),
+                    'unit_id' => $product->unit_id,
+                    'unit_name' => \backend\models\Unit::findName($product->unit_id),
+                ];
+            }
+
+            return $result;
+        }
+
+        // ถ้าขอข้อมูลสินค้าเฉพาะ ID (สำหรับการเลือกสินค้า)
+        $id = $request->get('id');
+        if ($id) {
+            $product = \backend\models\Product::findOne($id);
+            if ($product) {
+                return [
+                    'id' => $product->id,
+                    'product_name' => $product->name,
+                    'name' => $product->name,
+                    'code' => $product->code ?? '',
+                    'price' => $product->sale_price ?? 0,
+                    'display' => $product->code . ($product->name ? ' (' . $product->name . ')' : '')
+                ];
+            }
+        }
+
+        return ['error' => 'Product not found'];
     }
 
 }
