@@ -29,18 +29,23 @@ class ReportController extends Controller
                 'denyCallback' => function ($rule, $action) {
                     throw new ForbiddenHttpException('คุณไม่ได้รับอนุญาติให้เข้าใช้งาน!');
                 },
-                'rules'=>[
-                    [
-                        'allow'=>true,
-                        'roles'=>['@'],
-                        'matchCallback'=>function($rule,$action){
-                            $currentRoute = \Yii::$app->controller->getRoute();
-                            if(\Yii::$app->user->can('CanReadReport')){
-                                return true;
-                            }
-                        }
-                    ]
-                ]
+//                'rules'=>[
+//                    [
+//                        'allow'=>true,
+//                        'roles'=>['@'],
+//                        'matchCallback'=>function($rule,$action){
+//                            $currentRoute = \Yii::$app->controller->getRoute();
+//                            if(\Yii::$app->user->can($currentRoute)){
+//                                return true;
+//                            }
+//                        }
+//                    ]
+//                ],
+                [
+                    'allow' => true,
+                    'actions' => ['index'],
+                    'roles' => ['CanReadSaleReport'], // RBAC permission
+                ],
             ],
         ];
     }
