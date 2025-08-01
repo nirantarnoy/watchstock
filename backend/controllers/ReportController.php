@@ -6,10 +6,44 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Yii;
 use yii\db\Query;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
+use yii\filters\AccessControl;
+use yii\web\Response;
+use yii\helpers\ArrayHelper;
 
 class ReportController extends Controller
 {
+    public function behaviors()
+    {
+        return [
+//            'verbs' => [
+//                'class' => VerbFilter::className(),
+//                'actions' => [
+//                    'delete' => ['POST','GET'],
+//                ],
+//            ],
+            'access'=>[
+                'class'=>AccessControl::className(),
+                'denyCallback' => function ($rule, $action) {
+                    throw new ForbiddenHttpException('คุณไม่ได้รับอนุญาติให้เข้าใช้งาน!');
+                },
+                'rules'=>[
+                    [
+                        'allow'=>true,
+                        'roles'=>['@'],
+                        'matchCallback'=>function($rule,$action){
+                            $currentRoute = \Yii::$app->controller->getRoute();
+                            if(\Yii::$app->user->can($currentRoute)){
+                                return true;
+                            }
+                        }
+                    ]
+                ]
+            ],
+        ];
+    }
     public function actionIndex()
     {
 
