@@ -44,8 +44,8 @@ class ReportController extends Controller
                 [
                     'allow' => true,
                     'actions' => ['index'],
-                   // 'roles' => ['Super user'], // RBAC permission
-                    'permissionName' => 'CanReadSaleReport',
+                    'roles' => ['Super user','System Administrator'], // RBAC permission
+                    //'permissionName' => 'CanReadSaleReport',
                 ],
             ],
         ];
