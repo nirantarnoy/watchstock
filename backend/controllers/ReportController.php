@@ -29,7 +29,7 @@ class ReportController extends Controller
                 'denyCallback' => function ($rule, $action) {
                     throw new ForbiddenHttpException('คุณไม่ได้รับอนุญาติให้เข้าใช้งาน!');
                 },
-//                'rules'=>[
+                'rules'=>[
 //                    [
 //                        'allow'=>true,
 //                        'roles'=>['@'],
@@ -39,14 +39,15 @@ class ReportController extends Controller
 //                                return true;
 //                            }
 //                        }
-//                    ]
-//                ],
-                [
-                    'allow' => true,
-                    'actions' => ['index'],
-                    'roles' => ['Super user','System Administrator'], // RBAC permission
-                    //'permissionName' => 'CanReadSaleReport',
+//                    ],
+                    [
+                        'allow' => true,
+                        'actions' => ['index'],
+                        'roles' => ['Super user','System Administrator'], // RBAC permission
+                        //'permissionName' => 'CanReadSaleReport',
+                    ],
                 ],
+
             ],
         ];
     }
