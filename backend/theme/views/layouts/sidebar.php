@@ -168,7 +168,7 @@
                                     </a>
                                 </li>
                             <?php endif;?>
-                            <?php //if (\Yii::$app->user->can('stocktrans/index')): ?>
+                            <?php if (\Yii::$app->user->can('CanReadSaleReport')): ?>
                                 <li class="nav-item">
                                     <a href="index.php?r=report" class="nav-link report">
                                         <i class="far fa-circlez nav-icon"></i>
@@ -178,7 +178,7 @@
                                         </p>
                                     </a>
                                 </li>
-                            <?php //endif;?>
+                            <?php endif;?>
                         </ul>
                     </li>
                 <?php endif;?>
