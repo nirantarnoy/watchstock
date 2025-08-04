@@ -500,114 +500,85 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
             <form onsubmit="return validateForm();" action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="8">
-                <div class="row" style="margin-top: 10px">
-                    <div class="col-lg-2">
-                        <label for="">สินค้า</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">จำนวนเบิก</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">จำนวนคืน</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">กลับเข้าคลัง</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">คืนเป็นสินค้า</label>
-                    </div>
-<!--                    <div class="col-lg-1">-->
-<!--                        <label for="">เป็นสินค้าใหม่</label>-->
-<!--                    </div>-->
-                    <div class="col-lg-2">
-                        <label for="">เป็นสินค้าเดิม</label>
-                    </div>
-                    <div class="col-lg-3">
-                        <label for="">หมายเหตุ</label>
-                    </div>
-                </div>
-                <?php foreach ($lines as $value): ?>
-                    <?php
-                    if ($value->status == 1) continue; // คืนสินค้าแล้ว
-                    ?>
-                    <?php
-                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
-                    // echo $check_return_qty;
-                    if ($check_return_qty == 0) continue;
 
-                    $product_can_return = getCanreturnProduct($value->product_id);
-                    ?>
-                    <div class="row" style="margin-top: 10px">
-                        <div class="col-lg-2">
-                            <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
-                            <input type="hidden" name="warehouse_id[]" value="<?= $value->warehouse_id ?>">
-                            <input type="hidden" name="journal_trans_line_id[]" value="<?= $value->id ?>">
-                            <input type="text" class="form-control" readonly
-                                   value="<?= \backend\models\Product::findName($value->product_id) ?>">
-                        </div>
-                        <div class="col-lg-1">
-                            <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
-                        </div>
-                        <div class="col-lg-1">
-                            <input type="number" name="return_qty[]" class="form-control"
-                                   value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
-                                   onchange="checkReturnQty($(this))">
-                        </div>
-                        <div class="col-lg-1">
-                            <select name="return_to_warehouse[]" class="form-control line-return-to-warehouse">
-                                <option value="-1">-- เลือกคลัง --</option>
-                                <?php foreach ($warehouse_data as $value_warehouse): ?>
-                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-lg-1">
-                            <select name="return_to_type[]" class="form-control line-return-to-type">
-                                <?php for ($i = 0; $i <= count($product_type) - 1; $i++): ?>
-                                    <option value="<?= $product_type[$i]['id'] ?>"><?= $product_type[$i]['name'] ?></option>
-                                <?php endfor; ?>
-                            </select>
-                        </div>
-<!--                        <div class="col-lg-1">-->
-<!--                            <select name="is_return_new[]" class="form-control" onchange="checkReturnNew($(this))">-->
-<!--                                --><?php //for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
-<!--                                    <option value="--><?php //= $yes_no[$i]['id'] ?><!--">--><?php //= $yes_no[$i]['name'] ?><!--</option>-->
-<!--                                --><?php //endfor; ?>
-<!--                            </select>-->
-<!--                        </div>-->
+                <table>
+                    <thead>
+                    <tr>
+                        <th>สินค้า</th>
+                        <th>จำนวนเบิก</th>
+                        <th>จำนวนคืน</th>
+                        <th>กลับเข้าคลัง</th>
+                        <th>คืนเป็นสินค้า</th>
+                        <th>เป็นสินค้าเดิม</th>
+                        <th>หมายเหตุ</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($lines as $value): ?>
+                        <?php
+                        if ($value->status == 1) continue; // คืนสินค้าแล้ว
+                        ?>
+                        <?php
+                        $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
+                        // echo $check_return_qty;
+                        if ($check_return_qty == 0) continue;
 
-                        <div class="col-lg-2">
-<!--                            <select name="return_to_product[]" data-index="--><?php //=$i?><!--" class="form-control line-return-to-product" required>-->
-<!--                                <option value="-1"> -- เลือกสินค้า -- </option>-->
-<!--                                --><?php //if ($product_can_return != null): ?>
-<!--                                    --><?php //for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
-<!--                                        <option value="--><?php //= $product_can_return[$m]['id'] ?><!--">--><?php //= $product_can_return[$m]['name'] ?><!--</option>-->
-<!--                                    --><?php //endfor; ?>
-<!--                                --><?php //endif; ?>
-<!---->
-<!--                            </select>-->
-                            <input type="text"
-                                   name="return_to_product_name[]"
-                            class ='form-control product-autocomplete'
-                            placeholder = 'พิมพ์ชื่อสินค้าหรือรหัสสินค้า...'
-                            data-index = '<?=$i?>'
-                            autocomplete = 'off'
-                            required >
-                            <input type="hidden" name="return_to_product[]" class = 'product-id-hidden'
-                            data-index = "<?=$i?>">
-                            <div class="autocomplete-dropdown" data-index="<?= $i ?>"></div>
-                        </div>
-                        <div class="col-lg-3">
-                            <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">
-                        </div>
-                    </div>
+                        $product_can_return = getCanreturnProduct($value->product_id);
+                        ?>
+                        <tr>
+                            <td>
+                                <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
+                                <input type="hidden" name="warehouse_id[]" value="<?= $value->warehouse_id ?>">
+                                <input type="hidden" name="journal_trans_line_id[]" value="<?= $value->id ?>">
+                                <input type="text" class="form-control" readonly
+                                       value="<?= \backend\models\Product::findName($value->product_id) ?>">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
+                            </td>
+                            <td>
+                                <input type="number" name="return_qty[]" class="form-control"
+                                       value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
+                                       onchange="checkReturnQty($(this))">
+                            </td>
+                            <td>
+                                <select name="return_to_warehouse[]" class="form-control line-return-to-warehouse">
+                                    <option value="-1">-- เลือกคลัง --</option>
+                                    <?php foreach ($warehouse_data as $value_warehouse): ?>
+                                        <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="return_to_type[]" class="form-control line-return-to-type">
+                                    <?php for ($i = 0; $i <= count($product_type) - 1; $i++): ?>
+                                        <option value="<?= $product_type[$i]['id'] ?>"><?= $product_type[$i]['name'] ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text"
+                                       name="return_to_product_name[]"
+                                       class="form-control product-autocomplete"
+                                       placeholder="พิมพ์ชื่อสินค้าหรือรหัสสินค้า..."
+                                       data-index="<?=$i?>"
+                                       autocomplete="off"
+                                       required>
+                                <input type="hidden" name="return_to_product[]" class="product-id-hidden"
+                                       data-index="<?=$i?>">
+                                <div class="autocomplete-dropdown" data-index="<?= $i ?>"></div>
+                            </td>
+                            <td>
+                                <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
 
-                <?php endforeach; ?>
                 <br/>
-                <div class="row">
-                    <div class="col-lg-3">
-                        <button class="btn btn-success">บันทึกรายการ</button>
-                    </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-success">บันทึกรายการ</button>
                 </div>
             </form>
         <?php endif; ?>
