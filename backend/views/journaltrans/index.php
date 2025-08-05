@@ -239,6 +239,8 @@ function getBadgeType($status,$status_name) {
         return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
     } else if($status == 9) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
+    } else if($status == 10) {
+        return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
     }else {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }

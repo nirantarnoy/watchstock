@@ -43,6 +43,7 @@ class JournalTrans extends \yii\db\ActiveRecord
     const TYPE_SEND = 7;       // เบิกส่งช่าง
     const TYPE_RETURN_SEND = 8; // คืนส่งช่าง
     const TYPE_DROP = 9;       // ขาย Dropship
+    const TYPE_ADJUST_IN = 10;
 
 
 
@@ -180,7 +181,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_DROP:
                 $prefix = 'DRO';
                 break;
-
+            case self::TYPE_ADJUST_IN:
+                $prefix = 'SIN';
+                break;
         }
 
         $lastRecord = self::find()
