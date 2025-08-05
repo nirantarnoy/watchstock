@@ -312,7 +312,8 @@ if ($create_type == 7) {
                                                readonly value="">
                                     </div>
                                     <div class="col-sm-2">
-                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
+<!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty', 'onchange' => 'checkOverQty($(this))']) ?>
