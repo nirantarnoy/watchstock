@@ -14,7 +14,6 @@ $this->title = $model->journal_no;
 $this->params['breadcrumbs'][] = ['label' => 'รายการ Stock Transaction', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-
 // URL สำหรับ AJAX
 $ajax_url = Url::to(['get-product-info']);
 
@@ -66,6 +65,7 @@ $autocompleteCSS = <<<CSS
     overflow-y: auto;
     width: 100%;
     display: none;
+    margin-top: 1px;
 }
 
 .card {
@@ -159,6 +159,128 @@ $autocompleteCSS = <<<CSS
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+
+.table-scroll-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table.dynamic-width {
+    min-width: max-content;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table.dynamic-width th, table.dynamic-width td {
+    white-space: nowrap;
+    padding: 8px;
+    border: 1px solid #ddd;
+    position: relative;
+}
+
+/* ปรับปรุงส่วนของ autocomplete container */
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+.autocomplete-container .form-control {
+    width: 100%;
+}
+
+/* Global dropdown portal - แสดงนอก table */
+.autocomplete-dropdown-portal {
+    position: fixed;
+    z-index: 9999 !important;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 1px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 200px;
+    max-width: 90vw; /* จำกัดความกว้างสำหรับ mobile */
+}
+
+/* Fallback dropdown สำหรับในตาราง */
+.autocomplete-container .autocomplete-dropdown {
+    position: fixed;
+    z-index: 9999 !important;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 1px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 200px;
+    max-width: 90vw; /* จำกัดความกว้างสำหรับ mobile */
+}
+
+/* ป้องกัน table overflow */
+.table-scroll-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible !important;
+}
+
+table.dynamic-width {
+    min-width: max-content;
+    width: 100%;
+    border-collapse: collapse;
+    overflow: visible !important;
+}
+
+table.dynamic-width th, table.dynamic-width td {
+    white-space: nowrap;
+    padding: 8px;
+    border: 1px solid #ddd;
+    position: relative;
+    overflow: visible !important;
+}
+
+/* เพิ่ม style สำหรับ table cell ที่มี autocomplete */
+.table-autocomplete-cell {
+    overflow: visible !important;
+    position: relative;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    .autocomplete-dropdown-portal,
+    .autocomplete-container .autocomplete-dropdown {
+        max-width: calc(100vw - 20px);
+        max-height: 150px;
+        font-size: 14px;
+    }
+    
+    .autocomplete-item {
+        padding: 10px 8px;
+        font-size: 14px;
+    }
+    
+    .product-code {
+        font-size: 11px;
+    }
+    
+    .table-scroll-container {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 480px) {
+    .autocomplete-dropdown-portal,
+    .autocomplete-container .autocomplete-dropdown {
+        max-width: calc(100vw - 10px);
+        max-height: 120px;
+        left: 5px !important;
+        right: 5px !important;
+        width: auto !important;
+    }
+}
 CSS;
 
 $this->registerCss($autocompleteCSS);
@@ -169,11 +291,22 @@ $autocompleteJs = <<<JS
 var productsData = [];
 var productStockData = {};
 var isProductsLoaded = false;
+var currentDropdown = null;
+
+// สร้าง global dropdown portal
+function createDropdownPortal() {
+    if (!document.getElementById('autocomplete-portal')) {
+        var portal = document.createElement('div');
+        portal.id = 'autocomplete-portal';
+        portal.className = 'autocomplete-dropdown-portal';
+        document.body.appendChild(portal);
+    }
+    return document.getElementById('autocomplete-portal');
+}
 
 // ฟังก์ชันโหลดข้อมูลสินค้า
 function loadProductsData() {
     if (isProductsLoaded) return;
-    //alert('กําลังโหลดข้อมูลสินค้า...');
     $.ajax({
         url: '$ajax_url',
         type: 'GET',
@@ -202,58 +335,135 @@ function searchProducts(query) {
     }).slice(0, 10);
 }
 
-// ฟังก์ชันแสดงผลลัพธ์
-function showAutocompleteResults(input, results) {
-    var index = input.attr('data-index');
-    var dropdown = $('.autocomplete-dropdown[data-index="' + index + '"]');
+// ฟังก์ชันคำนวณตำแหน่ง dropdown - ปรับปรุงสำหรับ mobile
+function calculateDropdownPosition(input) {
+    var inputRect = input[0].getBoundingClientRect();
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    var viewport = {
+        width: window.innerWidth || document.documentElement.clientWidth,
+        height: window.innerHeight || document.documentElement.clientHeight
+    };
     
-    dropdown.empty();
+    var position = {
+        top: inputRect.bottom + scrollTop,
+        left: inputRect.left + scrollLeft,
+        width: inputRect.width
+    };
+    
+    // ปรับสำหรับ mobile
+    if (viewport.width <= 480) {
+        position.left = 5;
+        position.width = viewport.width - 10;
+    } else if (viewport.width <= 768) {
+        // ตรวจสอบว่า dropdown จะล้นขอบจอหรือไม่
+        var dropdownWidth = Math.max(inputRect.width, 200);
+        if (position.left + dropdownWidth > viewport.width - 20) {
+            position.left = viewport.width - dropdownWidth - 20;
+        }
+        position.width = Math.min(dropdownWidth, viewport.width - 20);
+    } else {
+        // Desktop - ตรวจสอบการล้นขอบ
+        var dropdownWidth = Math.max(inputRect.width, 200);
+        if (position.left + dropdownWidth > viewport.width - 20) {
+            position.left = viewport.width - dropdownWidth - 20;
+        }
+        position.width = dropdownWidth;
+    }
+    
+    // ตรวจสอบว่า dropdown จะล้นขอบล่างหรือไม่
+    var dropdownHeight = 200; // max-height
+    if (position.top + dropdownHeight > viewport.height + scrollTop - 20) {
+        // แสดงด้านบนของ input แทน
+        position.top = inputRect.top + scrollTop - dropdownHeight - 5;
+        if (position.top < scrollTop + 10) {
+            // ถ้าพื้นที่ด้านบนไม่พอ ให้แสดงในตำแหน่งที่เหมาะสม
+            position.top = inputRect.bottom + scrollTop;
+            dropdownHeight = Math.min(200, viewport.height - (inputRect.bottom - scrollTop) - 40);
+        }
+    }
+    
+    return position;
+}
+
+// ฟังก์ชันแสดงผลลัพธ์ - ใช้ portal
+function showAutocompleteResults(input, results) {
+    var portal = createDropdownPortal();
+    var portalElement = $(portal);
+    
+    // ซ่อน dropdown อื่นๆ
+    hideAllDropdowns();
+    
+    portalElement.empty();
     
     if (results.length === 0) {
-        dropdown.hide();
+        portalElement.hide();
         return;
     }
     
     results.forEach(function(product) {
         var item = $('<div class="autocomplete-item">')
             .html('<div>' + product.code + '</div><div class="product-code">' + product.name + '</div>')
-            .data('product', product);
-        dropdown.append(item);
+            .data('product', product)
+            .data('input', input);
+        portalElement.append(item);
     });
     
-    dropdown.show();
+    // คำนวณตำแหน่ง
+    var position = calculateDropdownPosition(input);
+    
+    portalElement.css({
+        'top': position.top + 'px',
+        'left': position.left + 'px',
+        'width': Math.max(position.width, 200) + 'px'
+    });
+    
+    portalElement.show();
+    currentDropdown = input;
+}
+
+// ฟังก์ชันซ่อน dropdown ทั้งหมด
+function hideAllDropdowns() {
+    $('.autocomplete-dropdown-portal').hide();
+    $('.autocomplete-dropdown').hide();
+    currentDropdown = null;
 }
 
 // ฟังก์ชันซ่อน dropdown
-function hideAutocomplete(index) {
+function hideAutocomplete(delay = 200) {
     setTimeout(function() {
-        $('.autocomplete-dropdown[data-index="' + index + '"]').hide();
-    }, 200);
+        hideAllDropdowns();
+    }, delay);
 }
 
-// ฟังก์ชันเลือกสินค้า
+// ฟังก์ชันเลือกสินค้า - ปรับปรุงใหม่
 function selectProduct(input, product) {
+    var container = input.closest('.autocomplete-container');
     var index = input.attr('data-index');
     
     // อัพเดตค่า
     input.val(product.display);
-    $('.product-id-hidden[data-index="' + index + '"]').val(product.id);
+    container.find('.product-id-hidden').val(product.id);
     
     // โหลดข้อมูลสต็อกและอัพเดตคลังสินค้า
-    // alert(product.id);
     loadProductStock(product.id, index);
-    // ซ่อน dropdown
-    $('.autocomplete-dropdown[data-index="' + index + '"]').hide();
     
+    // ซ่อน dropdown
+    hideAllDropdowns();
 }
 
+// ฟังก์ชันโหลดข้อมูลสต็อก (ถ้ามี)
+function loadProductStock(productId, index) {
+    // เพิ่มฟังก์ชันโหลดสต็อกตามต้องการ
+    console.log('Loading stock for product:', productId, 'index:', index);
+}
 
 $(document).ready(function() {
     
     // โหลดข้อมูลสินค้าตอนเริ่มต้น
     loadProductsData();
     
-    // Event สำหรับ autocomplete
+    // Event สำหรับ autocomplete - ปรับปรุงใหม่
     $(document).on('input', '.product-autocomplete', function() {
         var input = $(this);
         var query = input.val();
@@ -283,23 +493,20 @@ $(document).ready(function() {
     });
     
     $(document).on('blur', '.product-autocomplete', function() {
-        var index = $(this).attr('data-index');
-        hideAutocomplete(index);
+        hideAutocomplete();
     });
     
+    // Event สำหรับคลิกรายการใน portal
     $(document).on('click', '.autocomplete-item', function() {
         var product = $(this).data('product');
-        var dropdown = $(this).closest('.autocomplete-dropdown');
-        var index = dropdown.attr('data-index');
-        var input = $('.product-autocomplete[data-index="' + index + '"]');
+        var input = $(this).data('input');
         selectProduct(input, product);
     });
     
-    // Event navigation ด้วย keyboard
+    // Event navigation ด้วย keyboard - ปรับปรุงใหม่
     $(document).on('keydown', '.product-autocomplete', function(e) {
-        var index = $(this).attr('data-index');
-        var dropdown = $('.autocomplete-dropdown[data-index="' + index + '"]');
-        var items = dropdown.find('.autocomplete-item');
+        var portal = $('#autocomplete-portal');
+        var items = portal.find('.autocomplete-item');
         var highlighted = items.filter('.highlighted');
         
         if (e.keyCode === 40) { // Arrow Down
@@ -332,17 +539,42 @@ $(document).ready(function() {
             e.preventDefault();
             if (highlighted.length) {
                 var product = highlighted.data('product');
-                selectProduct($(this), product);
+                var input = highlighted.data('input');
+                selectProduct(input, product);
             }
         } else if (e.keyCode === 27) { // Escape
-            dropdown.hide();
+            hideAllDropdowns();
         }
+    });
+    
+    // ซ่อน dropdown เมื่อคลิกนอกพื้นที่
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.autocomplete-container').length && 
+            !$(e.target).closest('.autocomplete-dropdown-portal').length) {
+            hideAllDropdowns();
+        }
+    });
+    
+    // ปรับตำแหน่ง dropdown เมื่อมีการ scroll หรือ resize
+    $(window).on('scroll resize', function() {
+        if (currentDropdown && $('#autocomplete-portal').is(':visible')) {
+            var position = calculateDropdownPosition(currentDropdown);
+            $('#autocomplete-portal').css({
+                'top': position.top + 'px',
+                'left': position.left + 'px',
+                'width': Math.max(position.width, 200) + 'px'
+            });
+        }
+    });
+    
+    // ปิด dropdown เมื่อ scroll ใน table
+    $('.table-scroll-container').on('scroll', function() {
+        hideAllDropdowns();
     });
 });
 JS;
 
 $this->registerJs($autocompleteJs, \yii\web\View::POS_READY);
-
 
 $product_can_return = null;
 
@@ -408,7 +640,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 <?= DetailView::widget([
                     'model' => $model,
                     'attributes' => [
-                        //'customer_id',
                         'customer_name',
                         [
                             'attribute' => 'qty',
@@ -425,9 +656,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                 $htmel_status = getBadgeStatus($model->status, $status_name);
                                 return $htmel_status;
                             },
-                            // 'format' => 'raw',
-                            // 'filter' => JournalTrans::getStatusList(),
-                            //'headerOptions' => ['style' => 'width:100px'],
                         ],
                     ],
                 ]) ?>
@@ -466,12 +694,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     'contentOptions' => ['style' => 'text-align:right'],
                 ],
                 'remark',
-//                [
-//                    'attribute' => 'status',
-//                    'value' => function ($model) {
-//                        return $model->getStatusName();
-//                    },
-//                ],
             ],
         ]); ?>
 
@@ -500,118 +722,90 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
             <form onsubmit="return validateForm();" action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="8">
-                <div class="row" style="margin-top: 10px">
-                    <div class="col-lg-2">
-                        <label for="">สินค้า</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">จำนวนเบิก</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">จำนวนคืน</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">กลับเข้าคลัง</label>
-                    </div>
-                    <div class="col-lg-1">
-                        <label for="">คืนเป็นสินค้า</label>
-                    </div>
-<!--                    <div class="col-lg-1">-->
-<!--                        <label for="">เป็นสินค้าใหม่</label>-->
-<!--                    </div>-->
-                    <div class="col-lg-2">
-                        <label for="">เป็นสินค้าเดิม</label>
-                    </div>
-                    <div class="col-lg-3">
-                        <label for="">หมายเหตุ</label>
-                    </div>
+                <div class="table-scroll-container">
+                    <table class="dynamic-width">
+                        <thead>
+                        <tr>
+                            <th>สินค้า</th>
+                            <th>จำนวนเบิก</th>
+                            <th>จำนวนคืน</th>
+                            <th>กลับเข้าคลัง</th>
+                            <th>คืนเป็นสินค้า</th>
+                            <th>เป็นสินค้าเดิม</th>
+                            <th>หมายเหตุ</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php $i = 0; ?>
+                        <?php foreach ($lines as $value): ?>
+                            <?php
+                            if ($value->status == 1) continue; // คืนสินค้าแล้ว
+                            ?>
+                            <?php
+                            $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
+                            if ($check_return_qty == 0) continue;
+
+                            $product_can_return = getCanreturnProduct($value->product_id);
+                            ?>
+                            <tr>
+                                <td>
+                                    <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
+                                    <input type="hidden" name="warehouse_id[]" value="<?= $value->warehouse_id ?>">
+                                    <input type="hidden" name="journal_trans_line_id[]" value="<?= $value->id ?>">
+                                    <input type="text" class="form-control" readonly
+                                           value="<?= \backend\models\Product::findName($value->product_id) ?>">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
+                                </td>
+                                <td>
+                                    <input type="number" name="return_qty[]" class="form-control"
+                                           value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
+                                           onchange="checkReturnQty($(this))">
+                                </td>
+                                <td>
+                                    <select name="return_to_warehouse[]" class="form-control line-return-to-warehouse">
+                                        <option value="-1">-- เลือกคลัง --</option>
+                                        <?php foreach ($warehouse_data as $value_warehouse): ?>
+                                            <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="return_to_type[]" class="form-control line-return-to-type">
+                                        <?php for ($j = 0; $j <= count($product_type) - 1; $j++): ?>
+                                            <option value="<?= $product_type[$j]['id'] ?>"><?= $product_type[$j]['name'] ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </td>
+                                <td class="table-autocomplete-cell">
+                                    <div class="autocomplete-container">
+                                        <input type="text"
+                                               name="return_to_product_name[]"
+                                               class="form-control product-autocomplete"
+                                               placeholder="พิมพ์ชื่อสินค้าหรือรหัสสินค้า..."
+                                               data-index="<?= $i ?>"
+                                               autocomplete="off"
+                                               required>
+                                        <input type="hidden" name="return_to_product[]" class="product-id-hidden"
+                                               data-index="<?= $i ?>">
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">
+                                </td>
+                            </tr>
+                            <?php $i++; ?>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-                <?php foreach ($lines as $value): ?>
-                    <?php
-                    if ($value->status == 1) continue; // คืนสินค้าแล้ว
-                    ?>
-                    <?php
-                    $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
-                    // echo $check_return_qty;
-                    if ($check_return_qty == 0) continue;
-
-                    $product_can_return = getCanreturnProduct($value->product_id);
-                    ?>
-                    <div class="row" style="margin-top: 10px">
-                        <div class="col-lg-2">
-                            <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
-                            <input type="hidden" name="warehouse_id[]" value="<?= $value->warehouse_id ?>">
-                            <input type="hidden" name="journal_trans_line_id[]" value="<?= $value->id ?>">
-                            <input type="text" class="form-control" readonly
-                                   value="<?= \backend\models\Product::findName($value->product_id) ?>">
-                        </div>
-                        <div class="col-lg-1">
-                            <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
-                        </div>
-                        <div class="col-lg-1">
-                            <input type="number" name="return_qty[]" class="form-control"
-                                   value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
-                                   onchange="checkReturnQty($(this))">
-                        </div>
-                        <div class="col-lg-1">
-                            <select name="return_to_warehouse[]" class="form-control line-return-to-warehouse">
-                                <option value="-1">-- เลือกคลัง --</option>
-                                <?php foreach ($warehouse_data as $value_warehouse): ?>
-                                    <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-lg-1">
-                            <select name="return_to_type[]" class="form-control line-return-to-type">
-                                <?php for ($i = 0; $i <= count($product_type) - 1; $i++): ?>
-                                    <option value="<?= $product_type[$i]['id'] ?>"><?= $product_type[$i]['name'] ?></option>
-                                <?php endfor; ?>
-                            </select>
-                        </div>
-<!--                        <div class="col-lg-1">-->
-<!--                            <select name="is_return_new[]" class="form-control" onchange="checkReturnNew($(this))">-->
-<!--                                --><?php //for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
-<!--                                    <option value="--><?php //= $yes_no[$i]['id'] ?><!--">--><?php //= $yes_no[$i]['name'] ?><!--</option>-->
-<!--                                --><?php //endfor; ?>
-<!--                            </select>-->
-<!--                        </div>-->
-
-                        <div class="col-lg-2">
-<!--                            <select name="return_to_product[]" data-index="--><?php //=$i?><!--" class="form-control line-return-to-product" required>-->
-<!--                                <option value="-1"> -- เลือกสินค้า -- </option>-->
-<!--                                --><?php //if ($product_can_return != null): ?>
-<!--                                    --><?php //for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
-<!--                                        <option value="--><?php //= $product_can_return[$m]['id'] ?><!--">--><?php //= $product_can_return[$m]['name'] ?><!--</option>-->
-<!--                                    --><?php //endfor; ?>
-<!--                                --><?php //endif; ?>
-<!---->
-<!--                            </select>-->
-                            <input type="text"
-                                   name="return_to_product_name[]"
-                            class ='form-control product-autocomplete'
-                            placeholder = 'พิมพ์ชื่อสินค้าหรือรหัสสินค้า...'
-                            data-index = '<?=$i?>'
-                            autocomplete = 'off'
-                            required >
-                            <input type="hidden" name="return_to_product[]" class = 'product-id-hidden'
-                            data-index = "<?=$i?>">
-                            <div class="autocomplete-dropdown" data-index="<?= $i ?>"></div>
-                        </div>
-                        <div class="col-lg-3">
-                            <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">
-                        </div>
-                    </div>
-
-                <?php endforeach; ?>
                 <br/>
-                <div class="row">
-                    <div class="col-lg-3">
-                        <button class="btn btn-success">บันทึกรายการ</button>
-                    </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-success">บันทึกรายการ</button>
                 </div>
             </form>
         <?php endif; ?>
-
 
         <?php if ($model->trans_type_id == 5 && $model->status != 3): ?> <!-- คืนยืม -->
             <div class="row">
@@ -651,7 +845,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
-                    // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
                     ?>
                     <div class="row" style="margin-top: 10px">
@@ -711,15 +904,6 @@ function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 function getCanreturnProduct($product_id)
 {
     $product_data = [];
-//    $product_name = \backend\models\Product::findSku($product_id);
-//    if ($product_name != '' || $product_name != null) {
-//        $model = \common\models\Product::find()->where(['name' => trim($product_name)])->all();
-//        if ($model) {
-//            foreach ($model as $value) {
-//                array_push($product_data, ['id' => $value->id, 'name' => $value->name . ' ' . $value->description]);
-//            }
-//        }
-//    }
     $model = \common\models\Product::find()->where(['status' => 1])->all();
     if ($model) {
         foreach ($model as $value) {
@@ -789,7 +973,7 @@ function checkReturnNew(e){
 }
 
 function validateForm() {
-     let select_warehouses = document.querySelectorAll('.line-return-to-warehouse');
+    let select_warehouses = document.querySelectorAll('.line-return-to-warehouse');
     for (let i = 0; i < select_warehouses.length; i++) {
         if (select_warehouses[i].value === '-1') {
             alert('กรุณาเลือกคลังให้ครบถ้วน');
@@ -800,16 +984,14 @@ function validateForm() {
     
     let line_remark = document.querySelectorAll('.line-return-remark');
     
-    let selects = document.querySelectorAll('.line-return-to-product');
+    let selects = document.querySelectorAll('.product-id-hidden');
     for (let i = 0; i < selects.length; i++) {
-        if (selects[i].value === '-1' && line_remark[i].value === '') {
+        if (selects[i].value === '' && line_remark[i].value === '') {
             alert('กรุณาตรวจสอบสินค้าให้ครบถ้วน');
-            selects[i].focus();
+            selects[i].closest('.autocomplete-container').find('.product-autocomplete').focus();
             return false;
         }
     }
-    
-   
     
     return true;
 }
