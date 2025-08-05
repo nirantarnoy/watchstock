@@ -58,7 +58,7 @@ $autocompleteCSS = <<<CSS
     top: 100%;
     left: 0;
     right: 0;
-    z-index: 1050;
+    z-index: 9999;
     background: white;
     border: 1px solid #ccc;
     max-height: 200px;
@@ -66,6 +66,8 @@ $autocompleteCSS = <<<CSS
     width: 100%;
     display: none;
     margin-top: 1px;
+    -webkit-overflow-scrolling: touch; /* สำหรับ iOS */
+    touch-action: manipulation; /* สำหรับ Android */
 }
 
 .card {
@@ -948,6 +950,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                                placeholder="พิมพ์ชื่อสินค้าหรือรหัสสินค้า..."
                                                data-index="<?= $i ?>"
                                                autocomplete="off"
+                                               inputmode="text"
                                                required>
                                         <input type="hidden" name="return_to_product[]" class="product-id-hidden"
                                                data-index="<?= $i ?>">
