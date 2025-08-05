@@ -255,6 +255,86 @@ table.dynamic-width th, table.dynamic-width td {
         max-width: calc(100vw - 20px);
         max-height: 150px;
         font-size: 14px;
+        min-width: 250px; /* เพิ่มความกว้างสำหรับ mobile */
+    }
+    
+    .autocomplete-item {
+        padding: 12px 10px; /* เพิ่ม padding สำหรับ touch */
+        font-size: 14px;
+        min-height: 44px; /* ตาม iOS guidelines */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .product-code {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+    
+    .table-scroll-container {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* ปรับปรุง input สำหรับ mobile */
+    .product-autocomplete {
+        font-size: 16px !important; /* ป้องกัน zoom บน iOS */
+        padding: 12px 8px !important;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .autocomplete-dropdown-portal,
+    .autocomplete-container .autocomplete-dropdown {
+        max-width: calc(100vw - 10px);
+        max-height: 180px; /* เพิ่มความสูงสำหรับหน้าจอเล็ก */
+        left: 5px !important;
+        right: 5px !important;
+        width: auto !important;
+        min-width: auto;
+    }
+    
+    .autocomplete-item {
+        padding: 14px 12px; /* เพิ่ม padding มากขึ้น */
+        font-size: 15px;
+        min-height: 48px; /* เพิ่มขนาดสำหรับ touch */
+        border-bottom: 1px solid #eee;
+    }
+    
+    .autocomplete-item:active,
+    .autocomplete-item:hover {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+    
+    .autocomplete-item .product-code {
+        color: inherit;
+        opacity: 0.8;
+    }
+    
+    .product-autocomplete {
+        font-size: 16px !important;
+        padding: 14px 10px !important;
+        min-height: 48px;
+        -webkit-appearance: none;
+        border-radius: 4px;
+    }
+}
+
+/* เพิ่ม style สำหรับ mobile device class */
+.mobile-device .autocomplete-dropdown-portal {
+    -webkit-transform: translateZ(0); /* Hardware acceleration */
+    transform: translateZ(0);
+}
+
+.mobile-device .autocomplete-item {
+    -webkit-tap-highlight-color: rgba(0, 123, 255, 0.1);
+    tap-highlight-color: rgba(0, 123, 255, 0.1);
+}-dropdown {
+        max-width: calc(100vw - 20px);
+        max-height: 150px;
+        font-size: 14px;
     }
     
     .autocomplete-item {
@@ -292,6 +372,7 @@ var productsData = [];
 var productStockData = {};
 var isProductsLoaded = false;
 var currentDropdown = null;
+var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // สร้าง global dropdown portal
 function createDropdownPortal() {
@@ -307,18 +388,32 @@ function createDropdownPortal() {
 // ฟังก์ชันโหลดข้อมูลสินค้า
 function loadProductsData() {
     if (isProductsLoaded) return;
+    
+    // แสดง loading indicator สำหรับ mobile
+    if (isMobile) {
+        console.log('Loading products data for mobile...');
+    }
+    
     $.ajax({
         url: '$ajax_url',
         type: 'GET',
         data: { action: 'get-all-products' },
         dataType: 'json',
+        timeout: 10000, // เพิ่ม timeout สำหรับ mobile
         success: function(data) {
             productsData = data;
             isProductsLoaded = true;
+            if (isMobile) {
+                console.log('Products loaded successfully:', productsData.length, 'items');
+            }
         },
-        error: function() {
-            console.log('Error loading products data');
+        error: function(xhr, status, error) {
+            console.log('Error loading products data:', status, error);
             productsData = [];
+            // Fallback สำหรับ mobile - ลองโหลดอีกครั้ง
+            if (isMobile && status !== 'timeout') {
+                setTimeout(loadProductsData, 2000);
+            }
         }
     });
 }
@@ -328,16 +423,23 @@ function searchProducts(query) {
     if (!query || query.length < 1) return [];
     
     query = query.toLowerCase();
-    return productsData.filter(function(product) {
+    var results = productsData.filter(function(product) {
         return product.name.toLowerCase().includes(query) || 
                product.code.toLowerCase().includes(query) ||
                product.display.toLowerCase().includes(query);
     }).slice(0, 10);
+    
+    if (isMobile) {
+        console.log('Search results for "' + query + '":', results.length, 'items');
+    }
+    
+    return results;
 }
 
 // ฟังก์ชันคำนวณตำแหน่ง dropdown - ปรับปรุงสำหรับ mobile
 function calculateDropdownPosition(input) {
-    var inputRect = input[0].getBoundingClientRect();
+    var inputElement = input[0];
+    var inputRect = inputElement.getBoundingClientRect();
     var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
     var viewport = {
@@ -346,24 +448,22 @@ function calculateDropdownPosition(input) {
     };
     
     var position = {
-        top: inputRect.bottom + scrollTop,
+        top: inputRect.bottom + scrollTop + 2, // เพิ่ม gap เล็กน้อย
         left: inputRect.left + scrollLeft,
         width: inputRect.width
     };
     
-    // ปรับสำหรับ mobile
+    // ปรับสำหรับ mobile - ให้ dropdown กว้างขึ้น
     if (viewport.width <= 480) {
-        position.left = 5;
-        position.width = viewport.width - 10;
+        position.left = Math.max(5, inputRect.left + scrollLeft - 10);
+        position.width = Math.min(viewport.width - 10, inputRect.width + 20);
     } else if (viewport.width <= 768) {
-        // ตรวจสอบว่า dropdown จะล้นขอบจอหรือไม่
-        var dropdownWidth = Math.max(inputRect.width, 200);
+        var dropdownWidth = Math.max(inputRect.width, 250);
         if (position.left + dropdownWidth > viewport.width - 20) {
             position.left = viewport.width - dropdownWidth - 20;
         }
         position.width = Math.min(dropdownWidth, viewport.width - 20);
     } else {
-        // Desktop - ตรวจสอบการล้นขอบ
         var dropdownWidth = Math.max(inputRect.width, 200);
         if (position.left + dropdownWidth > viewport.width - 20) {
             position.left = viewport.width - dropdownWidth - 20;
@@ -372,14 +472,12 @@ function calculateDropdownPosition(input) {
     }
     
     // ตรวจสอบว่า dropdown จะล้นขอบล่างหรือไม่
-    var dropdownHeight = 200; // max-height
+    var dropdownHeight = 200;
     if (position.top + dropdownHeight > viewport.height + scrollTop - 20) {
-        // แสดงด้านบนของ input แทน
         position.top = inputRect.top + scrollTop - dropdownHeight - 5;
         if (position.top < scrollTop + 10) {
-            // ถ้าพื้นที่ด้านบนไม่พอ ให้แสดงในตำแหน่งที่เหมาะสม
-            position.top = inputRect.bottom + scrollTop;
-            dropdownHeight = Math.min(200, viewport.height - (inputRect.bottom - scrollTop) - 40);
+            position.top = inputRect.bottom + scrollTop + 2;
+            dropdownHeight = Math.min(150, viewport.height - (inputRect.bottom - scrollTop) - 40);
         }
     }
     
@@ -388,6 +486,10 @@ function calculateDropdownPosition(input) {
 
 // ฟังก์ชันแสดงผลลัพธ์ - ใช้ portal
 function showAutocompleteResults(input, results) {
+    if (isMobile) {
+        console.log('Showing autocomplete results on mobile...');
+    }
+    
     var portal = createDropdownPortal();
     var portalElement = $(portal);
     
@@ -398,6 +500,9 @@ function showAutocompleteResults(input, results) {
     
     if (results.length === 0) {
         portalElement.hide();
+        if (isMobile) {
+            console.log('No results to show');
+        }
         return;
     }
     
@@ -411,15 +516,29 @@ function showAutocompleteResults(input, results) {
     
     // คำนวณตำแหน่ง
     var position = calculateDropdownPosition(input);
+    var viewport = {
+        width: window.innerWidth || document.documentElement.clientWidth
+    };
     
     portalElement.css({
         'top': position.top + 'px',
         'left': position.left + 'px',
-        'width': Math.max(position.width, 200) + 'px'
+        'width': position.width + 'px',
+        'display': 'block'
     });
     
     portalElement.show();
     currentDropdown = input;
+    
+    if (isMobile) {
+        console.log('Dropdown shown at position:', {
+            top: position.top,
+            left: position.left,
+            width: position.width,
+            viewport: viewport.width,
+            itemCount: results.length
+        });
+    }
 }
 
 // ฟังก์ชันซ่อน dropdown ทั้งหมด
@@ -436,7 +555,7 @@ function hideAutocomplete(delay = 200) {
     }, delay);
 }
 
-// ฟังก์ชันเลือกสินค้า - ปรับปรุงใหม่
+// ฟังก์ชันเลือกสินค้า
 function selectProduct(input, product) {
     var container = input.closest('.autocomplete-container');
     var index = input.attr('data-index');
@@ -450,60 +569,95 @@ function selectProduct(input, product) {
     
     // ซ่อน dropdown
     hideAllDropdowns();
+    
+    if (isMobile) {
+        console.log('Product selected:', product.display);
+    }
 }
 
-// ฟังก์ชันโหลดข้อมูลสต็อก (ถ้ามี)
+// ฟังก์ชันโหลดข้อมูลสต็อก
 function loadProductStock(productId, index) {
-    // เพิ่มฟังก์ชันโหลดสต็อกตามต้องการ
     console.log('Loading stock for product:', productId, 'index:', index);
 }
 
 $(document).ready(function() {
     
+    // ตรวจสอบว่าเป็น mobile หรือไม่
+    if (isMobile) {
+        console.log('Mobile device detected');
+        // เพิ่ม class สำหรับ mobile
+        $('body').addClass('mobile-device');
+    }
+    
     // โหลดข้อมูลสินค้าตอนเริ่มต้น
     loadProductsData();
     
-    // Event สำหรับ autocomplete - ปรับปรุงใหม่
-    $(document).on('input', '.product-autocomplete', function() {
+    // Event สำหรับ autocomplete - รองรับ mobile
+    $(document).on('input keyup', '.product-autocomplete', function(e) {
         var input = $(this);
         var query = input.val();
+        
+        if (isMobile) {
+            console.log('Input event on mobile:', query);
+        }
         
         if (!isProductsLoaded) {
             loadProductsData();
             return;
         }
         
-        var results = searchProducts(query);
-        showAutocompleteResults(input, results);
+        if (query && query.length >= 1) {
+            var results = searchProducts(query);
+            showAutocompleteResults(input, results);
+        } else {
+            hideAllDropdowns();
+        }
     });
     
     $(document).on('focus', '.product-autocomplete', function() {
         var input = $(this);
         var query = input.val();
         
+        if (isMobile) {
+            console.log('Focus event on mobile:', query);
+        }
+        
         if (!isProductsLoaded) {
             loadProductsData();
             return;
         }
         
-        if (query) {
+        if (query && query.length >= 1) {
             var results = searchProducts(query);
             showAutocompleteResults(input, results);
         }
     });
     
     $(document).on('blur', '.product-autocomplete', function() {
-        hideAutocomplete();
+        if (!isMobile) {
+            hideAutocomplete();
+        }
+        // บน mobile ไม่ hide ทันที เพื่อให้สามารถแตะรายการได้
     });
     
-    // Event สำหรับคลิกรายการใน portal
-    $(document).on('click', '.autocomplete-item', function() {
+    // Event สำหรับคลิกรายการใน portal - รองรับ touch
+    $(document).on('click touchend', '.autocomplete-item', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         var product = $(this).data('product');
         var input = $(this).data('input');
-        selectProduct(input, product);
+        
+        if (product && input) {
+            selectProduct(input, product);
+        }
+        
+        if (isMobile) {
+            console.log('Item clicked/touched:', product ? product.display : 'undefined');
+        }
     });
     
-    // Event navigation ด้วย keyboard - ปรับปรุงใหม่
+    // Event navigation ด้วย keyboard
     $(document).on('keydown', '.product-autocomplete', function(e) {
         var portal = $('#autocomplete-portal');
         var items = portal.find('.autocomplete-item');
@@ -547,8 +701,8 @@ $(document).ready(function() {
         }
     });
     
-    // ซ่อน dropdown เมื่อคลิกนอกพื้นที่
-    $(document).on('click', function(e) {
+    // ซ่อน dropdown เมื่อคลิกนอกพื้นที่ - รองรับ touch
+    $(document).on('click touchstart', function(e) {
         if (!$(e.target).closest('.autocomplete-container').length && 
             !$(e.target).closest('.autocomplete-dropdown-portal').length) {
             hideAllDropdowns();
@@ -556,13 +710,14 @@ $(document).ready(function() {
     });
     
     // ปรับตำแหน่ง dropdown เมื่อมีการ scroll หรือ resize
-    $(window).on('scroll resize', function() {
+    $(window).on('scroll resize orientationchange', function() {
         if (currentDropdown && $('#autocomplete-portal').is(':visible')) {
             var position = calculateDropdownPosition(currentDropdown);
+            
             $('#autocomplete-portal').css({
                 'top': position.top + 'px',
                 'left': position.left + 'px',
-                'width': Math.max(position.width, 200) + 'px'
+                'width': position.width + 'px'
             });
         }
     });
@@ -570,6 +725,13 @@ $(document).ready(function() {
     // ปิด dropdown เมื่อ scroll ใน table
     $('.table-scroll-container').on('scroll', function() {
         hideAllDropdowns();
+    });
+    
+    // ปิด dropdown เมื่อเปลี่ยน orientation บน mobile
+    $(window).on('orientationchange', function() {
+        setTimeout(function() {
+            hideAllDropdowns();
+        }, 500);
     });
 });
 JS;
