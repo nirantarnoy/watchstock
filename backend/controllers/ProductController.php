@@ -960,7 +960,7 @@ class ProductController extends Controller
        // $users = Product::find()->joinWith('stocksum')->all();
 
         $users = null;
-        $sql = "SELECT w.name as warehouse_name,st.qty,p.name,p.description,p.product_group_id,p.unit_id,p.brand_id,p.remark
+        $sql = "SELECT w.name as warehouse_name,st.qty,p.name,p.description,p.product_group_id,p.unit_id,p.brand_id,p.remark,p.cost_price,p.sale_price
                 FROM product as p 
                     left join stock_sum as st on p.id = st.product_id 
                     left join warehouse as w on st.warehouse_id = w.id ORDER BY p.name ASC";
@@ -988,6 +988,8 @@ class ProductController extends Controller
             'F1' => 'Qty',
             'G1' => 'Note',
             'H1' => 'Warehouse',
+            'I1' => 'Cost',
+            'J1' => 'SalePrice',
         ];
 
         // Apply headers
@@ -1029,6 +1031,8 @@ class ProductController extends Controller
         $sheet->getColumnDimension('F')->setWidth(20);
         $sheet->getColumnDimension('G')->setWidth(20);
         $sheet->getColumnDimension('H')->setWidth(20);
+        $sheet->getColumnDimension('I')->setWidth(20);
+        $sheet->getColumnDimension('J')->setWidth(20);
 
         // Fill data rows
         $row = 2;
@@ -1052,6 +1056,8 @@ class ProductController extends Controller
             $sheet->setCellValue('F' . $row, $users[$i]['qty']==null?0:$users[$i]['qty']);
             $sheet->setCellValue('G' . $row, $users[$i]['remark']);
             $sheet->setCellValue('H' . $row, $users[$i]['warehouse_name']);
+            $sheet->setCellValue('I' . $row, $users[$i]['cost_price']);
+            $sheet->setCellValue('J' . $row, $users[$i]['sale_price']);
             $row++;
         }
 
