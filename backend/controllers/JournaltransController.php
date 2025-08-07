@@ -805,6 +805,7 @@ class JournaltransController extends Controller
         if ($request->get('action') === 'get-all-products') {
             $products = \backend\models\Product::find()
                 ->where(['status' => 1])
+                ->andFilterWhere(['>', 'stock_qty',0])
                 ->all();
 
             $result = [];
@@ -826,7 +827,7 @@ class JournaltransController extends Controller
         // ถ้าขอข้อมูลสินค้าเฉพาะ ID (สำหรับการเลือกสินค้า)
         $id = $request->get('id');
         if ($id) {
-            $product = \backend\models\Product::findOne($id);
+            $product = \backend\models\Product::find()->where(['id' => $id])->andFilterWhere(['>', 'stock_qty',0])->one();
             if ($product) {
                 return [
                     'id' => $product->id,
