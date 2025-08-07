@@ -336,7 +336,7 @@ class SiteController extends Controller
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 'AVG(jtl.sale_price) as avg_price',
                 'AVG(p.cost_price) as cost_price',
-                'SUM(jtl.qty * jtl.cost_price) - SUM(jtl.qty * p.cost_price) as profit'
+                'SUM(jtl.qty * p.sale_price) - SUM(jtl.qty * p.cost_price) as profit'
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
