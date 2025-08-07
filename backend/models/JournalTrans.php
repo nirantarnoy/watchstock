@@ -90,64 +90,96 @@ class JournalTrans extends \common\models\JournalTrans
 
     public static function generateJournalNoNew($trans_type_id)
     {
-        $prefix = '';
-        switch ($trans_type_id) {
-            case self::TYPE_OPENING:
-                $prefix = 'OPN';
-                break;
-            case self::TYPE_ADJUST:
-                $prefix = 'ADJ';
-                break;
-            case self::TYPE_SALE:
-                $prefix = 'SAL';
-                break;
-            case self::TYPE_RETURN_SALE:
-                $prefix = 'RSA';
-                break;
-            case self::TYPE_LOAN:
-                $prefix = 'LOA';
-                break;
-            case self::TYPE_RETURN_LOAN:
-                $prefix = 'RLO';
-                break;
-            case self::TYPE_SEND:
-                $prefix = 'SEN';
-                break;
-            case self::TYPE_RETURN_SEND:
-                $prefix = 'RSE';
-                break;
-            case self::TYPE_DROP:
-                $prefix = 'DRO';
-                break;
-            case self::TYPE_ADJUST_IN:
-                $prefix = 'SIN';
-                break;
+        $prefixMap = [
+            self::TYPE_OPENING => 'OPN',
+            self::TYPE_ADJUST => 'ADJ',
+            self::TYPE_SALE => 'SAL',
+            self::TYPE_RETURN_SALE => 'RSA',
+            self::TYPE_LOAN => 'LOA',
+            self::TYPE_RETURN_LOAN => 'RLO',
+            self::TYPE_SEND => 'SEN',
+            self::TYPE_RETURN_SEND => 'RSE',
+            self::TYPE_DROP => 'DRO',
+            self::TYPE_ADJUST_IN => 'SIN',
+        ];
 
-        }
+        $prefix = $prefixMap[$trans_type_id] ?? 'UNK'; // fallback กรณีไม่รู้จักประเภท
+        $ym = date('Ym');
+        $basePrefix = $prefix . $ym;
 
         $lastRecord = self::find()
             ->select(['journal_no'])
             ->where(['trans_type_id' => $trans_type_id])
-            ->andWhere(['like', 'journal_no', $prefix . date('Ym')])
+            ->andWhere(['like', 'journal_no', $basePrefix])
             ->orderBy(['id' => SORT_DESC])
             ->one();
 
-
-        if ($lastRecord != null) {
-            $prefix = $prefix . date('Ym');
-            $cnum = substr((string)$lastRecord->journal_no, 9, strlen($lastRecord->journal_no));
-            $len = strlen($cnum);
-            $clen = strlen($cnum + 1);
-            $loop = $len - $clen;
-            for ($i = 1; $i <= $loop; $i++) {
-                $prefix .= "0";
-            }
-            $prefix .= $cnum + 1;
-            return $prefix;
+        if ($lastRecord) {
+            $lastNum = (int)substr($lastRecord->journal_no, strlen($basePrefix));
+            $newNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
         } else {
-            $prefix = $prefix.date('Ym');
-            return $prefix . '0001';
+            $newNum = '0001';
         }
+
+        return $basePrefix . $newNum;
+//        $prefix = '';
+//        switch ($trans_type_id) {
+//            case self::TYPE_OPENING:
+//                $prefix = 'OPN';
+//                break;
+//            case self::TYPE_ADJUST:
+//                $prefix = 'ADJ';
+//                break;
+//            case self::TYPE_SALE:
+//                $prefix = 'SAL';
+//                break;
+//            case self::TYPE_RETURN_SALE:
+//                $prefix = 'RSA';
+//                break;
+//            case self::TYPE_LOAN:
+//                $prefix = 'LOA';
+//                break;
+//            case self::TYPE_RETURN_LOAN:
+//                $prefix = 'RLO';
+//                break;
+//            case self::TYPE_SEND:
+//                $prefix = 'SEN';
+//                break;
+//            case self::TYPE_RETURN_SEND:
+//                $prefix = 'RSE';
+//                break;
+//            case self::TYPE_DROP:
+//                $prefix = 'DRO';
+//                break;
+//            case self::TYPE_ADJUST_IN:
+//                $prefix = 'SIN';
+//                break;
+//
+//        }
+//
+//        $lastRecord = self::find()
+//            ->select(['journal_no'])
+//            ->where(['trans_type_id' => $trans_type_id])
+//            ->andWhere(['like', 'journal_no', $prefix . date('Ym')])
+//            ->orderBy(['id' => SORT_DESC])
+//            ->one();
+//
+//
+//        if ($lastRecord != null) {
+//            $prefix = $prefix . date('Ym');
+//            $cnum = substr((string)$lastRecord->journal_no, 9, strlen($lastRecord->journal_no));
+//            $len = strlen($cnum);
+//            $clen = strlen($cnum + 1);
+//            $loop = $len - $clen;
+//            for ($i = 1; $i <= $loop; $i++) {
+//                $prefix .= "0";
+//            }
+//            $prefix .= $cnum + 1;
+//            return $prefix;
+//        } else {
+//            $prefix = $prefix.date('Ym');
+//            return $prefix . '0001';
+//        }
     }
 
 

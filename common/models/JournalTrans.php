@@ -232,6 +232,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_DROP:
                 $prefix = 'DRO';
                 break;
+            case self::TYPE_ADJUST_IN:
+                $prefix = 'SIN';
+                break;
 
         }
 

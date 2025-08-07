@@ -123,6 +123,7 @@ class JournaltransController extends Controller
             if ($valid) {
                 //$transaction = \Yii::$app->db->beginTransaction();
                 // try {
+                $model->journal_no = $model::generateJournalNoNew($type);
                 if ($flag = $model->save(false)) {
                     // echo "ok";return;
                     foreach ($modelLines as $modelLine) {
