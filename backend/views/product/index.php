@@ -48,6 +48,8 @@ $this->params['breadcrumbs'][] = $this->title;
             //    'bordered' => true,
             //     'striped' => false,
             //    'hover' => true,
+            'responsive' => false,
+            'responsiveWrap' => false,
             'id' => 'product-grid',
             'pjax' => true,
 
