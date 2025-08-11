@@ -979,63 +979,65 @@ class ProductController extends Controller
             ->setDescription('Exported product data from the application');
 
         // Set column headers
-        $headers = [
-            'A1' => 'Name',
-            'B1' => 'Description',
-            'C1' => 'Product Type',
-            'D1' => 'Unit',
-            'E1' => 'Brand',
-            'F1' => 'Qty',
-            'G1' => 'Note',
-            'H1' => 'Warehouse',
-            'I1' => 'Cost',
-            'J1' => 'SalePrice',
-        ];
 
-        // Apply headers
-        foreach ($headers as $cell => $value) {
-            $sheet->setCellValue($cell, $value);
-        }
+        if(Yii::$app->user->can('Super user') || Yii::$app->user->can('System Administrator')) {
+            $headers = [
+                'A1' => 'Name',
+                'B1' => 'Description',
+                'C1' => 'Product Type',
+                'D1' => 'Unit',
+                'E1' => 'Brand',
+                'F1' => 'Qty',
+                'G1' => 'Note',
+                'H1' => 'Warehouse',
+                'I1' => 'Cost',
+                'J1' => 'SalePrice',
+            ];
 
-        // Style the header row
-        $headerStyle = [
-            'font' => [
-                'bold' => true,
-                'size' => 12,
-                'color' => ['rgb' => 'FFFFFF']
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4472C4']
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000']
+            // Apply headers
+            foreach ($headers as $cell => $value) {
+                $sheet->setCellValue($cell, $value);
+            }
+
+            // Style the header row
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'size' => 12,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4472C4']
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
                 ]
-            ]
-        ];
+            ];
 
-        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:J1')->applyFromArray($headerStyle);
 
-        // Set column widths
-        $sheet->getColumnDimension('A')->setWidth(10);
-        $sheet->getColumnDimension('B')->setWidth(20);
-        $sheet->getColumnDimension('C')->setWidth(30);
-        $sheet->getColumnDimension('D')->setWidth(15);
-        $sheet->getColumnDimension('E')->setWidth(20);
-        $sheet->getColumnDimension('F')->setWidth(20);
-        $sheet->getColumnDimension('G')->setWidth(20);
-        $sheet->getColumnDimension('H')->setWidth(20);
-        $sheet->getColumnDimension('I')->setWidth(20);
-        $sheet->getColumnDimension('J')->setWidth(20);
+            // Set column widths
+            $sheet->getColumnDimension('A')->setWidth(10);
+            $sheet->getColumnDimension('B')->setWidth(20);
+            $sheet->getColumnDimension('C')->setWidth(30);
+            $sheet->getColumnDimension('D')->setWidth(15);
+            $sheet->getColumnDimension('E')->setWidth(20);
+            $sheet->getColumnDimension('F')->setWidth(20);
+            $sheet->getColumnDimension('G')->setWidth(20);
+            $sheet->getColumnDimension('H')->setWidth(20);
+            $sheet->getColumnDimension('I')->setWidth(20);
+            $sheet->getColumnDimension('J')->setWidth(20);
 
-        // Fill data rows
-        $row = 2;
+            // Fill data rows
+            $row = 2;
 //        foreach ($users as $user) {
 //            $sheet->setCellValue('A' . $row, $user->name);
 //            $sheet->setCellValue('B' . $row, $user->description);
@@ -1047,22 +1049,102 @@ class ProductController extends Controller
 //            $sheet->setCellValue('H' . $row, $user->stocksum->warehouse_id);
 //            $row++;
 //        }
-        for ($i = 0; $i < count($users); $i++) {
-            $sheet->setCellValue('A' . $row, $users[$i]['name']);
-            $sheet->setCellValue('B' . $row, $users[$i]['description']);
-            $sheet->setCellValue('C' . $row, $users[$i]['product_group_id']);
-            $sheet->setCellValue('D' . $row, $users[$i]['unit_id']);
-            $sheet->setCellValue('E' . $row, $users[$i]['brand_id']);
-            $sheet->setCellValue('F' . $row, $users[$i]['qty']==null?0:$users[$i]['qty']);
-            $sheet->setCellValue('G' . $row, $users[$i]['remark']);
-            $sheet->setCellValue('H' . $row, $users[$i]['warehouse_name']);
-            $sheet->setCellValue('I' . $row, $users[$i]['cost_price']);
-            $sheet->setCellValue('J' . $row, $users[$i]['sale_price']);
-            $row++;
+            for ($i = 0; $i < count($users); $i++) {
+                $sheet->setCellValue('A' . $row, $users[$i]['name']);
+                $sheet->setCellValue('B' . $row, $users[$i]['description']);
+                $sheet->setCellValue('C' . $row, $users[$i]['product_group_id']);
+                $sheet->setCellValue('D' . $row, $users[$i]['unit_id']);
+                $sheet->setCellValue('E' . $row, $users[$i]['brand_id']);
+                $sheet->setCellValue('F' . $row, $users[$i]['qty'] == null ? 0 : $users[$i]['qty']);
+                $sheet->setCellValue('G' . $row, $users[$i]['remark']);
+                $sheet->setCellValue('H' . $row, $users[$i]['warehouse_name']);
+                $sheet->setCellValue('I' . $row, $users[$i]['cost_price']);
+                $sheet->setCellValue('J' . $row, $users[$i]['sale_price']);
+                $row++;
+            }
+        }else{
+            $headers = [
+                'A1' => 'Name',
+                'B1' => 'Description',
+                'C1' => 'Product Type',
+                'D1' => 'Unit',
+                'E1' => 'Brand',
+                'F1' => 'Qty',
+                'G1' => 'Note',
+                'H1' => 'Warehouse',
+                'I1' => 'SalePrice',
+            ];
+
+            // Apply headers
+            foreach ($headers as $cell => $value) {
+                $sheet->setCellValue($cell, $value);
+            }
+
+            // Style the header row
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'size' => 12,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4472C4']
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ]
+            ];
+
+            $sheet->getStyle('A1:I1')->applyFromArray($headerStyle);
+
+            // Set column widths
+            $sheet->getColumnDimension('A')->setWidth(10);
+            $sheet->getColumnDimension('B')->setWidth(20);
+            $sheet->getColumnDimension('C')->setWidth(30);
+            $sheet->getColumnDimension('D')->setWidth(15);
+            $sheet->getColumnDimension('E')->setWidth(20);
+            $sheet->getColumnDimension('F')->setWidth(20);
+            $sheet->getColumnDimension('G')->setWidth(20);
+            $sheet->getColumnDimension('H')->setWidth(20);
+            $sheet->getColumnDimension('I')->setWidth(20);
+
+            // Fill data rows
+            $row = 2;
+//        foreach ($users as $user) {
+//            $sheet->setCellValue('A' . $row, $user->name);
+//            $sheet->setCellValue('B' . $row, $user->description);
+//            $sheet->setCellValue('C' . $row, $user->product_group_id);
+//            $sheet->setCellValue('D' . $row, $user->unit_id);
+//            $sheet->setCellValue('E' . $row, $user->brand_id);
+//            $sheet->setCellValue('F' . $row, $user->stock_qty);
+//            $sheet->setCellValue('G' . $row, $user->remark);
+//            $sheet->setCellValue('H' . $row, $user->stocksum->warehouse_id);
+//            $row++;
+//        }
+            for ($i = 0; $i < count($users); $i++) {
+                $sheet->setCellValue('A' . $row, $users[$i]['name']);
+                $sheet->setCellValue('B' . $row, $users[$i]['description']);
+                $sheet->setCellValue('C' . $row, $users[$i]['product_group_id']);
+                $sheet->setCellValue('D' . $row, $users[$i]['unit_id']);
+                $sheet->setCellValue('E' . $row, $users[$i]['brand_id']);
+                $sheet->setCellValue('F' . $row, $users[$i]['qty'] == null ? 0 : $users[$i]['qty']);
+                $sheet->setCellValue('G' . $row, $users[$i]['remark']);
+                $sheet->setCellValue('H' . $row, $users[$i]['warehouse_name']);
+                $sheet->setCellValue('I' . $row, $users[$i]['sale_price']);
+                $row++;
+            }
         }
 
         // Apply borders to data
-        $dataRange = 'A1:H' . ($row - 1);
+        $dataRange = 'A1:J1' . ($row - 1);
         $sheet->getStyle($dataRange)->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN)
             ->getColor()->setRGB('CCCCCC');
