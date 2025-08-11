@@ -572,11 +572,11 @@ class JournaltransController extends Controller
 
                                 if ($trans_type_id == 8) { // คืนส่งช่าง
 
-                                        if ($return_to_product[$i] == '-1' && $remark[$i] != '') { // create new product from watch maker
+                                        if ($return_to_product[$i] == null && $remark[$i] != '') { // create new product from watch maker
                                             $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
                                             $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
                                         } else { // return but not create new product
-                                            if ($return_to_product[$i] != '-1') { // return to product by specific
+                                            if ($return_to_product[$i] != null) { // return to product by specific
                                                 $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
                                                 $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
                                             } else {
