@@ -124,7 +124,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     $products = [];
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
-                            $products[] = $line->product->name;
+                            $products[] = $line->product->name.' ('.$line->product->description.')';
                         }
                     }
                     return implode('<br>', $products);
