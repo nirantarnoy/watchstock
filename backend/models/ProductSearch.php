@@ -59,7 +59,7 @@ class ProductSearch extends Product
 
         $this->load($params);
 
-      //  print_r($params);
+        //  print_r($params);
 
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails
@@ -91,11 +91,14 @@ class ProductSearch extends Product
             $query->andFilterWhere(['!=','stock_qty',0]);
         }
 
+        // แก้ไขส่วน globalSearch ให้ใช้ andWhere แทน orFilterWhere
         if($this->globalSearch != ''){
-            $query->andFilterWhere(['like', 'product.namex', $this->globalSearch])
-                ->orFilterWhere(['like', 'product.description', $this->globalSearch]);
+            $query->andWhere([
+                'or',
+                ['like', 'product.name', $this->globalSearch],
+                ['like', 'product.description', $this->globalSearch]
+            ]);
         }
-
 
         return $dataProvider;
     }
