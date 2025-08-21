@@ -92,7 +92,7 @@ class ProductSearch extends Product
         }
 
         if($this->globalSearch != ''){
-            $query->andFilterWhere(['like', 'product.name', $this->globalSearch])
+            $query->andFilterWhere(['like', 'product.namex', $this->globalSearch])
                 ->orFilterWhere(['like', 'product.description', $this->globalSearch]);
         }
 
