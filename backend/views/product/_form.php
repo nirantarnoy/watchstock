@@ -24,6 +24,16 @@ if (!$model->isNewRecord) {
 
 }
 
+$this->registerCss('
+#preview {
+      margin-top: 10px;
+      max-width: 200px;
+      max-height: 200px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+');
 ?>
 
     <div class="product-form">
@@ -119,8 +129,9 @@ if (!$model->isNewRecord) {
                     <table style="width: 100%">
                         <tr>
                             <td style="border: 1px dashed grey;height: 250px;text-align: center;">
-                                <i class="fa fa-ban fa-lg" style="color: grey"></i>
-                                <span style="color: lightgrey">ไม่พบไฟล์แนบ</span>
+                                <i class="fa fa-ban fa-lg none-file-icon" style="color: grey"></i>
+                                <span style="color: lightgrey" class="none-file-text">ไม่พบไฟล์แนบ</span>
+                                <img id="preview" src="#" alt="Preview" style="display:none;">
                             </td>
                         </tr>
                     </table>
@@ -143,7 +154,8 @@ if (!$model->isNewRecord) {
                         </tr>
                     </table>
                 <?php endif; ?>
-                <input type="file" name="product_photo" class="form-control">
+                <input type="file" id="file" name="product_photo" class="form-control">
+                <br />
             </div>
             <div class="col-lg-6">
                 <label for="">สินค้าคงเหลือ</label>
@@ -270,6 +282,20 @@ var removelist = [];
 var removecustomerpricelist = [];
 $(function(){
   // $(".line-exp-date").datepicker(); 
+  document.getElementById("file").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById("preview");
+            preview.src = e.target.result;
+            preview.style.display = "block";
+            $(".none-file-text").hide();
+            $(".none-file-icon").hide();
+        };
+        reader.readAsDataURL(file);
+    }
+});
 });
 function addline(e){
     var tr = $("#table-list tbody tr:last");
