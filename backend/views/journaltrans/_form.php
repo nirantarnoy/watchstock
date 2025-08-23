@@ -288,7 +288,7 @@ if ($create_type == 7) {
                                         //                                            ],
                                         //                                        ]) ?>
                                         <?= $form->field($modelLine, "[{$i}]product_id")->dropDownList(
-                                            ArrayHelper::map(\backend\models\Product::find()->where(['status' => 1])->andWhere(['>','stock_qty',0])->all(), 'id', function ($model) {
+                                            ArrayHelper::map(\backend\models\Product::find()->where(['status' => 1])->andWhere(['>', 'stock_qty', 0])->all(), 'id', function ($model) {
                                                 return $model->name . '  ' . $model->description;
                                             }),
                                             [
@@ -312,7 +312,7 @@ if ($create_type == 7) {
                                                readonly value="">
                                     </div>
                                     <div class="col-sm-2">
-<!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
+                                        <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
                                         <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
@@ -335,22 +335,23 @@ if ($create_type == 7) {
         </div>
 
 
-
         <?php if ($model->isNewRecord): ?>
             <div class="form-group">
                 <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
                 <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
             </div>
-        <?php else:?>
+        <?php else: ?>
             <?php
             $has_line = checkHasTransLine($model->id);
             //echo $has_line;
             ?>
             <?php if ($model->status != 3 && $has_line == 0): ?>
-                <div class="form-group">
-                    <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
-                    <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
-                </div>
+                <?php if ($model->status != 4): ?>
+                    <div class="form-group">
+                        <?= Html::submitButton($model->isNewRecord ? 'บันทึก' : 'บันทึกการแก้ไข', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+                        <?= Html::a('ยกเลิก', ['index'], ['class' => 'btn btn-default']) ?>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
         <?php endif; ?>
 

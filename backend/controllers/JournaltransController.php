@@ -844,4 +844,32 @@ class JournaltransController extends Controller
         return ['error' => 'Product not found'];
     }
 
+    public function actionCancel($id){
+        $res = 0;
+        if($id){
+            $model = $this->findModel($id);
+            if($model){
+                $model->status = JournalTrans::JOURNAL_TRANS_STATUS_CANCEL;
+                if($model->save(false)){
+                    $model_line = JournalTransLine::find()->where(['journal_trans_id'=>$id])->all();
+                    if($model_line){
+                        foreach($model_line as $value){
+                            $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$value->product_id,'warehouse_id'=>$value->warehouse_id])->one();
+                            if($model_sum){
+                                $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
+                                if($model_sum->save(false)){
+                                    $res+=1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if($res > 0){
+            \Yii::$app->session->setFlash('msg-success','บันทึกรายการสำเร็จ');
+        }
+        return $this->redirect(['view','id'=>$id]);
+    }
+
 }

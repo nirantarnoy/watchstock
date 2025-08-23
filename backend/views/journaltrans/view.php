@@ -364,6 +364,15 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     'method' => 'post',
                 ],
             ]) : '' ?>
+            <?php if($model->status != \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL):?>
+            <?=Html::a('ยกเลิกการทำรายการ', ['cancel', 'id' => $model->id], [
+                    'class' => 'btn btn-warning',
+                    'data' => [
+                        'confirm' => 'คุณแน่ใจหรือไม่ที่จะยกเลิกรายการนี้?',
+                        'method' => 'get',
+                    ],
+                ]);?>
+            <?php endif;?>
             <?= Html::a('สร้างรายการใหม่', ['create'], ['class' => 'btn btn-success']) ?>
         </p>
 

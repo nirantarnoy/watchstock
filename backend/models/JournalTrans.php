@@ -21,6 +21,10 @@ class JournalTrans extends \common\models\JournalTrans
     const TYPE_DROP = 9;       // ขาย Dropship
 
     const TYPE_ADJUST_IN = 10;
+
+    const JOURNAL_TRANS_STATUS_DRAFT = 0;
+    const JOURNAL_TRANS_STATUS_ACTIVE = 1;
+    const JOURNAL_TRANS_STATUS_CANCEL = 4;
     public function behaviors()
     {
         return [
