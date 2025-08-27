@@ -563,7 +563,13 @@ class SiteController extends Controller
     public function getProductStock($product_id){
         $qty = 0;
         if($product_id){
-            $qty = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['>','warehouse_id',0])->sum('qty');
+            $model = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['>','warehouse_id',0])->all();
+            if($model){
+                foreach ($model as $value){
+                    $qty += (int)$value->qty + (int)$value->reserv_qty;
+                }
+            }
+
         }
         return $qty == null?0:$qty;
     }
