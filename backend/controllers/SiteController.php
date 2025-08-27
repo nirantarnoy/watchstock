@@ -27,7 +27,7 @@ class SiteController extends Controller
                 'class' => AccessControl::class,
                 'rules' => [
                     [
-                        'actions' => ['login', 'error','logindriver'],
+                        'actions' => ['login', 'error','logindriver','calproduct-stock'],
                         'allow' => true,
                     ],
                     [
@@ -542,4 +542,29 @@ class SiteController extends Controller
         exit;
     }
 
+    public function actionCalproductStock(){
+        $rows=0;
+        $model = \backend\models\Product::find()->where(['status'=>1])->all();
+        if($model){
+            foreach($model as $value){
+                $stock_qty = $this->getProductStock($value->id);
+                $model_update = \backend\models\Product::find()->where(['id'=>$value->id])->one();
+                if($model_update){
+                    $model_update->stock_qty = (int)$stock_qty;
+                    if($model_update->save(false)){
+                        $rows+=1;
+                    }
+                }
+              //  echo $stock_qty.'<br />';
+            }
+        }
+        echo "Update ".$rows. " Rows";
+    }
+    public function getProductStock($product_id){
+        $qty = 0;
+        if($product_id){
+            $qty = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['>','warehouse_id',0])->sum('qty');
+        }
+        return $qty == null?0:$qty;
+    }
 }
