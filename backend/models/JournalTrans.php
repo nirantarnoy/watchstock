@@ -186,5 +186,11 @@ class JournalTrans extends \common\models\JournalTrans
 //        }
     }
 
+    public function getJournalTransLine()
+    {
+        return $this->hasMany(\common\models\JournalTransLine::class, ['journal_trans_id' => 'id']);
+    }
+
+
 
 }

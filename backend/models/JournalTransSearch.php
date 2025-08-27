@@ -42,7 +42,7 @@ class JournalTransSearch extends JournalTrans
      */
     public function search($params)
     {
-        $query = JournalTrans::find();
+        $query = JournalTrans::find()->joinWith('journalTransLine.product');
 
         // add conditions that should always apply here
 
@@ -80,7 +80,7 @@ class JournalTransSearch extends JournalTrans
 
         $query->andFilterWhere(['like', 'journal_no', $this->journal_no])
             ->andFilterWhere(['like', 'customer_name', $this->customer_name])
-            ->andFilterWhere(['like', 'remark', $this->remark]);
+            ->andFilterWhere(['like', 'journal_trans.remark', $this->remark]);
 
         if (!empty($this->trans_date)) {
             $query->andFilterWhere(['between', 'trans_date',
@@ -92,7 +92,9 @@ class JournalTransSearch extends JournalTrans
         if(!empty($this->globalSearch)){
             $query->orFilterWhere(['like', 'journal_no', $this->globalSearch])
                 ->orFilterWhere(['like', 'customer_name', $this->globalSearch])
-                ->orFilterWhere(['like', 'remark', $this->globalSearch]);
+                ->orFilterWhere(['like', 'journal_trans.remark', $this->globalSearch])
+                ->orFilterWhere(['like', 'product.name', $this->globalSearch])
+            ->orFilterWhere(['like', 'product.description', $this->globalSearch]);
         }
 
         return $dataProvider;
