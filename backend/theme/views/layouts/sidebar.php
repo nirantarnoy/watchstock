@@ -64,7 +64,14 @@
                     </ul>
                 </li>
                 <?php endif;?>
-
+                <?php if (\Yii::$app->user->can('product/index')): ?>
+                    <li class="nav-item has-treeview has-sub">
+                        <a href="index.php?r=product" class="nav-link product">
+                            <i class="far fa-circlez nav-icon"></i>
+                            <p>สินค้า</p>
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <?php if(\Yii::$app->user->can('productgroup/index')||\Yii::$app->user->can('product/index')||\Yii::$app->user->can('warehouse/index')||\Yii::$app->user->can('product/index')||\Yii::$app->user->can('stocksum/index')||\Yii::$app->user->can('stocktrans/index')):?>
 
                 <li class="nav-item has-treeview has-sub">
