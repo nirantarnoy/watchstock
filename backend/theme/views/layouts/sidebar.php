@@ -109,12 +109,12 @@
                             </li>
                         <?php endif; ?>
                         <?php if (\Yii::$app->user->can('product/index')): ?>
-                            <li class="nav-item">
-                                <a href="index.php?r=product" class="nav-link product">
-                                    <i class="far fa-circlez nav-icon"></i>
-                                    <p>สินค้า</p>
-                                </a>
-                            </li>
+<!--                            <li class="nav-item">-->
+<!--                                <a href="index.php?r=product" class="nav-link product">-->
+<!--                                    <i class="far fa-circlez nav-icon"></i>-->
+<!--                                    <p>สินค้า</p>-->
+<!--                                </a>-->
+<!--                            </li>-->
                         <?php endif; ?>
                         <?php if (\Yii::$app->user->can('warehouse/index')): ?>
                         <li class="nav-item">
