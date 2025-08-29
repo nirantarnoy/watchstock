@@ -68,7 +68,7 @@ class JournalTransSearch extends JournalTrans
             'stock_type_id' => $this->stock_type_id,
             'customer_id' => $this->customer_id,
             'qty' => $this->qty,
-            'status' => $this->status,
+            'journal_trans.status' => $this->status,
             'created_at' => $this->created_at,
             'created_by' => $this->created_by,
             'updated_at' => $this->updated_at,
