@@ -82,6 +82,33 @@ $this->params['breadcrumbs'][] = $this->title;
                 ],
                 'name',
                 'description',
+                [
+                    'attribute' => 'sale_price',
+                    'headerOptions' => ['style' => 'text-align: center'],
+                    'contentOptions' => ['style' => 'text-align: center'],
+                    'value' => function ($data) {
+                        return number_format($data->sale_price, 0);
+                    }
+                ],
+                [
+                    'attribute' => 'stock_qty',
+                    'headerOptions' => ['style' => 'text-align: center'],
+                    'contentOptions' => ['style' => 'text-align: center'],
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        return '<a href="#" data-var="'.$data->id.'" onclick="showMakerProduct($(this))">'. number_format($data->stock_qty, 0).'</a>';
+                    }
+                ],
+                [
+                    'attribute' => 'reserv_qty',
+                    'label' => 'จอง/ยืม',
+                    'headerOptions' => ['style' => 'text-align: center'],
+                    'contentOptions' => ['style' => 'text-align: center'],
+                    'value' => function ($data) {
+                        $res_qty = \backend\models\Stocksum::getResQty($data->id);
+                        return number_format($res_qty, 0);
+                    }
+                ],
                 // 'product_type_id',
 //                [
 //                    'attribute' => 'product_group_id',
@@ -112,14 +139,7 @@ $this->params['breadcrumbs'][] = $this->title;
 //                        return implode('<br>', $warehouses);
                     }
                 ],
-                [
-                    'attribute' => 'sale_price',
-                    'headerOptions' => ['style' => 'text-align: center'],
-                    'contentOptions' => ['style' => 'text-align: center'],
-                    'value' => function ($data) {
-                        return number_format($data->sale_price, 0);
-                    }
-                ],
+
 //                [
 //                    'attribute' => 'product_type_id',
 //                    'headerOptions' => ['style' => 'text-align: center'],
@@ -140,25 +160,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 //'last_price',
                 //'std_price',
                 //'company_id',
-                [
-                    'attribute' => 'stock_qty',
-                    'headerOptions' => ['style' => 'text-align: center'],
-                    'contentOptions' => ['style' => 'text-align: center'],
-                    'format' => 'raw',
-                    'value' => function ($data) {
-                        return '<a href="#" data-var="'.$data->id.'" onclick="showMakerProduct($(this))">'. number_format($data->stock_qty, 0).'</a>';
-                    }
-                ],
-                [
-                    'attribute' => 'reserv_qty',
-                    'label' => 'จอง/ยืม',
-                    'headerOptions' => ['style' => 'text-align: center'],
-                    'contentOptions' => ['style' => 'text-align: center'],
-                    'value' => function ($data) {
-                        $res_qty = \backend\models\Stocksum::getResQty($data->id);
-                        return number_format($res_qty, 0);
-                    }
-                ],
+
                 [
                     'attribute' => 'status',
                     'format' => 'raw',
