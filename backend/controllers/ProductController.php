@@ -573,7 +573,7 @@ class ProductController extends Controller
                         continue;
                     }
 
-                    $model_dup = \backend\models\Product::find()->where(['name' => trim($rowData[0]),'description'=>trim($rowData[1])])->one();
+                    $model_dup = \backend\models\Product::find()->where(['name' => ltrim($rowData[0]),'description'=>ltrim($rowData[1])])->one();
                     if ($model_dup != null) {
                         $new_stock_qty = 0;
                         if($rowData[5] != null || $rowData[5] != ''){
@@ -588,26 +588,26 @@ class ProductController extends Controller
                         }
                         continue;
                     }else{
-                        //    echo "must new";
-                        $modelx = new \backend\models\Product();
-                        // $modelx->code = $rowData[0];
-                        $modelx->name = trim($rowData[0]);
-                        $modelx->description = trim($rowData[1]);
-                        $modelx->product_group_id = $rowData[2]; // watch or phone or etc
-                        $modelx->brand_id = $rowData[4];
-                        $modelx->product_type_id = 1; // normal or custom
-                        $modelx->type_id = 1; // 1 = new 2 = second used
-                        $modelx->unit_id = 1;
-                        $modelx->status = 1;
-                        $modelx->cost_price = 0;
-                        $modelx->sale_price = 0;
-                        $modelx->stock_qty = 0;//$rowData[5];
-                        $modelx->remark = $rowData[6];
-                        //
-                        if ($modelx->save(false)) {
-                            $this->calStock($modelx->id,1,$rowData[7],$rowData[5]);
-                            $res += 1;
-                        }
+//                        //    echo "must new";
+//                        $modelx = new \backend\models\Product();
+//                        // $modelx->code = $rowData[0];
+//                        $modelx->name = trim($rowData[0]);
+//                        $modelx->description = trim($rowData[1]);
+//                        $modelx->product_group_id = $rowData[2]; // watch or phone or etc
+//                        $modelx->brand_id = $rowData[4];
+//                        $modelx->product_type_id = 1; // normal or custom
+//                        $modelx->type_id = 1; // 1 = new 2 = second used
+//                        $modelx->unit_id = 1;
+//                        $modelx->status = 1;
+//                        $modelx->cost_price = 0;
+//                        $modelx->sale_price = 0;
+//                        $modelx->stock_qty = 0;//$rowData[5];
+//                        $modelx->remark = $rowData[6];
+//                        //
+//                        if ($modelx->save(false)) {
+//                            $this->calStock($modelx->id,1,$rowData[7],$rowData[5]);
+//                            $res += 1;
+//                        }
                     }
 
 
