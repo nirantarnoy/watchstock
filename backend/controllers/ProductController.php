@@ -654,6 +654,7 @@ class ProductController extends Controller
                 $model = \common\models\StockSum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
                 if($model){
                     $model->qty = $qty; // initial stock
+                    $model->reserv_qty = 0; // reset reserv to 0
                     if($model->save(false)){
                        $this->calUpdateProductStock($product_id);
                     }
@@ -662,14 +663,10 @@ class ProductController extends Controller
                     $model->product_id = $product_id;
                     $model->warehouse_id = $warehouse_id;
                     $model->qty = $qty;
+                    $model->reserv_qty = 0;
                     $model->updated_at = date('Y-m-d H:i:s');
                     if($model->save(false)){
                         $this->calUpdateProductStock($product_id);
-//                        $model_product = \backend\models\Product::findOne($product_id);
-//                        if($model_product){
-//                            $model_product->stock_qty = $qty; // update stock product
-//                            $model_product->save(false);
-//                        }
                     }
                 }
             }
