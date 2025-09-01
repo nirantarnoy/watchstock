@@ -238,8 +238,12 @@ class ProductController extends Controller
                     $model_journal_trans->warehouse_id = 0;
 
                     if($model_journal_trans->save(false)){
+                        if($line_warehouse!=null){
+                            \backend\models\Stocksum::updateAll(['qty'=>0],['product_id'=>$model->id]);
+                        }
                         for($i=0;$i<=count($line_warehouse)-1;$i++){
-                            if($line_warehouse[$i] == null || $line_qty[$i] == null || $line_warehouse[$i] <= 0){
+
+                            if($line_warehouse[$i] == null || $line_qty[$i] == null || $line_warehouse[$i] <= 0 || $line_warehouse[$i] == ''){
                                 continue;
                             }
 
@@ -259,6 +263,7 @@ class ProductController extends Controller
                                       //  $this->updateProductStock($model->id);
                                     }
                                 }else{
+
                                     $model_sum = new \backend\models\Stocksum();
                                     $model_sum->product_id = $model->id;
                                     $model_sum->warehouse_id = $line_warehouse[$i];
