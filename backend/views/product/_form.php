@@ -184,7 +184,7 @@ $this->registerCss('
         </div>
         <br/>
         <br/>
-        <?php if (Yii::$app->user->identity->username == 'Mhee' || Yii::$app->user->identity->username == 'mheeadmin'): ?>
+        <?php //if (Yii::$app->user->identity->username == 'Mhee' || Yii::$app->user->identity->username == 'mheeadmin'): ?>
             <div class="row">
                 <div class="col-lg-12">
                     <h4>จัดการสต๊อกสินค้า</h4>
@@ -266,7 +266,7 @@ $this->registerCss('
                 </div>
             </div>
             <br/>
-        <?php endif; ?>
+        <?php //endif; ?>
         <div class="form-group">
             <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
         </div>

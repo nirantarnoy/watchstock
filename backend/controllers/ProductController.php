@@ -145,7 +145,7 @@ class ProductController extends Controller
                     }
 
                     if($line_warehouse != null){
-                        for($i=0;$i<count($line_warehouse);$i++){
+                        for($i=0;$i<=count($line_warehouse)-1;$i++){
                             if($line_qty[$i] == 0){
                                 continue;
                             }
