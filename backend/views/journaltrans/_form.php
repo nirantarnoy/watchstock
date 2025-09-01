@@ -160,6 +160,15 @@ $is_disabled_maker = true;
 if ($create_type == 7) {
     $is_disabled_maker = false;
 }
+
+$model_products = null;
+if($create_type == 10){
+    $model_products =  \backend\models\Product::find()->where(['status' => 1])->all();
+}else{
+    $model_products =  \backend\models\Product::find()->where(['status' => 1])->andWhere(['>', 'stock_qty', 0])->all();
+}
+
+
 ?>
 
     <div class="journal-trans-form">
@@ -288,7 +297,7 @@ if ($create_type == 7) {
                                         //                                            ],
                                         //                                        ]) ?>
                                         <?= $form->field($modelLine, "[{$i}]product_id")->dropDownList(
-                                            ArrayHelper::map(\backend\models\Product::find()->where(['status' => 1])->andWhere(['>', 'stock_qty', 0])->all(), 'id', function ($model) {
+                                            ArrayHelper::map($model_products, 'id', function ($model) {
                                                 return $model->name . '  ' . $model->description;
                                             }),
                                             [
