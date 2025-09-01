@@ -958,6 +958,223 @@ class ProductController extends Controller
 
     public function actionExportProducts()
     {
+        // รับ parameters จาก request
+        $searchModel = new ProductSearch();
+        $params = Yii::$app->request->queryParams;
+
+        // สร้าง base SQL query
+        $sql = "SELECT w.name as warehouse_name,
+                   st.qty,
+                   p.name,
+                   p.description,
+                   p.product_group_id,
+                   p.unit_id,
+                   p.brand_id,
+                   p.remark,
+                   p.cost_price,
+                   p.sale_price,
+                   p.product_type_id,
+                   pb.name as brand_name,
+                   pg.name as product_group_name,
+                   u.name as unit_name
+            FROM product as p 
+            LEFT JOIN stock_sum as st on p.id = st.product_id 
+            LEFT JOIN warehouse as w on st.warehouse_id = w.id
+            LEFT JOIN product_brand as pb on p.brand_id = pb.id
+            LEFT JOIN product_group as pg on p.product_group_id = pg.id
+            LEFT JOIN unit as u on p.unit_id = u.id
+            WHERE 1=1";
+
+        $sqlParams = [];
+
+        // เพิ่มเงื่อนไขการกรองตาม parameters
+        if (isset($params['ProductSearch'])) {
+            $search = $params['ProductSearch'];
+
+            // Global Search - ค้นหาใน name และ description
+            if (!empty($search['globalSearch'])) {
+                $sql .= " AND (p.name LIKE :globalSearch OR p.description LIKE :globalSearch)";
+                $sqlParams[':globalSearch'] = '%' . $search['globalSearch'] . '%';
+            }
+
+            // Brand filter
+            if (!empty($search['brand_id'])) {
+                $sql .= " AND p.brand_id = :brand_id";
+                $sqlParams[':brand_id'] = $search['brand_id'];
+            }
+
+            // Product Type filter
+            if (!empty($search['product_type_id'])) {
+                $sql .= " AND p.product_type_id = :product_type_id";
+                $sqlParams[':product_type_id'] = $search['product_type_id'];
+            }
+
+//            // Party (Watchmaker) filter
+//            if (!empty($search['party_id'])) {
+//                $sql .= " AND p.party_id = :party_id";
+//                $sqlParams[':party_id'] = $search['party_id'];
+//            }
+
+            // Warehouse filter
+            if (!empty($search['warehouse_id'])) {
+                $sql .= " AND st.warehouse_id = :warehouse_id";
+                $sqlParams[':warehouse_id'] = $search['warehouse_id'];
+            }
+
+            // Stock filter
+            if (isset($search['stock_empty']) && $search['stock_empty'] !== '') {
+                if ($search['stock_empty'] == '1') {
+                    // สต๊อก 0
+                    $sql .= " AND (st.qty = 0 OR st.qty IS NULL)";
+                } elseif ($search['stock_empty'] == '2') {
+                    // สต๊อกมากกว่า 0
+                    $sql .= " AND st.qty > 0";
+                }
+                // ถ้า stock_empty = 0 (ทั้งหมด) ไม่ต้องเพิ่มเงื่อนไข
+            }
+        }
+
+        $sql .= " ORDER BY p.name ASC";
+
+        // Execute query with parameters
+        $command = Yii::$app->db->createCommand($sql);
+        foreach ($sqlParams as $key => $value) {
+            $command->bindValue($key, $value);
+        }
+        $users = $command->queryAll();
+
+        // Create new Spreadsheet object
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set document properties
+        $spreadsheet->getProperties()
+            ->setCreator('Your App Name')
+            ->setLastModifiedBy('Your App Name')
+            ->setTitle('Product Export')
+            ->setSubject('Product Data')
+            ->setDescription('Exported product data from the application');
+
+        // Set column headers based on user permissions
+        if(Yii::$app->user->can('Super user') || Yii::$app->user->can('System Administrator')) {
+            $headers = [
+                'A1' => 'Name',
+                'B1' => 'Description',
+                'C1' => 'Product Group',
+                'D1' => 'Unit',
+                'E1' => 'Brand',
+                'F1' => 'Qty',
+                'G1' => 'Note',
+                'H1' => 'Warehouse',
+                'I1' => 'Cost Price',
+                'J1' => 'Sale Price',
+            ];
+            $lastColumn = 'J';
+        } else {
+            $headers = [
+                'A1' => 'Name',
+                'B1' => 'Description',
+                'C1' => 'Product Group',
+                'D1' => 'Unit',
+                'E1' => 'Brand',
+                'F1' => 'Qty',
+                'G1' => 'Note',
+                'H1' => 'Warehouse',
+                'I1' => 'Sale Price',
+            ];
+            $lastColumn = 'I';
+        }
+
+        // Apply headers
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Style the header row
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'size' => 12,
+                'color' => ['rgb' => 'FFFFFF']
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ];
+
+        $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray($headerStyle);
+
+        // Set column widths
+        $columnWidths = ['A' => 20, 'B' => 30, 'C' => 20, 'D' => 15, 'E' => 20,
+            'F' => 10, 'G' => 30, 'H' => 20, 'I' => 15, 'J' => 15];
+
+        foreach ($columnWidths as $col => $width) {
+            $sheet->getColumnDimension($col)->setWidth($width);
+        }
+
+        // Fill data rows
+        $row = 2;
+        foreach ($users as $user) {
+            $sheet->setCellValue('A' . $row, $user['name']);
+            $sheet->setCellValue('B' . $row, $user['description']);
+            $sheet->setCellValue('C' . $row, $user['product_group_name']); // แสดงชื่อแทน ID
+            $sheet->setCellValue('D' . $row, $user['unit_name']); // แสดงชื่อแทน ID
+            $sheet->setCellValue('E' . $row, $user['brand_name']); // แสดงชื่อแทน ID
+            $sheet->setCellValue('F' . $row, $user['qty'] == null ? 0 : $user['qty']);
+            $sheet->setCellValue('G' . $row, $user['remark']);
+            $sheet->setCellValue('H' . $row, $user['warehouse_name']);
+
+            if(Yii::$app->user->can('Super user') || Yii::$app->user->can('System Administrator')) {
+                $sheet->setCellValue('I' . $row, $user['cost_price']);
+                $sheet->setCellValue('J' . $row, $user['sale_price']);
+            } else {
+                $sheet->setCellValue('I' . $row, $user['sale_price']);
+            }
+            $row++;
+        }
+
+        // Apply borders to data
+        $dataRange = 'A1:' . $lastColumn . ($row - 1);
+        $sheet->getStyle($dataRange)->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN)
+            ->getColor()->setRGB('CCCCCC');
+
+        // Generate filename with current filters info
+        $filename = 'products_export_' . date('Y-m-d_H-i-s');
+        if (!empty($sqlParams)) {
+            $filename .= '_filtered';
+        }
+        $filename .= '.xlsx';
+
+        // Set response headers for download
+        Yii::$app->response->format = Response::FORMAT_RAW;
+        Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        Yii::$app->response->headers->add('Content-Disposition', 'attachment;filename="' . $filename . '"');
+        Yii::$app->response->headers->add('Cache-Control', 'max-age=0');
+
+        // Write file to output
+        $writer = new Xlsx($spreadsheet);
+
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        return $content;
+    }
+
+    public function actionExportProductsOld()
+    {
         // Get data from your model
        // $users = Product::find()->joinWith('stocksum')->all();
 

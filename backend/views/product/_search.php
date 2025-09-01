@@ -10,6 +10,10 @@ use yii\widgets\ActiveForm;
 /** @var yii\widgets\ActiveForm $form */
 $stock_empty_data = [['id' => 0, 'name' => 'ทั้งหมด'], ['id' => 1, 'name' => 'สต๊อก 0'], ['id' => 2, 'name' => 'สต๊อกมากกว่า 0']];
 $stockEmptyOptions = ArrayHelper::map($stock_empty_data, 'id', 'name');
+
+// เก็บ current parameters
+$currentParams = Yii::$app->request->queryParams;
+unset($currentParams['r']); // ลบ route parameter
 ?>
 
 <div class="product-search">
@@ -25,7 +29,8 @@ $stockEmptyOptions = ArrayHelper::map($stock_empty_data, 'id', 'name');
         <div class="col-lg-10">
             <p>
                 <?= Html::a(Yii::t('app', '<i class="fa fa-plus"></i> สร้างใหม่'), ['create'], ['class' => 'btn btn-success']) ?>
-                <?= Html::a(Yii::t('app', '<i class="fa fa-download"></i> Export'), ['export-products'], ['class' => 'btn btn-info']) ?>
+                <?= Html::a(Yii::t('app', '<i class="fa fa-download"></i> Export'), array_merge(['export-products'], $currentParams), ['class' => 'btn btn-info','data-pjax' => '0', // ปิดการทำงานของ PJAX สำหรับลิงค์นี้
+                    'target' => '_blank']) ?>
             </p>
         </div>
         <div class="col-lg-2" style="text-align: right">
