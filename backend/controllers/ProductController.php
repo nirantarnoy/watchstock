@@ -635,13 +635,13 @@ class ProductController extends Controller
 
         $warehouse_id = 0;
         if($warehouse_name!='' || $warehouse_name!=null){
-            $warehouse = \common\models\Warehouse::find()->where(['name'=>trim($warehouse_name)])->one();
+            $warehouse = \common\models\Warehouse::find()->where(['name'=>ltrim($warehouse_name)])->one();
             if($warehouse){
                 $warehouse_id = $warehouse->id;
             }else{
                     $warehouse = new \common\models\Warehouse();
-                    $warehouse->name = trim($warehouse_name);
-                    $warehouse->description = trim($warehouse_name);
+                    $warehouse->name = ltrim($warehouse_name);
+                    $warehouse->description = ltrim($warehouse_name);
                     $warehouse->status = 1;
                     if($warehouse->save(false)){
                         $warehouse_id = $warehouse->id;
