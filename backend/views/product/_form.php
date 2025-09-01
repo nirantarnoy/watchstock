@@ -184,7 +184,7 @@ $this->registerCss('
         </div>
         <br/>
         <br/>
-        <?php //if (Yii::$app->user->identity->username == 'Mhee' || Yii::$app->user->identity->username == 'mheeadmin'): ?>
+        <?php if (Yii::$app->user->identity->username == 'Mhee' || Yii::$app->user->identity->username == 'mheeadmin'): ?>
             <div class="row">
                 <div class="col-lg-12">
                     <h4>จัดการสต๊อกสินค้า</h4>
@@ -266,7 +266,91 @@ $this->registerCss('
                 </div>
             </div>
             <br/>
-        <?php //endif; ?>
+        <?php else: ?>
+            <?php if ($model->isNewRecord): ?>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h4>จัดการสต๊อกสินค้า</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <table class="table table-bordered table-striped" id="table-list">
+                            <thead>
+                            <tr>
+                                <th style="text-align: center;">ที่จัดเก็บ</th>
+                                <th style="text-align: center;">จำนวนคงเหลือ</th>
+                                <th>-</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php if ($model_line != null): ?>
+                                <?php foreach ($model_line as $value): ?>
+                                    <tr data-var="<?= $value->id; ?>">
+                                        <td>
+                                            <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
+                                                   value="<?= $value->id ?>">
+                                            <select name="warehouse_id[]" id="" class="form-control line-warehouse-id">
+                                                <option value="-1">--เลือก-</option>
+                                                <?php foreach ($data_warehouse as $xvalue): ?>
+                                                    <?php
+                                                    $selected = '';
+                                                    if ($value->warehouse_id == $xvalue->id) {
+                                                        $selected = 'selected';
+                                                    }
+                                                    ?>
+                                                    <option value="<?= $xvalue->id ?>" <?= $selected ?>><?= $xvalue->name ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control line-qty" name="line_qty[]"
+                                                   value="<?= $value->qty ?>">
+                                        </td>
+                                        <td>
+                                            <div class="btn btn-danger" onclick="removeline($(this))"><i
+                                                        class="fa fa-trash"></i></div>
+                                        </td>
+
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr data-var="">
+                                    <td>
+                                        <!--                            <input type="text" class="form-control line-warehouse-id" name="warehouse_id[]" value="">-->
+                                        <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
+                                               value="0">
+                                        <select name="warehouse_id[]" id="" class="form-control line-warehouse-id">
+                                            <option value="-1">--เลือก-</option>
+                                            <?php foreach ($data_warehouse as $xvalue): ?>
+                                                <option value="<?= $xvalue->id ?>"><?= $xvalue->name ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control line-qty" name="line_qty[]" value="">
+                                    </td>
+                                    <td>
+                                        <div class="btn btn-danger" onclick="removeline($(this))"><i
+                                                    class="fa fa-trash"></i></div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <td colspan="3" style="text-align: left;">
+                                    <div class="btn btn-sm btn-primary" onclick="addline($(this))">เพิ่ม</div>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <br/>
+            <?php endif; ?>
+        <?php endif; ?>
         <div class="form-group">
             <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
         </div>
