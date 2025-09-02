@@ -61,9 +61,9 @@ unset($currentParams['r']); // ลบ route parameter
         <div class="col-lg-2">
             <?= $form->field($model, 'product_type_id')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\helpers\ProductType::asArrayObject(),'id','name'),'options'=>['placeholder'=>'-- เลือกประเภทสินค้า --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
         </div>
-        <div class="col-lg-2">
-            <?= $form->field($model, 'party_id')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\models\Watchmaker::find()->all(),'id','name'),'options'=>['placeholder'=>'-- เลือกช่าง --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
-        </div>
+<!--        <div class="col-lg-2">-->
+<!--            --><?php //= $form->field($model, 'party_id')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\models\Watchmaker::find()->all(),'id','name'),'options'=>['placeholder'=>'-- เลือกช่าง --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
+<!--        </div>-->
         <div class="col-lg-2">
             <?= $form->field($model, 'warehouse_id')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\models\Warehouse::find()->all(),'id','name'),'options'=>['placeholder'=>'-- เลือกคลังสินค้า --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
         </div>
