@@ -116,15 +116,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             ],
             [
-                'attribute' => 'photo',
-                'label' => '',
-                'format' => 'raw',
-                'value' => function ($data) {
-                   $product_photo = \backend\models\Product::getPhoto($data->journalTransLine->product_id);
-                   return '<img src="'.\Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $product_photo.'" >';
-                }
-            ],
-            [
                 'attribute' => 'product_id',
                 'format' => 'raw',
                 'label' => 'สินค้า',

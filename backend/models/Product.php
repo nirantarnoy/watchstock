@@ -192,6 +192,10 @@ class Product extends \common\models\Product
         return $model != null ?$model->photo:'';
   }
 
+  public static function getPhotoJournal($journal_id){
+       // $model = JournalTransLine::find()->where(['journal_trans_id'=>$journal_id])->one();
+  }
+
 
 
 }
