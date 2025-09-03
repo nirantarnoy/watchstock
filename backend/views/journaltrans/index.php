@@ -120,7 +120,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => '',
                 'format' => 'raw',
                 'value' => function ($data) {
-                   $product_photo = \backend\models\Product::getPhoto($data->product_id);
+                   $product_photo = \backend\models\Product::getPhoto($data->journaltransline->product_id);
                    return '<img src="'.\Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $product_photo.'" >';
                 }
             ],
