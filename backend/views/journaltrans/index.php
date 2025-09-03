@@ -115,17 +115,18 @@ $this->params['breadcrumbs'][] = $this->title;
                     return \backend\models\Watchmaker::findName($model->party_id);
                 }
             ],
+
             [
                 'attribute' => 'product_id',
                 'format' => 'raw',
                 'label' => 'สินค้า',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:left'],
                 'value' => function ($model) {
                     $products = [];
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
-                            $products[] = $line->product->name . ' (' . $line->product->description . ')';
+                            $products[] = '<img src="'.\Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line->product->id.'" > '.$line->product->name . ' (' . $line->product->description . ')';
                         }
                     }
                     return implode('<br>', $products);
