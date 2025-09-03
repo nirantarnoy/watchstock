@@ -1,6 +1,7 @@
 <?php
 
 use yii\helpers\Html;
+
 //use yii\grid\GridView;
 use kartik\grid\GridView;
 use yii\widgets\Pjax;
@@ -24,35 +25,35 @@ $this->params['breadcrumbs'][] = $this->title;
     <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><br>กำลังโหลดข้อมูล...
 </div>
 <div class="journal-trans-index">
-   <div class="row">
-       <div class="col-lg-10">
-           <p>
-               <?= Html::a('<i class="fa fa-plus"></i> บันทึกขาย', ['create', 'type' => 3], ['class' => 'btn btn-success']) ?>
-               <?= Html::a('<i class="fa fa-archive"></i> บันทึกยืมสินค้า', ['create', 'type' => 5], ['class' => 'btn btn-info']) ?>
-               <?= Html::a('<i class="fa fa-wrench"></i> บันทึกส่งช่าง', ['create', 'type' => 7], ['class' => 'btn btn-primary']) ?>
-               <?= Html::a('<i class="fa fa-shopping-cart"></i> บันทึกขาย Drop Ship', ['create', 'type' => 9], ['class' => 'btn btn-secondary']) ?>
-               <?= Html::a('<i class="fa fa-file-import"></i> บันทึกรับยอดสินค้าเข้าคลัง', ['create', 'type' => 10], ['class' => 'btn btn-warning']) ?>
-           </p>
+    <div class="row">
+        <div class="col-lg-10">
+            <p>
+                <?= Html::a('<i class="fa fa-plus"></i> บันทึกขาย', ['create', 'type' => 3], ['class' => 'btn btn-success']) ?>
+                <?= Html::a('<i class="fa fa-archive"></i> บันทึกยืมสินค้า', ['create', 'type' => 5], ['class' => 'btn btn-info']) ?>
+                <?= Html::a('<i class="fa fa-wrench"></i> บันทึกส่งช่าง', ['create', 'type' => 7], ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('<i class="fa fa-shopping-cart"></i> บันทึกขาย Drop Ship', ['create', 'type' => 9], ['class' => 'btn btn-secondary']) ?>
+                <?= Html::a('<i class="fa fa-file-import"></i> บันทึกรับยอดสินค้าเข้าคลัง', ['create', 'type' => 10], ['class' => 'btn btn-warning']) ?>
+            </p>
 
-       </div>
-       <div class="col-lg-2" style="text-align: right">
-           <form id="form-perpage" class="form-inline" action="<?= Url::to(['journaltrans/index'], true) ?>"
-                 method="post">
-               <div class="form-group">
-                   <label>แสดง </label>
-                   <select class="form-control" name="perpage" id="perpage">
-                       <option value="20" <?= $perpage == '20' ? 'selected' : '' ?>>20</option>
-                       <option value="50" <?= $perpage == '50' ? 'selected' : '' ?> >50</option>
-                       <option value="100" <?= $perpage == '100' ? 'selected' : '' ?>>100</option>
-                   </select>
-                   <label> รายการ</label>
-               </div>
-           </form>
-       </div>
-   </div>
+        </div>
+        <div class="col-lg-2" style="text-align: right">
+            <form id="form-perpage" class="form-inline" action="<?= Url::to(['journaltrans/index'], true) ?>"
+                  method="post">
+                <div class="form-group">
+                    <label>แสดง </label>
+                    <select class="form-control" name="perpage" id="perpage">
+                        <option value="20" <?= $perpage == '20' ? 'selected' : '' ?>>20</option>
+                        <option value="50" <?= $perpage == '50' ? 'selected' : '' ?> >50</option>
+                        <option value="100" <?= $perpage == '100' ? 'selected' : '' ?>>100</option>
+                    </select>
+                    <label> รายการ</label>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <?php Pjax::begin(); ?>
-    <?php  echo $this->render('_search', ['model' => $searchModel]); ?>
+    <?php echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -80,38 +81,47 @@ $this->params['breadcrumbs'][] = $this->title;
 
             [
                 'attribute' => 'journal_no',
-               // 'headerOptions' => ['style' => 'width:150px'],
+                // 'headerOptions' => ['style' => 'width:150px'],
             ],
             [
                 'attribute' => 'trans_date',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center'],
-               // 'format' => ['datetime', 'php:d/m/Y H:i'],
-                'value' => function($model) {
+                // 'format' => ['datetime', 'php:d/m/Y H:i'],
+                'value' => function ($model) {
                     return date('d/m/Y H:i:s', strtotime($model->trans_date));
                 }
-              //  'headerOptions' => ['style' => 'width:150px'],
+                //  'headerOptions' => ['style' => 'width:150px'],
             ],
             [
                 'attribute' => 'trans_type_id',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center'],
                 'format' => 'html',
-                'value' => function($model) {
+                'value' => function ($model) {
                     $trans_type_name = $model->getTransactionTypeName();
-                    $htmel_status = getBadgeType($model->trans_type_id,$trans_type_name);
+                    $htmel_status = getBadgeType($model->trans_type_id, $trans_type_name);
                     return $htmel_status;
                 },
-               // 'filter' => JournalTrans::getTransactionTypeList(),
-               // 'headerOptions' => ['style' => 'width:120px'],
+                // 'filter' => JournalTrans::getTransactionTypeList(),
+                // 'headerOptions' => ['style' => 'width:120px'],
             ],
             'customer_name',
             [
                 'attribute' => 'party_id',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center'],
-                'value'=>function($model) {
+                'value' => function ($model) {
                     return \backend\models\Watchmaker::findName($model->party_id);
+                }
+            ],
+            [
+                'attribute' => 'photo',
+                'label' => '',
+                'format' => 'raw',
+                'value' => function ($data) {
+                   $product_photo = \backend\models\Product::getPhoto($data->product_id);
+                   return '<img src="'.\Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $product_photo.'" >';
                 }
             ],
             [
@@ -120,11 +130,11 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => 'สินค้า',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center'],
-                'value'=>function($model) {
+                'value' => function ($model) {
                     $products = [];
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
-                            $products[] = $line->product->name.' ('.$line->product->description.')';
+                            $products[] = $line->product->name . ' (' . $line->product->description . ')';
                         }
                     }
                     return implode('<br>', $products);
@@ -135,7 +145,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => ['decimal', 0],
                 'headerOptions' => ['style' => 'text-align:right'],
                 'contentOptions' => ['style' => 'text-align:right'],
-                'value' => function($model) {
+                'value' => function ($model) {
                     return \backend\models\JournalTrans::getLineQty($model->id);
                 },
             ],
@@ -153,13 +163,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center'],
                 'format' => 'raw',
-                'value' => function($model) {
+                'value' => function ($model) {
                     $status_name = \backend\helpers\TransStatusType::getTypeById($model->status);
-                    $htmel_status = getBadgeStatus($model->status,$status_name);
+                    $htmel_status = getBadgeStatus($model->status, $status_name);
                     return $htmel_status;
                 },
-               // 'format' => 'raw',
-               // 'filter' => JournalTrans::getStatusList(),
+                // 'format' => 'raw',
+                // 'filter' => JournalTrans::getStatusList(),
                 //'headerOptions' => ['style' => 'width:100px'],
             ],
 
@@ -208,7 +218,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'data-var' => $data->id,
                             'onclick' => 'recDelete($(this));'
                         ]);
-                        return $data->status ==1? Html::a('<span class="fas fa-trash-alt btn btn-xs btn-default"></span>', 'javascript:void(0)', $options):'';
+                        return $data->status == 1 ? Html::a('<span class="fas fa-trash-alt btn btn-xs btn-default"></span>', 'javascript:void(0)', $options) : '';
                     }
                 ]
             ],
@@ -220,14 +230,15 @@ $this->params['breadcrumbs'][] = $this->title;
 </div>
 
 <?php
-function getBadgeType($status,$status_name) {
+function getBadgeType($status, $status_name)
+{
     if ($status == 1) {
         return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 2) {
+    } else if ($status == 2) {
         return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 3) {
+    } else if ($status == 3) {
         return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 4) {
+    } else if ($status == 4) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
     } else if ($status == 5) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
@@ -235,28 +246,30 @@ function getBadgeType($status,$status_name) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
     } else if ($status == 7) {
         return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 8) {
+    } else if ($status == 8) {
         return '<span class="badge badge-pill badge-primary" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 9) {
+    } else if ($status == 9) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 10) {
+    } else if ($status == 10) {
         return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
-    }else {
+    } else {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }
 }
 
-function getBadgeStatus($status,$status_name) {
+function getBadgeStatus($status, $status_name)
+{
     if ($status == 1) {
         return '<span class="badge badge-pill badge-info" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 2) {
+    } else if ($status == 2) {
         return '<span class="badge badge-pill badge-warning" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 3) {
+    } else if ($status == 3) {
         return '<span class="badge badge-pill badge-success" style="padding: 10px;">' . $status_name . '</span>';
-    } else if($status == 4) {
+    } else if ($status == 4) {
         return '<span class="badge badge-pill badge-secondary" style="padding: 10px;">' . $status_name . '</span>';
     }
 }
+
 ?>
 
 <?php
