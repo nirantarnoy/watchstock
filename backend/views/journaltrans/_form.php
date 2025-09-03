@@ -621,6 +621,11 @@ $(window).on('load', function() {
 function getWarehouseproduct(e){
        var id = e.val();
        var row = e.closest(".row");
+       var create_type = $("#create-type").val();
+       if(create_type === 10 || create_type==='10'){ // ปรับยอดเข้าไม่ต้องเช็คคงคลัง
+         //  alert();
+           return false;
+       }
       // alert(id);
         if(id){
             $.ajax({
