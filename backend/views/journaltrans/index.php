@@ -127,7 +127,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
                             $line_photo = \backend\models\Product::getPhoto($line->product_id);
-                            $products[] = '<img src="'.\Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo.'" > '.$line->product->name . ' (' . $line->product->description . ')';
+                            $products[] = '<img src="'.\Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo.'" style="width: 50px; height: 50px;" > '.$line->product->name . ' (' . $line->product->description . ')';
                         }
                     }
                     return implode('<br>', $products);
