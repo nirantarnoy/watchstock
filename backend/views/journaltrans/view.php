@@ -357,7 +357,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
 
         <p>
             <?= Html::a('แก้ไข', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-            <?= $model->status != 3 ? Html::a('ลบ', ['delete', 'id' => $model->id], [
+            <?= $model->status != 3 && $model->status !=4 ? Html::a('ลบ', ['delete', 'id' => $model->id], [
                 'class' => 'btn btn-danger',
                 'data' => [
                     'confirm' => 'คุณแน่ใจหรือไม่ที่จะลบรายการนี้?',
