@@ -263,6 +263,12 @@ class JournaltransController extends Controller
         $transaction = Yii::$app->db->beginTransaction();
         try {
             // Delete all related lines first
+            $model_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $id])->all();
+            if($model_line){
+                foreach($model_line as $value){
+                    $this->updateCancelTrans($value->product_id,$value->qty,$value->warehouse_id);
+                }
+            }
             JournalTransLine::deleteAll(['journal_trans_id' => $id]);
 
             // Delete master
@@ -276,6 +282,35 @@ class JournaltransController extends Controller
         }
 
         return $this->redirect(['index']);
+    }
+
+    private function updateCancelTrans($product_id,$qty,$warehouse_id){
+        if($product_id && $qty){
+            $model = new JournalTrans();
+            $model->journal_no = $model::generateJournalNoNew(4);
+            $model->trans_date = date('Y-m-d H:i:s');
+            $model->stock_type_id = 1; // 1 in , 2 out
+            //$model->activity_type = 11;
+            $model->created_by = \Yii::$app->user->id;
+            $model->created_at = time();
+            if($model->save(false)){
+                $model_line = new JournalTransLine();
+                $model_line->journal_trans_id = $model->id;
+                $model_line->product_id = $product_id;
+                $model_line->qty = $qty;
+                $model_line->warehouse_id = $warehouse_id;
+                if($model_line->save(false)){
+                    $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->sum('qty');
+                    if($model_stock){
+                        $model_stock->qty += (int)$qty;
+                        $model_stock->updated_at = time();
+                        if($model_stock->save(false)){
+                            $this->updateProductStock($product_id);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
