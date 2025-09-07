@@ -36,6 +36,7 @@ class JournaltransController extends Controller
                 'actions' => [
                     'delete' => ['POST', 'GET'],
                     'delete-line' => ['POST', 'GET'],
+                    'cancel'=>['POST','GET']
                 ],
             ],
         ];
@@ -881,6 +882,8 @@ class JournaltransController extends Controller
 
     public function actionCancel($id){
         $res = 0;
+       // $id = \Yii::$app->request->post('id');
+      //  echo $id;return;
         if($id){
             $model = $this->findModel($id);
             if($model){
@@ -891,7 +894,12 @@ class JournaltransController extends Controller
                         foreach($model_line as $value){
                             $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$value->product_id,'warehouse_id'=>$value->warehouse_id])->one();
                             if($model_sum){
-                                $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
+                                if($model->stock_type_id == 2){
+                                    $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
+                                }else if($model->stock_type_id == 1){
+                                    $model_sum->qty = (float)$model_sum->qty - (float)$value->qty;
+                                }
+
                                 if($model_sum->save(false)){
                                     $res+=1;
                                 }

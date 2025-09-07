@@ -368,8 +368,8 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
             <?=Html::a('ยกเลิกการทำรายการ', ['cancel', 'id' => $model->id], [
                     'class' => 'btn btn-warning',
                     'data' => [
-                        'confirm' => 'คุณแน่ใจหรือไม่ที่จะยกเลิกรายการนี้?',
-                        'method' => 'get',
+                        'confirm' => 'คุณแน่ใจหรือไม่ที่จะยกเลิกรายการนี้ ?'.$model->id,
+                        'method' => 'post',
                     ],
                 ]);?>
             <?php endif;?>
