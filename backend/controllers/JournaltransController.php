@@ -894,9 +894,15 @@ class JournaltransController extends Controller
                         foreach($model_line as $value){
                             $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$value->product_id,'warehouse_id'=>$value->warehouse_id])->one();
                             if($model_sum){
-                                if($model->stock_type_id == 2){
-                                    $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
-                                }else if($model->stock_type_id == 1){
+                                if($model->stock_type_id == 2){ // stock out
+                                    if($model->trans_type_id == 5 || $model->trans_type_id == 7){
+                                        $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
+                                        $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$value->qty;
+                                    }else{
+                                        $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
+                                    }
+
+                                }else if($model->stock_type_id == 1){ // stock in
                                     $model_sum->qty = (float)$model_sum->qty - (float)$value->qty;
                                 }
 
