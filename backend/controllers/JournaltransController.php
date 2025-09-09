@@ -334,7 +334,7 @@ class JournaltransController extends Controller
     {
         if ($product_id && $stock_type_id && $qty) {
             if ($stock_type_id == 2) { // stock out
-                $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', $qty])->one();
+                $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', (int)$qty])->one();
                 if ($model) {
                     $model->qty -= (int)$qty;
                     if ($activity_type == 5 || $activity_type == 7) { // ยืม
@@ -348,20 +348,20 @@ class JournaltransController extends Controller
             if ($stock_type_id == 1) { // stock in
 
                 if ($activity_type == 6) { // คืนยืม
-                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', $qty])->one();
+                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', (int)$qty])->one();
                     if ($model) {
                         if ($model->warehouse_id == $warehouse_id) { // same warehouse
-                            $model->qty += $qty;
-                            $model->reserv_qty -= $qty;
+                            $model->qty += (int)$qty;
+                            $model->reserv_qty -= (int)$qty;
                             if ($model->save(false)) {
                                 $this->updateProductStock($product_id);
                             }
                         } else { // diff warehouse
-                            $model->reserv_qty -= $qty; // remove reserve qty
+                            $model->reserv_qty -= (int)$qty; // remove reserve qty
                             if ($model->save(false)) {
                                 $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // find new warehouse
                                 if ($modelx) {
-                                    $modelx->qty += $qty;
+                                    $modelx->qty += (int)$qty;
                                     if ($modelx->save(false)) {
                                         $this->updateProductStock($product_id);
                                     }
@@ -369,7 +369,7 @@ class JournaltransController extends Controller
                                     $modelx = new \common\models\StockSum();
                                     $modelx->product_id = $product_id;
                                     $modelx->warehouse_id = $warehouse_id;
-                                    $modelx->qty = $qty;
+                                    $modelx->qty = (int)$qty;
                                     $modelx->reserv_qty = 0;
                                     $modelx->updated_at = date('Y-m-d H:i:s');
                                     if ($modelx->save(false)) {
