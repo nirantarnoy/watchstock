@@ -139,13 +139,13 @@ class JournaltransController extends Controller
 
                     $total_qty = 0;
                     foreach ($modelLines as $modelLine) {
-                        $total_qty += $modelLine->qty;
+                        $total_qty += (int)$modelLine->qty;
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                         $model_stock_trans->journal_trans_id = $model->id;
                         $model_stock_trans->trans_type_id = $model->trans_type_id;
                         $model_stock_trans->product_id = $modelLine->product_id;
-                        $model_stock_trans->qty = $modelLine->qty;
+                        $model_stock_trans->qty = (int)$modelLine->qty;
                         $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
                         $model_stock_trans->stock_type_id = $model->stock_type_id;
                         $model_stock_trans->remark = $modelLine->remark;
@@ -336,9 +336,9 @@ class JournaltransController extends Controller
             if ($stock_type_id == 2) { // stock out
                 $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', $qty])->one();
                 if ($model) {
-                    $model->qty -= $qty;
+                    $model->qty -= (int)$qty;
                     if ($activity_type == 5 || $activity_type == 7) { // ยืม
-                        $model->reserv_qty += $qty;
+                        $model->reserv_qty += (int)$qty;
                     }
                     if ($model->save(false)) {
                         $this->updateProductStock($product_id);
@@ -732,6 +732,8 @@ class JournaltransController extends Controller
             if ($model_stock_sum) {
                 $product_sale_price = \backend\models\Product::findSalePrice($product_id);
                 array_push($onhand, ['stock_qty' => $model_stock_sum->qty, 'sale_price' => $product_sale_price]); // stock ตัดได้แค่ยอดที่มีคงเหลือ ไม่รวมยอดจอง
+            }else{
+                array_push($onhand,['stock_qty'=> 0,'sale_price'=>0]);
             }
         }
         return json_encode($onhand);

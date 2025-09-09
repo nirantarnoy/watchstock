@@ -193,16 +193,6 @@ if ($create_type == 7) {
                     ]
                 ]) ?>
             </div>
-            <!--            <div class="col-md-3">-->
-            <!--                --><?php //= $form->field($model, 'warehouse_id')->widget(Select2::className(), [
-            //                    'data' => ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
-            //                    'options' => ['placeholder' => '-- เลือกคลัง --','onchange'=>'getWarehouseproduct($(this))'],
-            //                    'pluginOptions' => [
-            //                        'allowClear' => true,
-            //                        'theme' => 'krajee',
-            //                    ],
-            //                ]) ?>
-            <!--            </div>-->
             <div class="col-md-3">
                 <?= $form->field($model, 'party_id')->widget(Select2::className(), [
                     'data' => ArrayHelper::map(\backend\models\Watchmaker::find()->all(), 'id', 'name'),
@@ -277,17 +267,6 @@ if ($create_type == 7) {
                                 ?>
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        <!--                                        --><?php //= $form->field($modelLine, "[{$i}]product_id")->widget(Select2::className(),[
-                                        //                                            'data' => ArrayHelper::map(\backend\models\Product::find()->all(), 'id', 'name'),
-                                        //                                            'options' => [
-                                        //                                                'placeholder' => '-- เลือกสินค้า --',
-                                        //                                                'class' => 'form-control product-select'
-                                        //                                            ],
-                                        //                                            'pluginOptions' => [
-                                        //                                                'allowClear' => true,
-                                        //                                                'theme' => 'krajee',
-                                        //                                            ],
-                                        //                                        ]) ?>
                                         <?= $form->field($modelLine, "[{$i}]product_id")->dropDownList(
                                             ArrayHelper::map(\backend\models\Product::find()->where(['status' => 1])->all(), 'id', function ($model) {
                                                 return $model->name . '  ' . $model->description;
@@ -300,11 +279,13 @@ if ($create_type == 7) {
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]warehouse_id")->dropDownList(
-                                            ArrayHelper::map(\backend\models\Warehouse::find()->all(), 'id', 'name'),
+                                            ArrayHelper::map(\backend\models\Warehouse::find()->where(['status' => 100])->all(), 'id', 'name'),
                                             [
                                                 'prompt' => '-- เลือกคลัง --',
                                                 'class' => 'form-control warehouse-id',
-                                                'onchange' => 'getProductonhand($(this))']
+                                                'onchange' => 'getProductonhand($(this))',
+                                                'readonly' => true,
+                                            ]
                                         ) ?>
                                     </div>
                                     <div class="col-sm-2">
@@ -616,19 +597,19 @@ function getWarehouseproduct(e){
        var id = e.val();
        var row = e.closest(".row");
       // alert(id);
-        if(id){
-            $.ajax({
-                url: '$url_to_get_warehouseproduct',
-                type: 'POST',
-                data: {id: id},
-                dataType: 'html',
-                success: function(data) {
-                    if(data!='' || data!=null){
-                        row.find('.warehouse-id').html(data);
-                    }
-                }
-            });
-        }
+//        if(id){
+//            $.ajax({
+//                url: '$url_to_get_warehouseproduct',
+//                type: 'POST',
+//                data: {id: id},
+//                dataType: 'html',
+//                success: function(data) {
+//                    if(data!='' || data!=null){
+//                        row.find('.warehouse-id').html(data);
+//                    }
+//                }
+//            });
+//        }
    }
 function getProductonhand(e){
        var warehouse_id = e.val();
