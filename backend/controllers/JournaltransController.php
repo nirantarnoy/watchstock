@@ -581,7 +581,7 @@ class JournaltransController extends Controller
             if ($model->save(false)) {
                 if ($product_id != null) {
                     for ($i = 0; $i < count($product_id); $i++) {
-                        if ($qty[$i] == null || $qty[$i] == '' || $qty[$i] == '0' || $qty[$i] == 0) continue;
+                        if ($qty[$i] == null || $qty[$i] == '' || $qty[$i] == '0' || $qty[$i] == 0 || $return_to_warehouse[$i] == null || $return_to_warehouse[$i] == '') continue;
                         $model_line = new \common\models\JournalTransLine();
                         $model_line->journal_trans_id = $model->id;
                         $model_line->product_id = $product_id[$i];

@@ -678,7 +678,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                    onchange="checkReturnQty($(this))">
                         </div>
                         <div class="col-lg-2">
-                            <select name="return_to_warehouse[]" class="form-control" required>
+                            <select name="return_to_warehouse[]" class="form-control">
                                 <option value="">--เลือกคลัง--</option>
                                 <?php foreach ($warehouse_data as $value_warehouse): ?>
                                     <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
