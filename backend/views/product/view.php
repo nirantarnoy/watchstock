@@ -119,7 +119,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php
         $searchModel = new StocktransSearch();
         $dataProvider = $searchModel->search([]);
-        $dataProvider->query->where(['id'=>$model->id]);
+        $dataProvider->query->where(['product_id'=>$model->id]);
         $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
     ?>
     <h5><b>ประวัติการทำรายการ</b></h5>
