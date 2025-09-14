@@ -520,6 +520,8 @@ class JournaltransController extends Controller
                 }
 
                 \backend\models\Product::updateAll(['stock_qty' => $all_stock], ['id' => $product_id]);
+            }else{
+                \backend\models\Product::updateAll(['stock_qty' => 0], ['id' => $product_id]);
             }
         }
     }
@@ -954,7 +956,9 @@ class JournaltransController extends Controller
                     }
                 }
                 $this->updateProductStock($model_line->product_id);
-
+               if($res > 0){
+                   \common\models\JournalTransLine::deleteAll(['id'=>$model_line->id]);
+               }
             }
 
         }

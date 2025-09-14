@@ -479,7 +479,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     'label' => 'ยกเลิกการทำรายการ',
                     'format' => 'raw',
                     'value' => function ($data) {
-                        return '<a class="btn btn-danger" href="index.php?r=journaltrans/cancelbyline&id='.$data->id.'">ยกเลิก</a>';
+                        return '<div class="btn btn-danger" onclick="canelline($(this))">ยกเลิก</div>';
                     }
                 ]
 //                [
@@ -711,6 +711,9 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
         <br/>
 
     </div>
+    <form id="form-cancel-line" action="<?=Url::to(['journaltrans/cancelbyline'],true)?>" method="post">
+        <input type="hidden" class="cancel-id" name="cancel_id" value="">
+    </form>
 <?php
 function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 {
@@ -828,6 +831,15 @@ function validateForm() {
    
     
     return true;
+}
+function canelline(e){
+    var id = e.attr("data-var");
+    if(id){
+        if(confirm("ต้องการยกเลิกรายการใช่หรือไม่")){
+            $(".cancel-id").val(id);
+            $("#form-cancel-line").submit();
+        }
+    }
 }
 JS;
 $this->registerJs($js, static::POS_END);
