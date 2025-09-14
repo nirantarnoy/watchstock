@@ -912,6 +912,7 @@ class JournaltransController extends Controller
                                     $res+=1;
                                 }
                             }
+                            $this->updateProductStock($value->product_id);
                         }
                     }
                 }
@@ -921,6 +922,26 @@ class JournaltransController extends Controller
             \Yii::$app->session->setFlash('msg-success','บันทึกรายการสำเร็จ');
         }
         return $this->redirect(['view','id'=>$id]);
+    }
+    public function actionCalallstock()
+    {
+        $model_product = \backend\models\Product::find()->where(['status'=>1])->all();
+        if ($model_product) {
+            foreach($model_product as $value){
+                $model_stock = \backend\models\Stocksum::find()->where(['product_id' => $value->id])->all();
+                if ($model_stock) {
+                    $all_stock = 0;
+                    foreach ($model_stock as $model) {
+                        if($model->warehouse_id == null || $model->warehouse_id == '')continue;
+                        $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
+                        $all_stock += ($model->qty + $res_qty); // รวมจํานวน + จํานวนจอง
+                    }
+
+                    \backend\models\Product::updateAll(['stock_qty' => $all_stock], ['id' => $value->id]);
+                }
+            }
+
+        }
     }
 
 }
