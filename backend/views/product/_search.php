@@ -73,7 +73,9 @@ unset($currentParams['r']); // ลบ route parameter
         <!--        <div class="col-lg-2">-->
 <!--            --><?php //= $form->field($model, 'type_id')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\helpers\CatType::asArrayObject(),'id','name'),'options'=>['placeholder'=>'-- เลือกสภาพสินค้า --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
 <!--        </div>-->
+        <button class="btn btn-primary">ค้นหา</button>
     </div>
+
 
 
     <?php ActiveForm::end(); ?>
