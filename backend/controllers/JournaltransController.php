@@ -928,10 +928,10 @@ class JournaltransController extends Controller
         return $this->redirect(['view', 'id' => $id]);
     }
 
-    public function actionCancelbyline($id)
+    public function actionCancelbyline()
     {
         $res = 0;
-        // $id = \Yii::$app->request->post('id');
+         $id = \Yii::$app->request->post('cancel_id');
         //  echo $id;return;
         if ($id) {
             $model_line = JournalTransLine::find()->where(['id' => $id])->one();
