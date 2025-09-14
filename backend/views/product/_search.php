@@ -70,10 +70,11 @@ unset($currentParams['r']); // ลบ route parameter
         <div class="col-lg-2">
            <?= $form->field($model, 'stock_empty')->dropDownList($stockEmptyOptions,['onchange'=>'$(this).submit()'])->label(false) ?>
         </div>
-        <!--        <div class="col-lg-2">-->
+                <div class="col-lg-2">
+                    <button class="btn btn-primary">ค้นหา</button>
 <!--            --><?php //= $form->field($model, 'type_id')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\helpers\CatType::asArrayObject(),'id','name'),'options'=>['placeholder'=>'-- เลือกสภาพสินค้า --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
-<!--        </div>-->
-        <button class="btn btn-primary">ค้นหา</button>
+        </div>
+
     </div>
 
 
