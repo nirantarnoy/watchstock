@@ -933,11 +933,13 @@ class JournaltransController extends Controller
         $res = 0;
          $id = \Yii::$app->request->post('cancel_id');
         //  echo $id;return;
+        $journal_id = 0;
         if ($id) {
             $model_line = JournalTransLine::find()->where(['id' => $id])->one();
             if ($model_line) {
                 $model = \backend\models\JournalTrans::find()->where(['id'=>$model_line->journal_trans_id])->one();
                 $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_line->product_id, 'warehouse_id' => $model_line->warehouse_id])->one();
+                $journal_id = $model->id;
                 if ($model_sum) {
                     if ($model->stock_type_id == 2) { // stock out
                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
@@ -953,6 +955,17 @@ class JournaltransController extends Controller
 
                     if ($model_sum->save(false)) {
                         $res += 1;
+                        $model_stock_trans = new \common\models\StockTrans();
+                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_stock_trans->journal_trans_id = $model->id;
+                        $model_stock_trans->trans_type_id = $model->trans_type_id;
+                        $model_stock_trans->product_id = $model_line->product_id;
+                        $model_stock_trans->qty = (int)$model_line->qty;
+                        $model_stock_trans->warehouse_id = $model_line->warehouse_id;
+                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
+                        $model_stock_trans->remark = $model_line->remark;
+                        $model_stock_trans->created_by = \Yii::$app->user->id;
+                        $model_stock_trans->save(false);
                     }
                 }
                 $this->updateProductStock($model_line->product_id);
@@ -965,7 +978,7 @@ class JournaltransController extends Controller
         if ($res > 0) {
             \Yii::$app->session->setFlash('msg-success', 'บันทึกรายการสำเร็จ');
         }
-        return $this->redirect(['view', 'id' => $id]);
+        return $this->redirect(['view', 'id' => $journal_id]);
     }
 
     public function actionCalallstock()
