@@ -365,13 +365,13 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 ],
             ]) : '' ?>
             <?php if($model->status != \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL):?>
-            <?=Html::a('ยกเลิกการทำรายการ', ['cancel', 'id' => $model->id], [
-                    'class' => 'btn btn-warning',
-                    'data' => [
-                        'confirm' => 'คุณแน่ใจหรือไม่ที่จะยกเลิกรายการนี้ ?'.$model->id,
-                        'method' => 'post',
-                    ],
-                ]);?>
+<!--            --><?php //=Html::a('ยกเลิกการทำรายการ', ['cancel', 'id' => $model->id], [
+//                    'class' => 'btn btn-warning',
+//                    'data' => [
+//                        'confirm' => 'คุณแน่ใจหรือไม่ที่จะยกเลิกรายการนี้ ?'.$model->id,
+//                        'method' => 'post',
+//                    ],
+//                ]);?>
             <?php endif;?>
             <?= Html::a('สร้างรายการใหม่', ['create'], ['class' => 'btn btn-success']) ?>
         </p>
@@ -475,6 +475,13 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     'contentOptions' => ['style' => 'text-align:right'],
                 ],
                 'remark',
+                [
+                    'label' => 'ยกเลิกการทำรายการ',
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        return '<a class="btn btn-danger" href="index.php?r=journaltrans/cancelbyline&id='.$data->id.'">ยกเลิก</a>';
+                    }
+                ]
 //                [
 //                    'attribute' => 'status',
 //                    'value' => function ($model) {

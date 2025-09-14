@@ -115,12 +115,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attributes' => $attributes2,]) ?>
         </div>
     </div>
-    <br />
+    <br/>
     <?php
-        $searchModel = new StocktransSearch();
-        $dataProvider = $searchModel->search([]);
-        $dataProvider->query->where(['product_id'=>$model->id]);
-        $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
+    $searchModel = new StocktransSearch();
+    $dataProvider = $searchModel->search([]);
+    $dataProvider->query->where(['product_id' => $model->id]);
+    $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
     ?>
     <h5><b>ประวัติการทำรายการ</b></h5>
     <div class="row">
@@ -200,6 +200,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             return \backend\models\User::findName($data->created_by);
                         }
                     ],
+
                     //'created_at',
                     //'stock_type_id',
                 ],
