@@ -125,7 +125,7 @@ class ProductController extends Controller
 
 
                  $model->code = $model->name;
-                if ($model->save(false)) {
+                if ($model->save()) {
                     $uploaded = UploadedFile::getInstanceByName('product_photo');
                     $uploaded2 = UploadedFile::getInstanceByName('product_photo_2');
 
@@ -174,9 +174,10 @@ class ProductController extends Controller
                         }
                         $this->updateProductStock($model->id);
                     }
+                    return $this->redirect(['view', 'id' => $model->id]);
                 }
 
-                return $this->redirect(['view', 'id' => $model->id]);
+
             }
         } else {
             $model->loadDefaultValues();
@@ -525,7 +526,7 @@ class ProductController extends Controller
                         $modelx->stock_qty = 0;//$rowData[5];
                         $modelx->remark = $rowData[6];
                         //
-                        if ($modelx->save(false)) {
+                        if ($modelx->save()) {
                             $this->calStock($modelx->id,1,$rowData[7],$rowData[5]);
                             $res += 1;
                         }

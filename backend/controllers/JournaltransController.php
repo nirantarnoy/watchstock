@@ -757,7 +757,7 @@ class JournaltransController extends Controller
             $model_new->status = $model->status;
             $model_new->product_type_id = $model->product_type_id;
             $model_new->type_id = $model->type_id;
-            if ($model_new->save(false)) {
+            if ($model_new->save()) {
 
                 if ($warehouse_id != null) {
 
