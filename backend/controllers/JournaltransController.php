@@ -331,110 +331,226 @@ class JournaltransController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
 
+//    public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type)
+//    {
+//        if ($product_id && $stock_type_id && $qty) {
+//            if ($stock_type_id == 2) { // stock out
+//                $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', (int)$qty])->one();
+//                if ($model) {
+//                    $model->qty -= (int)$qty;
+//                    if ($activity_type == 5 || $activity_type == 7) { // ยืม
+//                        $model->reserv_qty += (int)$qty;
+//                    }
+//                    if ($model->save(false)) {
+//                        $this->updateProductStock($product_id);
+//                    }
+//                }
+//            }
+//            if ($stock_type_id == 1) { // stock in
+//
+//                if ($activity_type == 6) { // คืนยืม
+//                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', (int)$qty])->one();
+//                    if ($model) {
+//                        if ($model->warehouse_id == $warehouse_id) { // same warehouse
+//                            $model->qty += (int)$qty;
+//                            $model->reserv_qty -= (int)$qty;
+//                            if ($model->save(false)) {
+//                                $this->updateProductStock($product_id);
+//                            }
+//                        } else { // diff warehouse
+//                            $model->reserv_qty -= (int)$qty; // remove reserve qty
+//                            if ($model->save(false)) {
+//                                $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // find new warehouse
+//                                if ($modelx) {
+//                                    $modelx->qty += (int)$qty;
+//                                    if ($modelx->save(false)) {
+//                                        $this->updateProductStock($product_id);
+//                                    }
+//                                } else {
+//                                    $modelx = new \common\models\StockSum();
+//                                    $modelx->product_id = $product_id;
+//                                    $modelx->warehouse_id = $warehouse_id;
+//                                    $modelx->qty = (int)$qty;
+//                                    $modelx->reserv_qty = 0;
+//                                    $modelx->updated_at = date('Y-m-d H:i:s');
+//                                    if ($modelx->save(false)) {
+//                                        $this->updateProductStock($product_id);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                } else if ($activity_type == 10) { // รับสินค้าอัพเดทคลัง
+//                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
+//                    if ($model) {
+//                        $model->qty += $qty;
+//                        if ($model->save(false)) {
+//                            $this->updateProductStock($product_id);
+//                        }
+//                    } else {
+//                        $model = new \common\models\StockSum();
+//                        $model->product_id = $product_id;
+//                        $model->warehouse_id = $warehouse_id;
+//                        $model->qty = $qty;
+//                        $model->reserv_qty = 0;
+//                        $model->updated_at = date('Y-m-d H:i:s');
+//                        if ($model->save(false)) {
+//                            $this->updateProductStock($product_id);
+//                        }
+//                    }
+//                } else {
+//                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
+//                    if ($model) {
+//                        $model->qty += $qty;
+//                        if ($model->reserv_qty >= ($qty)) { // remove reserve qty
+//                            $model->reserv_qty = ($model->reserv_qty - $qty);
+//                        }
+//                        if ($model->save(false)) {
+//                            $this->updateProductStock($product_id);
+//                        }
+//                    } else {
+//                        $model = new \common\models\StockSum();
+//                        $model->product_id = $product_id;
+//                        $model->warehouse_id = $warehouse_id;
+//                        $model->qty = $qty;
+//                        $model->reserv_qty = 0;
+//                        $model->updated_at = date('Y-m-d H:i:s');
+//                        if ($model->save(false)) {
+//                            $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
+//                            if ($model_update_reserve) {
+//                                foreach ($model_update_reserve as $model_reserve) {
+//                                    if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
+//                                        $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
+//                                        $model_reserve->save(false);
+//                                        break;
+//                                    }
+//                                }
+//                            }
+//                            $this->updateProductStock($product_id);
+//                        }
+//                    }
+//                }
+//
+//
+//            }
+//        }
+//    }
+
     public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type)
     {
-        if ($product_id && $stock_type_id && $qty) {
-            if ($stock_type_id == 2) { // stock out
-                $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', (int)$qty])->one();
-                if ($model) {
-                    $model->qty -= (int)$qty;
-                    if ($activity_type == 5 || $activity_type == 7) { // ยืม
-                        $model->reserv_qty += (int)$qty;
-                    }
-                    if ($model->save(false)) {
-                        $this->updateProductStock($product_id);
-                    }
+        $qty = (int)$qty;
+        if (!$product_id || !$stock_type_id || $qty <= 0) {
+            return false;
+        }
+
+        // === Stock Out ===
+        if ($stock_type_id == 2) {
+            $model = \common\models\StockSum::find()
+                ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                ->andWhere(['>=', 'qty', $qty])
+                ->one();
+
+            if ($model) {
+                $model->qty -= $qty;
+                if (in_array($activity_type, [5, 7])) { // ยืม
+                    $model->reserv_qty += $qty;
+                }
+                $model->updated_at = date('Y-m-d H:i:s');
+                if ($model->save(false)) {
+                    $this->updateProductStock($product_id);
                 }
             }
-            if ($stock_type_id == 1) { // stock in
+            return true;
+        }
 
-                if ($activity_type == 6) { // คืนยืม
-                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', (int)$qty])->one();
-                    if ($model) {
-                        if ($model->warehouse_id == $warehouse_id) { // same warehouse
-                            $model->qty += (int)$qty;
-                            $model->reserv_qty -= (int)$qty;
-                            if ($model->save(false)) {
+        // === Stock In ===
+        if ($stock_type_id == 1) {
+            if ($activity_type == 6) {
+                // คืนยืม
+                $model = \common\models\StockSum::find()
+                    ->where(['product_id' => $product_id])
+                    ->andWhere(['>=', 'reserv_qty', $qty])
+                    ->one();
+
+                if ($model) {
+                    if ($model->warehouse_id == $warehouse_id) {
+                        // คืนเข้าคลังเดิม
+                        $model->qty += $qty;
+                        $model->reserv_qty = max(0, $model->reserv_qty - $qty);
+                        $model->updated_at = date('Y-m-d H:i:s');
+                        if ($model->save(false)) {
+                            $this->updateProductStock($product_id);
+                        }
+                    } else {
+                        // คืนเข้าคลังใหม่
+                        $model->reserv_qty = max(0, $model->reserv_qty - $qty);
+                        $model->updated_at = date('Y-m-d H:i:s');
+                        if ($model->save(false)) {
+                            $modelx = \common\models\StockSum::find()
+                                ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                                ->one();
+                            if ($modelx) {
+                                $modelx->qty += $qty;
+                            } else {
+                                $modelx = new \common\models\StockSum();
+                                $modelx->product_id = $product_id;
+                                $modelx->warehouse_id = $warehouse_id;
+                                $modelx->qty = $qty;
+                                $modelx->reserv_qty = 0;
+                            }
+                            $modelx->updated_at = date('Y-m-d H:i:s');
+                            if ($modelx->save(false)) {
                                 $this->updateProductStock($product_id);
                             }
-                        } else { // diff warehouse
-                            $model->reserv_qty -= (int)$qty; // remove reserve qty
-                            if ($model->save(false)) {
-                                $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // find new warehouse
-                                if ($modelx) {
-                                    $modelx->qty += (int)$qty;
-                                    if ($modelx->save(false)) {
-                                        $this->updateProductStock($product_id);
-                                    }
-                                } else {
-                                    $modelx = new \common\models\StockSum();
-                                    $modelx->product_id = $product_id;
-                                    $modelx->warehouse_id = $warehouse_id;
-                                    $modelx->qty = (int)$qty;
-                                    $modelx->reserv_qty = 0;
-                                    $modelx->updated_at = date('Y-m-d H:i:s');
-                                    if ($modelx->save(false)) {
-                                        $this->updateProductStock($product_id);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if ($activity_type == 10) { // รับสินค้าอัพเดทคลัง
-                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
-                    if ($model) {
-                        $model->qty += $qty;
-                        if ($model->save(false)) {
-                            $this->updateProductStock($product_id);
-                        }
-                    } else {
-                        $model = new \common\models\StockSum();
-                        $model->product_id = $product_id;
-                        $model->warehouse_id = $warehouse_id;
-                        $model->qty = $qty;
-                        $model->reserv_qty = 0;
-                        $model->updated_at = date('Y-m-d H:i:s');
-                        if ($model->save(false)) {
-                            $this->updateProductStock($product_id);
-                        }
-                    }
-                } else {
-                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
-                    if ($model) {
-                        $model->qty += $qty;
-                        if ($model->reserv_qty >= ($qty)) { // remove reserve qty
-                            $model->reserv_qty = ($model->reserv_qty - $qty);
-                        }
-                        if ($model->save(false)) {
-                            $this->updateProductStock($product_id);
-                        }
-                    } else {
-                        $model = new \common\models\StockSum();
-                        $model->product_id = $product_id;
-                        $model->warehouse_id = $warehouse_id;
-                        $model->qty = $qty;
-                        $model->reserv_qty = 0;
-                        $model->updated_at = date('Y-m-d H:i:s');
-                        if ($model->save(false)) {
-                            $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
-                            if ($model_update_reserve) {
-                                foreach ($model_update_reserve as $model_reserve) {
-                                    if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
-                                        $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
-                                        $model_reserve->save(false);
-                                        break;
-                                    }
-                                }
-                            }
-                            $this->updateProductStock($product_id);
                         }
                     }
                 }
+            } elseif ($activity_type == 10) {
+                // รับสินค้าอัพเดทคลัง
+                $model = \common\models\StockSum::find()
+                    ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                    ->one();
 
+                if ($model) {
+                    $model->qty += $qty;
+                } else {
+                    $model = new \common\models\StockSum();
+                    $model->product_id = $product_id;
+                    $model->warehouse_id = $warehouse_id;
+                    $model->qty = $qty;
+                    $model->reserv_qty = 0;
+                }
+                $model->updated_at = date('Y-m-d H:i:s');
+                if ($model->save(false)) {
+                    $this->updateProductStock($product_id);
+                }
+            } else {
+                // รับเข้าทั่วไป
+                $model = \common\models\StockSum::find()
+                    ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                    ->one();
 
+                if ($model) {
+                    $model->qty += $qty;
+                    $model->reserv_qty = max(0, $model->reserv_qty - $qty);
+                } else {
+                    $model = new \common\models\StockSum();
+                    $model->product_id = $product_id;
+                    $model->warehouse_id = $warehouse_id;
+                    $model->qty = $qty;
+                    $model->reserv_qty = 0;
+                }
+                $model->updated_at = date('Y-m-d H:i:s');
+                if ($model->save(false)) {
+                    $this->updateProductStock($product_id);
+                }
             }
+            return true;
         }
+
+        return false;
     }
+
 
     public function calStockReturnFixProduct($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type, $original_product_id, $original_warehouse_id)
     {
@@ -556,132 +672,292 @@ class JournaltransController extends Controller
         return $models;
     }
 
+//    public function actionAddreturnproduct()
+//    {
+//        $product_id = \Yii::$app->request->post('product_id');
+//        $journal_trans_id = \Yii::$app->request->post('journal_trans_id');
+//        $qty = \Yii::$app->request->post('return_qty');
+//        $remark = \Yii::$app->request->post('return_remark');
+//        $return_to_type = \Yii::$app->request->post('return_to_type');
+//        $trans_type_id = \Yii::$app->request->post('trans_type_id');
+//        $return_to_warehouse = \Yii::$app->request->post('return_to_warehouse');
+//        $original_warehouse = \Yii::$app->request->post('warehouse_id');
+//        $is_return_new = \Yii::$app->request->post('is_return_new');
+//        $return_to_product = \Yii::$app->request->post('return_to_product');
+////        $journal_trans_line_id = \Yii::$app->request->post('journal_trans_line_id');
+//
+//        // print_r($return_to_product);return;
+//
+//        if ($journal_trans_id && $qty != null && $trans_type_id != null) {
+//            $model = new \backend\models\JournalTrans();
+//            $model->trans_date = date('Y-m-d H:i:s');
+//            $model->journal_no = $model::generateJournalNoNew($trans_type_id);
+//            $model->remark = '';
+//            $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง 6 = คืนยืม
+//            $model->status = 3;
+//            $model->stock_type_id = 1; // 1 เข้า 2 ออก
+//            $model->trans_ref_id = $journal_trans_id;
+//            if ($model->save(false)) {
+//                if ($product_id != null) {
+//                    for ($i = 0; $i < count($product_id); $i++) {
+//                        if ($qty[$i] == null || $qty[$i] == '' || $qty[$i] == '0' || $qty[$i] == 0 || $return_to_warehouse[$i] == null || $return_to_warehouse[$i] == '') continue;
+//                        $model_line = new \common\models\JournalTransLine();
+//                        $model_line->journal_trans_id = $model->id;
+//                        $model_line->product_id = $product_id[$i];
+//                        $model_line->qty = $qty[$i];
+//                        $model_line->remark = $remark[$i];
+//                        $model_line->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1; // default
+//                        $model_line->return_to_type = $return_to_type != null ? $return_to_type[$i] : null;
+//                        $model_line->journal_trans_ref_id = $journal_trans_id;
+//                        if ($model_line->save(false)) {
+//                            $model_stock_trans = new \common\models\StockTrans();
+//                            $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+//                            $model_stock_trans->trans_type_id = $trans_type_id;
+//                            $model_stock_trans->product_id = $product_id[$i];
+//                            $model_stock_trans->journal_trans_id = $model->id;
+//                            $model_stock_trans->qty = $qty[$i];
+//                            $model_stock_trans->remark = $remark[$i];
+//                            $model_stock_trans->stock_type_id = 1;
+//                            $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
+//                            if ($model_stock_trans->save(false)) {
+//                                if ($trans_type_id == 6) { // คือยืม
+//                                    $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id); // stock in from return borrow
+//                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+//                                }
+//
+//                                if ($trans_type_id == 8) { // คืนส่งช่าง
+//
+//                                    if ($return_to_product[$i] == null && $remark[$i] != '') { // create new product from watch maker
+//                                        $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
+//                                        $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+//                                    } else { // return but not create new product
+//                                        if ($return_to_product[$i] != null) { // return to product by specific
+//                                            $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
+//                                            $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
+//                                        } else {
+//                                            $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
+//                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+//                                        }
+//                                    }
+//
+//
+////                                    if ($is_return_new != null) {
+////                                        //   if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
+////                                        if ($is_return_new[$i] == 1) { // create new product from watch maker
+////                                            $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
+////                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+////                                        } else if ($is_return_new[$i] == 0) { // return but not create new product
+////
+////                                            if ($return_to_product[$i] != '0') { // return to product by specific
+////                                                $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
+////                                                $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
+////                                            } else {
+////                                                $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
+////                                                $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
+////                                            }
+////                                        }
+////                                    }
+//
+//                                }
+//                            }
+//
+//                        }
+//
+//
+//                    }
+//                }
+//                $this->calForcomplete($journal_trans_id, $model->id);
+//            }
+//
+//        }
+//        return $this->redirect(['journaltrans/view', 'id' => $journal_trans_id]);
+//    }
+//
+//    function calForupdateTransLine($journal_trans_id, $trans_line_new_id, $product_id)
+//    {
+//        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])->one();
+//        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
+//        if ($return_qty >= $borrow_qty->qty) {
+//            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])->one();
+//            if ($trans_line) {
+//                $trans_line->status = 1; // line trans complete
+//                $trans_line->save(false);
+//            }
+//        }
+//    }
+//
+//    function calForupdateTransLineFixProduct($journal_trans_id, $trans_line_new_id, $product_id, $original_product_id)
+//    {
+//        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])->one();
+//        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $original_product_id])->sum('qty');
+//        if ($return_qty >= $borrow_qty->qty) {
+//            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])->one();
+//            if ($trans_line) {
+//                $trans_line->status = 1; // line trans complete
+//                $trans_line->save(false);
+//            }
+//        }
+//    }
+
     public function actionAddreturnproduct()
     {
-        $product_id = \Yii::$app->request->post('product_id');
-        $journal_trans_id = \Yii::$app->request->post('journal_trans_id');
-        $qty = \Yii::$app->request->post('return_qty');
-        $remark = \Yii::$app->request->post('return_remark');
-        $return_to_type = \Yii::$app->request->post('return_to_type');
-        $trans_type_id = \Yii::$app->request->post('trans_type_id');
-        $return_to_warehouse = \Yii::$app->request->post('return_to_warehouse');
-        $original_warehouse = \Yii::$app->request->post('warehouse_id');
-        $is_return_new = \Yii::$app->request->post('is_return_new');
-        $return_to_product = \Yii::$app->request->post('return_to_product');
-//        $journal_trans_line_id = \Yii::$app->request->post('journal_trans_line_id');
+        $request = \Yii::$app->request;
+        $product_id = $request->post('product_id', []);
+        $journal_trans_id = $request->post('journal_trans_id');
+        $qty = $request->post('return_qty', []);
+        $remark = $request->post('return_remark', []);
+        $return_to_type = $request->post('return_to_type', []);
+        $trans_type_id = $request->post('trans_type_id');
+        $return_to_warehouse = $request->post('return_to_warehouse', []);
+        $original_warehouse = $request->post('warehouse_id', []);
+        $return_to_product = $request->post('return_to_product', []);
 
-        // print_r($return_to_product);return;
-
-        if ($journal_trans_id && $qty != null && $trans_type_id != null) {
+        if ($journal_trans_id && $qty && $trans_type_id) {
             $model = new \backend\models\JournalTrans();
             $model->trans_date = date('Y-m-d H:i:s');
             $model->journal_no = $model::generateJournalNoNew($trans_type_id);
             $model->remark = '';
-            $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง 6 = คืนยืม
+            $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง, 6 = คืนยืม
             $model->status = 3;
-            $model->stock_type_id = 1; // 1 เข้า 2 ออก
+            $model->stock_type_id = 1; // 1 เข้า, 2 ออก
             $model->trans_ref_id = $journal_trans_id;
+
             if ($model->save(false)) {
-                if ($product_id != null) {
-                    for ($i = 0; $i < count($product_id); $i++) {
-                        if ($qty[$i] == null || $qty[$i] == '' || $qty[$i] == '0' || $qty[$i] == 0 || $return_to_warehouse[$i] == null || $return_to_warehouse[$i] == '') continue;
-                        $model_line = new \common\models\JournalTransLine();
-                        $model_line->journal_trans_id = $model->id;
-                        $model_line->product_id = $product_id[$i];
-                        $model_line->qty = $qty[$i];
-                        $model_line->remark = $remark[$i];
-                        $model_line->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1; // default
-                        $model_line->return_to_type = $return_to_type != null ? $return_to_type[$i] : null;
-                        $model_line->journal_trans_ref_id = $journal_trans_id;
-                        if ($model_line->save(false)) {
-                            $model_stock_trans = new \common\models\StockTrans();
-                            $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                            $model_stock_trans->trans_type_id = $trans_type_id;
-                            $model_stock_trans->product_id = $product_id[$i];
-                            $model_stock_trans->journal_trans_id = $model->id;
-                            $model_stock_trans->qty = $qty[$i];
-                            $model_stock_trans->remark = $remark[$i];
-                            $model_stock_trans->stock_type_id = 1;
-                            $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
-                            if ($model_stock_trans->save(false)) {
-                                if ($trans_type_id == 6) { // คือยืม
-                                    $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id); // stock in from return borrow
-                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-                                }
+                foreach ($product_id as $i => $pid) {
+                    $qtyVal = isset($qty[$i]) ? (float)$qty[$i] : 0;
+                    $whVal = $return_to_warehouse[$i] ?? null;
+                    $remarkVal = $remark[$i] ?? '';
+                    $returnToTypeVal = $return_to_type[$i] ?? null;
+                    $returnToProductVal = $return_to_product[$i] ?? null;
+                    $originalWhVal = $original_warehouse[$i] ?? null;
 
-                                if ($trans_type_id == 8) { // คืนส่งช่าง
+                    // ข้ามถ้าไม่มี qty หรือ warehouse
+                    if ($qtyVal <= 0 || empty($whVal)) {
+                        continue;
+                    }
 
-                                    if ($return_to_product[$i] == null && $remark[$i] != '') { // create new product from watch maker
-                                        $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
-                                        $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-                                    } else { // return but not create new product
-                                        if ($return_to_product[$i] != null) { // return to product by specific
-                                            $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
-                                            $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
-                                        } else {
-                                            $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
-                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-                                        }
-                                    }
+                    // JournalTransLine
+                    $model_line = new \common\models\JournalTransLine();
+                    $model_line->journal_trans_id = $model->id;
+                    $model_line->product_id = $pid;
+                    $model_line->qty = $qtyVal;
+                    $model_line->remark = $remarkVal;
+                    $model_line->warehouse_id = $whVal;
+                    $model_line->return_to_type = $returnToTypeVal;
+                    $model_line->journal_trans_ref_id = $journal_trans_id;
 
+                    if ($model_line->save(false)) {
+                        // StockTrans
+                        $model_stock_trans = new \common\models\StockTrans();
+                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_stock_trans->trans_type_id = $trans_type_id;
+                        $model_stock_trans->product_id = $pid;
+                        $model_stock_trans->journal_trans_id = $model->id;
+                        $model_stock_trans->qty = $qtyVal;
+                        $model_stock_trans->remark = $remarkVal;
+                        $model_stock_trans->stock_type_id = 1;
+                        $model_stock_trans->warehouse_id = $whVal;
 
-//                                    if ($is_return_new != null) {
-//                                        //   if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
-//                                        if ($is_return_new[$i] == 1) { // create new product from watch maker
-//                                            $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
-//                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-//                                        } else if ($is_return_new[$i] == 0) { // return but not create new product
-//
-//                                            if ($return_to_product[$i] != '0') { // return to product by specific
-//                                                $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
-//                                                $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
-//                                            } else {
-//                                                $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
-//                                                $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-//                                            }
-//                                        }
-//                                    }
-
-                                }
+                        if ($model_stock_trans->save(false)) {
+                            if ($trans_type_id == 6) {
+                                // คืนจากยืม
+                                $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
+                                $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
                             }
 
+                            if ($trans_type_id == 8) {
+                                // คืนส่งช่าง
+                                if (empty($returnToProductVal) && !empty($remarkVal)) {
+                                    // คืนแล้วสร้าง product ใหม่
+                                    $this->crateNewProductFromWatchMaker($pid, $remarkVal, $whVal, $qtyVal, $originalWhVal);
+                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                } elseif (!empty($returnToProductVal)) {
+                                    // คืนเข้าของที่ระบุ
+                                    $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal);
+                                    $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $returnToProductVal, $pid);
+                                } else {
+                                    // คืนตาม product เดิม
+                                    $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
+                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                }
+                            }
                         }
-
-
                     }
                 }
                 $this->calForcomplete($journal_trans_id, $model->id);
             }
-
         }
         return $this->redirect(['journaltrans/view', 'id' => $journal_trans_id]);
     }
 
-    function calForupdateTransLine($journal_trans_id, $trans_line_new_id, $product_id)
+    function calForupdateTransLine($journal_trans_id, $product_id)
     {
-        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])->one();
-        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
-        if ($return_qty >= $borrow_qty->qty) {
-            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])->one();
+        // qty ที่ถูกยืม
+        $borrow_qty = \common\models\JournalTransLine::find()
+            ->select('qty')
+            ->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])
+            ->scalar();
+
+        if ($borrow_qty === null) {
+            return; // ถ้าไม่มี line ยืม ไม่ต้องทำอะไร
+        }
+
+        // qty ที่คืนมาแล้ว
+        $return_qty = \common\models\JournalTransLine::find()
+            ->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])
+            ->sum('qty');
+
+        if ($return_qty === null) {
+            $return_qty = 0;
+        }
+
+        // ถ้าคืนครบแล้ว → ปรับสถานะ complete
+        if ($return_qty >= $borrow_qty) {
+            $trans_line = \common\models\JournalTransLine::find()
+                ->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])
+                ->one();
+
             if ($trans_line) {
-                $trans_line->status = 1; // line trans complete
+                $trans_line->status = 1; // complete
                 $trans_line->save(false);
             }
         }
     }
 
-    function calForupdateTransLineFixProduct($journal_trans_id, $trans_line_new_id, $product_id, $original_product_id)
+    function calForupdateTransLineFixProduct($journal_trans_id, $product_id, $original_product_id)
     {
-        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])->one();
-        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $original_product_id])->sum('qty');
-        if ($return_qty >= $borrow_qty->qty) {
-            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])->one();
+        // qty ที่ถูกยืม (จาก original product)
+        $borrow_qty = \common\models\JournalTransLine::find()
+            ->select('qty')
+            ->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])
+            ->scalar();
+
+        if ($borrow_qty === null) {
+            return;
+        }
+
+        // qty ที่คืน (นับตาม original product เช่นกัน)
+        $return_qty = \common\models\JournalTransLine::find()
+            ->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $original_product_id])
+            ->sum('qty');
+
+        if ($return_qty === null) {
+            $return_qty = 0;
+        }
+
+        if ($return_qty >= $borrow_qty) {
+            $trans_line = \common\models\JournalTransLine::find()
+                ->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])
+                ->one();
+
             if ($trans_line) {
-                $trans_line->status = 1; // line trans complete
+                $trans_line->status = 1; // complete
                 $trans_line->save(false);
             }
         }
     }
+
+
 
     function calForcomplete($journal_trans_origin_id, $journal_return_id)
     {
@@ -847,7 +1123,7 @@ class JournaltransController extends Controller
         if ($request->get('action') === 'get-all-products') {
             $products = \backend\models\Product::find()
                 ->where(['status' => 1])
-                ->andFilterWhere(['>', 'stock_qty', 0])
+         //       ->andFilterWhere(['>', 'stock_qty', 0])
                 ->all();
 
             $result = [];
