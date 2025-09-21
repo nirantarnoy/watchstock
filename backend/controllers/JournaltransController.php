@@ -152,6 +152,9 @@ class JournaltransController extends Controller
                         $model_stock_trans->created_by = $model->created_by;
                         if ($model_stock_trans->save(false)) {
                             $this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id);
+                            if($type == 10){
+                                $this->updateProductPrice($modelLine->product_id,$modelLine->sale_price); // ปรับยอดแล้วปรับราคาขายด้วย
+                            }
                         }
                     }
                     \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
@@ -549,6 +552,17 @@ class JournaltransController extends Controller
         }
 
         return false;
+    }
+
+    public function updateProductPrice($product_id,$new_price){
+        if($product_id && $new_price >0){
+            $model = \backend\models\Product::find()->where(['id'=>$product_id])->one();
+            if($model){
+                $model->sale_price = $new_price;
+                $model->save(false);
+            }
+        }
+        return true;
     }
 
 
