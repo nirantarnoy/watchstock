@@ -270,7 +270,7 @@ class JournaltransController extends Controller
             $model_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $id])->all();
             if ($model_line) {
                 foreach ($model_line as $value) {
-                    $this->updateCancelTrans($value->product_id, $value->qty, $value->warehouse_id);
+                    $this->updateCancelTrans($value->product_id, $value->qty, $value->warehouse_id,$model->stock_type_id);
                 }
             }
             JournalTransLine::deleteAll(['journal_trans_id' => $id]);
@@ -288,13 +288,13 @@ class JournaltransController extends Controller
         return $this->redirect(['index']);
     }
 
-    private function updateCancelTrans($product_id, $qty, $warehouse_id)
+    private function updateCancelTrans($product_id, $qty, $warehouse_id,$original_stock_type_id)
     {
         if ($product_id && $qty) {
             $model = new JournalTrans();
             $model->journal_no = $model::generateJournalNoNew(4);
             $model->trans_date = date('Y-m-d H:i:s');
-            $model->stock_type_id = 1; // 1 in , 2 out
+            $model->stock_type_id = $original_stock_type_id==1?2:1; // 1 in , 2 out
             //$model->activity_type = 11;
             $model->created_by = \Yii::$app->user->id;
             $model->created_at = time();
@@ -313,13 +313,27 @@ class JournaltransController extends Controller
                     $model_stock_trans->journal_trans_id = $model->id;
                     $model_stock_trans->qty = $qty;
                     $model_stock_trans->remark = '';
-                    $model_stock_trans->stock_type_id = 2;
+                    $model_stock_trans->stock_type_id = $original_stock_type_id==1?2:1;
                     $model_stock_trans->warehouse_id = $warehouse_id;
                     if($model_stock_trans->save(false)){
                         $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->sum('qty');
                         if ($model_stock) {
-                            $model_stock->qty += (int)$qty;
-                            $model_stock->updated_at = time();
+//                            $model_stock->qty += (int)$qty;
+//                            $model_stock->updated_at = time();
+//                            if ($model_stock->save(false)) {
+//                                $this->updateProductStock($product_id);
+//                            }
+                            if ($original_stock_type_id == 2) { // stock out
+                                if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
+                                    $model_stock->qty = (float)$model_stock->qty + (float)$qty;
+                                    $model_stock->reserv_qty = (float)$model_stock->reserv_qty - (float)$qty;
+                                } else {
+                                    $model_stock->qty = (float)$model_stock->qty + (float)$qty;
+                                }
+
+                            } else if ($original_stock_type_id == 1) { // stock in
+                                $model_stock->qty = (float)$model_stock->qty - (float)$qty;
+                            }
                             if ($model_stock->save(false)) {
                                 $this->updateProductStock($product_id);
                             }
