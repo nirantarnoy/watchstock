@@ -22,6 +22,8 @@ class JournalTrans extends \common\models\JournalTrans
 
     const TYPE_ADJUST_IN = 10;
 
+    const TYPE_DELETE = 11;
+
     const JOURNAL_TRANS_STATUS_DRAFT = 0;
     const JOURNAL_TRANS_STATUS_ACTIVE = 1;
     const JOURNAL_TRANS_STATUS_CANCEL = 4;
@@ -105,6 +107,7 @@ class JournalTrans extends \common\models\JournalTrans
             self::TYPE_RETURN_SEND => 'RSE',
             self::TYPE_DROP => 'DRO',
             self::TYPE_ADJUST_IN => 'SIN',
+            self::TYPE_DELETE => 'DEL',
         ];
 
         $prefix = $prefixMap[$trans_type_id] ?? 'UNK'; // fallback กรณีไม่รู้จักประเภท

@@ -305,12 +305,24 @@ class JournaltransController extends Controller
                 $model_line->qty = $qty;
                 $model_line->warehouse_id = $warehouse_id;
                 if ($model_line->save(false)) {
-                    $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->sum('qty');
-                    if ($model_stock) {
-                        $model_stock->qty += (int)$qty;
-                        $model_stock->updated_at = time();
-                        if ($model_stock->save(false)) {
-                            $this->updateProductStock($product_id);
+
+                    $model_stock_trans = new \common\models\StockTrans();
+                    $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                    $model_stock_trans->trans_type_id = 11; // delete trans
+                    $model_stock_trans->product_id = $product_id;
+                    $model_stock_trans->journal_trans_id = $model->id;
+                    $model_stock_trans->qty = $qty;
+                    $model_stock_trans->remark = '';
+                    $model_stock_trans->stock_type_id = 2;
+                    $model_stock_trans->warehouse_id = $warehouse_id;
+                    if($model_stock_trans->save(false)){
+                        $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->sum('qty');
+                        if ($model_stock) {
+                            $model_stock->qty += (int)$qty;
+                            $model_stock->updated_at = time();
+                            if ($model_stock->save(false)) {
+                                $this->updateProductStock($product_id);
+                            }
                         }
                     }
                 }
