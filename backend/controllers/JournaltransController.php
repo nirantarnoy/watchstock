@@ -826,79 +826,92 @@ class JournaltransController extends Controller
         $original_warehouse = $request->post('warehouse_id', []);
         $return_to_product = $request->post('return_to_product', []);
 
-        if ($journal_trans_id && $qty && $trans_type_id) {
-            $model = new \backend\models\JournalTrans();
-            $model->trans_date = date('Y-m-d H:i:s');
-            $model->journal_no = $model::generateJournalNoNew($trans_type_id);
-            $model->remark = '';
-            $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง, 6 = คืนยืม
-            $model->status = 3;
-            $model->stock_type_id = 1; // 1 เข้า, 2 ออก
-            $model->trans_ref_id = $journal_trans_id;
+        //print_r($return_to_warehouse);return;
 
-            if ($model->save(false)) {
-                foreach ($product_id as $i => $pid) {
-                    $qtyVal = isset($qty[$i]) ? (float)$qty[$i] : 0;
-                    $whVal = $return_to_warehouse[$i] ?? null;
-                    $remarkVal = $remark[$i] ?? '';
-                    $returnToTypeVal = $return_to_type[$i] ?? null;
-                    $returnToProductVal = $return_to_product[$i] ?? null;
-                    $originalWhVal = $original_warehouse[$i] ?? null;
-
-                    // ข้ามถ้าไม่มี qty หรือ warehouse
-                    if ($qtyVal <= 0 || empty($whVal)) {
-                        continue;
+        if ($journal_trans_id && $qty && $trans_type_id && $return_to_warehouse !=null) {
+            if($product_id!=null && $qty !=null){
+                $check_has_warehouse = 0;
+                for($x=0;$x<=count($return_to_warehouse)-1;$x++){
+                    if($return_to_warehouse[$x] >0){
+                        $check_has_warehouse+=1;
                     }
+                }
+                if($check_has_warehouse >0){
+                    $model = new \backend\models\JournalTrans();
+                    $model->trans_date = date('Y-m-d H:i:s');
+                    $model->journal_no = $model::generateJournalNoNew($trans_type_id);
+                    $model->remark = '';
+                    $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง, 6 = คืนยืม
+                    $model->status = 3;
+                    $model->stock_type_id = 1; // 1 เข้า, 2 ออก
+                    $model->trans_ref_id = $journal_trans_id;
 
-                    // JournalTransLine
-                    $model_line = new \common\models\JournalTransLine();
-                    $model_line->journal_trans_id = $model->id;
-                    $model_line->product_id = $pid;
-                    $model_line->qty = $qtyVal;
-                    $model_line->remark = $remarkVal;
-                    $model_line->warehouse_id = $whVal;
-                    $model_line->return_to_type = $returnToTypeVal;
-                    $model_line->journal_trans_ref_id = $journal_trans_id;
+                    if ($model->save(false)) {
+                        foreach ($product_id as $i => $pid) {
+                            $qtyVal = isset($qty[$i]) ? (float)$qty[$i] : 0;
+                            $whVal = $return_to_warehouse[$i] ?? null;
+                            $remarkVal = $remark[$i] ?? '';
+                            $returnToTypeVal = $return_to_type[$i] ?? null;
+                            $returnToProductVal = $return_to_product[$i] ?? null;
+                            $originalWhVal = $original_warehouse[$i] ?? null;
 
-                    if ($model_line->save(false)) {
-                        // StockTrans
-                        $model_stock_trans = new \common\models\StockTrans();
-                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                        $model_stock_trans->trans_type_id = $trans_type_id;
-                        $model_stock_trans->product_id = $pid;
-                        $model_stock_trans->journal_trans_id = $model->id;
-                        $model_stock_trans->qty = $qtyVal;
-                        $model_stock_trans->remark = $remarkVal;
-                        $model_stock_trans->stock_type_id = 1;
-                        $model_stock_trans->warehouse_id = $whVal;
-
-                        if ($model_stock_trans->save(false)) {
-                            if ($trans_type_id == 6) {
-                                // คืนจากยืม
-                                $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
-                                $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                            // ข้ามถ้าไม่มี qty หรือ warehouse
+                            if ($qtyVal <= 0 || empty($whVal)) {
+                                continue;
                             }
 
-                            if ($trans_type_id == 8) {
-                                // คืนส่งช่าง
-                                if (empty($returnToProductVal) && !empty($remarkVal)) {
-                                    // คืนแล้วสร้าง product ใหม่
-                                    $this->crateNewProductFromWatchMaker($pid, $remarkVal, $whVal, $qtyVal, $originalWhVal);
-                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
-                                } elseif (!empty($returnToProductVal)) {
-                                    // คืนเข้าของที่ระบุ
-                                    $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal);
-                                    $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $returnToProductVal, $pid);
-                                } else {
-                                    // คืนตาม product เดิม
-                                    $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
-                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                            // JournalTransLine
+                            $model_line = new \common\models\JournalTransLine();
+                            $model_line->journal_trans_id = $model->id;
+                            $model_line->product_id = $pid;
+                            $model_line->qty = $qtyVal;
+                            $model_line->remark = $remarkVal;
+                            $model_line->warehouse_id = $whVal;
+                            $model_line->return_to_type = $returnToTypeVal;
+                            $model_line->journal_trans_ref_id = $journal_trans_id;
+
+                            if ($model_line->save(false)) {
+                                // StockTrans
+                                $model_stock_trans = new \common\models\StockTrans();
+                                $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                                $model_stock_trans->trans_type_id = $trans_type_id;
+                                $model_stock_trans->product_id = $pid;
+                                $model_stock_trans->journal_trans_id = $model->id;
+                                $model_stock_trans->qty = $qtyVal;
+                                $model_stock_trans->remark = $remarkVal;
+                                $model_stock_trans->stock_type_id = 1;
+                                $model_stock_trans->warehouse_id = $whVal;
+
+                                if ($model_stock_trans->save(false)) {
+                                    if ($trans_type_id == 6) {
+                                        // คืนจากยืม
+                                        $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
+                                        $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                    }
+
+                                    if ($trans_type_id == 8) {
+                                        // คืนส่งช่าง
+                                        if (empty($returnToProductVal) && !empty($remarkVal)) {
+                                            // คืนแล้วสร้าง product ใหม่
+                                            $this->crateNewProductFromWatchMaker($pid, $remarkVal, $whVal, $qtyVal, $originalWhVal);
+                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                        } elseif (!empty($returnToProductVal)) {
+                                            // คืนเข้าของที่ระบุ
+                                            $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal);
+                                            $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $returnToProductVal, $pid);
+                                        } else {
+                                            // คืนตาม product เดิม
+                                            $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
+                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                        }
+                                    }
                                 }
                             }
                         }
+                        $this->calForcomplete($journal_trans_id, $model->id);
                     }
                 }
-                $this->calForcomplete($journal_trans_id, $model->id);
+
             }
         }
         return $this->redirect(['journaltrans/view', 'id' => $journal_trans_id]);

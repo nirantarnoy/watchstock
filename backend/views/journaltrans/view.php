@@ -14,7 +14,6 @@ $this->title = $model->journal_no;
 $this->params['breadcrumbs'][] = ['label' => 'รายการ Stock Transaction', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-
 // URL สำหรับ AJAX
 $ajax_url = Url::to(['get-product-info']);
 
@@ -173,7 +172,7 @@ var isProductsLoaded = false;
 // ฟังก์ชันโหลดข้อมูลสินค้า
 function loadProductsData() {
     if (isProductsLoaded) return;
-    //alert('กําลังโหลดข้อมูลสินค้า...');
+    
     $.ajax({
         url: '$ajax_url',
         type: 'GET',
@@ -240,13 +239,17 @@ function selectProduct(input, product) {
     $('.product-id-hidden[data-index="' + index + '"]').val(product.id);
     
     // โหลดข้อมูลสต็อกและอัพเดตคลังสินค้า
-    // alert(product.id);
     loadProductStock(product.id, index);
+    
     // ซ่อน dropdown
     $('.autocomplete-dropdown[data-index="' + index + '"]').hide();
-    
 }
 
+// ฟังก์ชันโหลดข้อมูลสต็อก
+function loadProductStock(productId, index) {
+    // สำหรับการโหลดข้อมูลสต็อก (ถ้าต้องการ)
+    // ปรับตามความต้องการของระบบ
+}
 
 $(document).ready(function() {
     
@@ -343,7 +346,6 @@ JS;
 
 $this->registerJs($autocompleteJs, \yii\web\View::POS_READY);
 
-
 $product_can_return = null;
 
 \yii\web\YiiAsset::register($this);
@@ -365,13 +367,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 ],
             ]) : '' ?>
             <?php if($model->status != \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL):?>
-<!--            --><?php //=Html::a('ยกเลิกการทำรายการ', ['cancel', 'id' => $model->id], [
-//                    'class' => 'btn btn-warning',
-//                    'data' => [
-//                        'confirm' => 'คุณแน่ใจหรือไม่ที่จะยกเลิกรายการนี้ ?'.$model->id,
-//                        'method' => 'post',
-//                    ],
-//                ]);?>
             <?php endif;?>
             <?= Html::a('สร้างรายการใหม่', ['create'], ['class' => 'btn btn-success']) ?>
         </p>
@@ -417,7 +412,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 <?= DetailView::widget([
                     'model' => $model,
                     'attributes' => [
-                        //'customer_id',
                         'customer_name',
                         [
                             'attribute' => 'qty',
@@ -434,9 +428,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                 $htmel_status = getBadgeStatus($model->status, $status_name);
                                 return $htmel_status;
                             },
-                            // 'format' => 'raw',
-                            // 'filter' => JournalTrans::getStatusList(),
-                            //'headerOptions' => ['style' => 'width:100px'],
                         ],
                     ],
                 ]) ?>
@@ -482,12 +473,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                         return '<div class="btn btn-danger" data-var="'.$data->id.'" onclick="canelline($(this))">ยกเลิก</div>';
                     }
                 ]
-//                [
-//                    'attribute' => 'status',
-//                    'value' => function ($model) {
-//                        return $model->getStatusName();
-//                    },
-//                ],
             ],
         ]); ?>
 
@@ -532,9 +517,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     <div class="col-lg-1">
                         <label for="">คืนเป็นสินค้า</label>
                     </div>
-<!--                    <div class="col-lg-1">-->
-<!--                        <label for="">เป็นสินค้าใหม่</label>-->
-<!--                    </div>-->
                     <div class="col-lg-2">
                         <label for="">เป็นสินค้าเดิม</label>
                     </div>
@@ -542,18 +524,19 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                         <label for="">หมายเหตุ</label>
                     </div>
                 </div>
-                <?php foreach ($lines as $value): ?>
+                <?php
+                $row_index = 0; // เพิ่มตัวแปรนับแถว
+                foreach ($lines as $value): ?>
                     <?php
                     if ($value->status == 1) continue; // คืนสินค้าแล้ว
                     ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
-                    // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
 
                     $product_can_return = getCanreturnProduct($value->product_id);
                     ?>
-                    <div class="row" style="margin-top: 10px">
+                    <div class="row" style="margin-top: 10px; position: relative;">
                         <div class="col-lg-2">
                             <input type="hidden" name="product_id[]" value="<?= $value->product_id ?>">
                             <input type="hidden" name="warehouse_id[]" value="<?= $value->warehouse_id ?>">
@@ -565,7 +548,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                             <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
                         </div>
                         <div class="col-lg-1">
-                            <input type="number" name="return_qty[]" class="form-control"
+                            <input type="number" name="return_qty[]" class="form-control line-return-qty"
                                    value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
                                    onchange="checkReturnQty($(this))">
                         </div>
@@ -584,40 +567,24 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                                 <?php endfor; ?>
                             </select>
                         </div>
-<!--                        <div class="col-lg-1">-->
-<!--                            <select name="is_return_new[]" class="form-control" onchange="checkReturnNew($(this))">-->
-<!--                                --><?php //for ($i = 0; $i <= count($yes_no) - 1; $i++): ?>
-<!--                                    <option value="--><?php //= $yes_no[$i]['id'] ?><!--">--><?php //= $yes_no[$i]['name'] ?><!--</option>-->
-<!--                                --><?php //endfor; ?>
-<!--                            </select>-->
-<!--                        </div>-->
-
-                        <div class="col-lg-2">
-<!--                            <select name="return_to_product[]" data-index="--><?php //=$i?><!--" class="form-control line-return-to-product" required>-->
-<!--                                <option value="-1"> -- เลือกสินค้า -- </option>-->
-<!--                                --><?php //if ($product_can_return != null): ?>
-<!--                                    --><?php //for ($m = 0; $m <= count($product_can_return)-1; $m++): ?>
-<!--                                        <option value="--><?php //= $product_can_return[$m]['id'] ?><!--">--><?php //= $product_can_return[$m]['name'] ?><!--</option>-->
-<!--                                    --><?php //endfor; ?>
-<!--                                --><?php //endif; ?>
-<!---->
-<!--                            </select>-->
+                        <div class="col-lg-2 product-field-container">
                             <input type="text"
                                    name="return_to_product_name[]"
-                            class ='form-control product-autocomplete'
-                            placeholder = 'พิมพ์ชื่อสินค้าหรือรหัสสินค้า...'
-                            data-index = '<?=$i?>'
-                            autocomplete = 'off'
-                            required >
-                            <input type="hidden" name="return_to_product[]" class = 'product-id-hidden'
-                            data-index = "<?=$i?>">
-                            <div class="autocomplete-dropdown" data-index="<?= $i ?>"></div>
+                                   class="form-control product-autocomplete"
+                                   placeholder="พิมพ์ชื่อสินค้าหรือรหัสสินค้า..."
+                                   data-index="<?= $row_index ?>"
+                                   autocomplete="off">
+                            <input type="hidden" name="return_to_product[]" class="product-id-hidden"
+                                   data-index="<?= $row_index ?>" value="">
+                            <div class="autocomplete-dropdown" data-index="<?= $row_index ?>"></div>
                         </div>
                         <div class="col-lg-3">
                             <input type="text" name="return_remark[]" class="form-control line-return-remark" value="">
                         </div>
                     </div>
-
+                    <?php
+                    $row_index++; // เพิ่มค่า index สำหรับแถวถัดไป
+                    ?>
                 <?php endforeach; ?>
                 <br/>
                 <div class="row">
@@ -627,7 +594,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 </div>
             </form>
         <?php endif; ?>
-
 
         <?php if ($model->trans_type_id == 5 && $model->status != 3): ?> <!-- คืนยืม -->
             <div class="row">
@@ -663,11 +629,9 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     } else {
                         $has_line += 1;
                     }
-
                     ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
-                    // echo $check_return_qty;
                     if ($check_return_qty == 0) continue;
                     ?>
                     <div class="row" style="margin-top: 10px">
@@ -696,7 +660,6 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                             <input type="text" name="return_remark[]" class="form-control">
                         </div>
                     </div>
-
                 <?php endforeach; ?>
                 <br/>
                 <div class="row">
@@ -714,6 +677,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
     <form id="form-cancel-line" action="<?=Url::to(['journaltrans/cancelbyline'],true)?>" method="post">
         <input type="hidden" class="cancel-id" name="cancel_id" value="">
     </form>
+
 <?php
 function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 {
@@ -730,15 +694,6 @@ function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 function getCanreturnProduct($product_id)
 {
     $product_data = [];
-//    $product_name = \backend\models\Product::findSku($product_id);
-//    if ($product_name != '' || $product_name != null) {
-//        $model = \common\models\Product::find()->where(['name' => trim($product_name)])->all();
-//        if ($model) {
-//            foreach ($model as $value) {
-//                array_push($product_data, ['id' => $value->id, 'name' => $value->name . ' ' . $value->description]);
-//            }
-//        }
-//    }
     $model = \common\models\Product::find()->where(['status' => 1])->all();
     if ($model) {
         foreach ($model as $value) {
@@ -808,30 +763,38 @@ function checkReturnNew(e){
 }
 
 function validateForm() {
-     let select_warehouses = document.querySelectorAll('.line-return-to-warehouse');
+    let select_warehouses = document.querySelectorAll('.line-return-to-warehouse');
+    let select_qty = document.querySelectorAll('.line-return-qty');
+    
     for (let i = 0; i < select_warehouses.length; i++) {
-        if (select_warehouses[i].value === '-1') {
-            alert('กรุณาเลือกคลังให้ครบถ้วน');
-            select_warehouses[i].focus();
-            return false;
+        // ลบ required ก่อนทุกครั้ง
+        select_warehouses[i].removeAttribute("required");
+    
+        if (parseFloat(select_qty[i].value) > 0) {
+            // ถ้าจำนวน > 0 แต่ยังไม่ได้เลือกคลัง
+            if (select_warehouses[i].value === '-1' || select_warehouses[i].value === '') {
+                select_warehouses[i].focus();
+                alert("กรุณาเลือกคลัง");
+                return false;
+            }
         }
     }
     
     let line_remark = document.querySelectorAll('.line-return-remark');
-    
-    let selects = document.querySelectorAll('.line-return-to-product');
+    let selects = document.querySelectorAll('.product-id-hidden');
     for (let i = 0; i < selects.length; i++) {
-        if (selects[i].value === '-1' && line_remark[i].value === '') {
-            alert('กรุณาตรวจสอบสินค้าให้ครบถ้วน');
-            selects[i].focus();
-            return false;
+         if (parseFloat(select_qty[i].value) > 0) {
+            if ((selects[i].value === '' || selects[i].value === undefined) && line_remark[i].value === '') {
+                console.log(selects[i].value);
+                alert('กรุณาตรวจสอบสินค้าให้ครบถ้วน');
+                selects[i].focus();
+                return false;
+            }
         }
     }
-    
-   
-    
     return true;
 }
+
 function canelline(e){
     var id = e.attr("data-var");
     if(id){
