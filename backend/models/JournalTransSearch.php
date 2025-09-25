@@ -44,8 +44,6 @@ class JournalTransSearch extends JournalTrans
     {
         $query = JournalTrans::find()->joinWith('journalTransLine.product');
 
-        // add conditions that should always apply here
-
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'sort' => [
@@ -56,12 +54,10 @@ class JournalTransSearch extends JournalTrans
         $this->load($params);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
-        // grid filtering conditions
+        // เงื่อนไขพื้นฐาน (AND conditions)
         $query->andFilterWhere([
             'id' => $this->id,
             'trans_type_id' => $this->trans_type_id,
@@ -78,10 +74,14 @@ class JournalTransSearch extends JournalTrans
             'warehouse_id' => $this->warehouse_id,
         ]);
 
-        $query->andFilterWhere(['like', 'journal_no', $this->journal_no])
-            ->andFilterWhere(['like', 'customer_name', $this->customer_name])
-            ->andFilterWhere(['like', 'journal_trans.remark', $this->remark]);
+        // เงื่อนไข LIKE ปกติ
+        if(empty($this->globalSearch)){
+            $query->andFilterWhere(['like', 'journal_no', $this->journal_no])
+                ->andFilterWhere(['like', 'customer_name', $this->customer_name])
+                ->andFilterWhere(['like', 'journal_trans.remark', $this->remark]);
+        }
 
+        // วันที่
         if (!empty($this->trans_date)) {
             $query->andFilterWhere(['between', 'trans_date',
                 $this->trans_date . ' 00:00:00',
@@ -89,12 +89,16 @@ class JournalTransSearch extends JournalTrans
             ]);
         }
 
+        // Global Search (ใช้ AND กับ OR ภายใน)
         if(!empty($this->globalSearch)){
-            $query->orFilterWhere(['like', 'journal_no', $this->globalSearch])
-                ->orFilterWhere(['like', 'customer_name', $this->globalSearch])
-                ->orFilterWhere(['like', 'journal_trans.remark', $this->globalSearch])
-                ->orFilterWhere(['like', 'product.name', $this->globalSearch])
-            ->orFilterWhere(['like', 'product.description', $this->globalSearch]);
+            $query->andWhere([
+                'or',
+                ['like', 'journal_no', $this->globalSearch],
+                ['like', 'customer_name', $this->globalSearch],
+                ['like', 'journal_trans.remark', $this->globalSearch],
+                ['like', 'product.name', $this->globalSearch],
+                ['like', 'product.description', $this->globalSearch]
+            ]);
         }
 
         return $dataProvider;
