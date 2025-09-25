@@ -257,7 +257,7 @@ class ProductController extends Controller
                             if($model_trans->save(false)){
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
                                 if($model_sum){
-                                    $model_sum->qty = $line_qty[$i];
+                                    $model_sum->qty = $line_qty[$i] + ($model_sum->qty ?? 0);
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
@@ -291,7 +291,6 @@ class ProductController extends Controller
 
                     $this->updateProductStock($model->id);
                 }
-
             }
 
             return $this->redirect(['view', 'id' => $model->id]);
