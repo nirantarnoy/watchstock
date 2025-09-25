@@ -275,14 +275,14 @@ class ProductController extends Controller
                                        // $this->updateProductStock($model->id);
                                     }
                                 }
-                                $this->updateProductStock($model->id);
+
                             }
                         }
                     }
 
                 }
 
-
+                $this->updateProductStock($model->id);
                 if($removelist!=null){
                     $xdel = explode(',', $removelist);
                     for($i=0;$i<count($xdel);$i++){
@@ -306,18 +306,16 @@ class ProductController extends Controller
     }
 
     function updateProductStock($product_id){
-      if($product_id){
-          $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->all();
-          if($model_stock){
-              $all_stock = 0;
-              foreach($model_stock as $model){
-                  $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
-                  $all_stock += ($model->qty + $res_qty);
-              }
+        if($product_id){
+            $total_stock = \backend\models\Stocksum::find()
+                ->where(['product_id' => $product_id])
+                ->sum('qty + COALESCE(reserv_qty, 0)');
 
-              \backend\models\Product::updateAll(['stock_qty'=>$all_stock],['id'=>$product_id]);
-          }
-      }
+            \backend\models\Product::updateAll(
+                ['stock_qty' => $total_stock ?: 0],
+                ['id' => $product_id]
+            );
+        }
     }
 
     /**
