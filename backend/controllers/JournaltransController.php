@@ -598,64 +598,82 @@ class JournaltransController extends Controller
             if ($stock_type_id == 1) { // stock in
                 if ($activity_type == 8) { // คืนช่าง
                     if ($original_product_id == $product_id) { // same product
-                        $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
-                        if ($model) {
-                            $model->qty += $qty;
-                            if ($model->reserv_qty >= ($qty)) { // remove reserve qty
-                                $model->reserv_qty = ($model->reserv_qty - $qty);
+                        $model_trans = new \backend\models\Stocktrans();
+                        $model_trans->product_id = $product_id;
+                        $model_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
+                        $model_trans->qty = $qty;
+                        $model_trans->status = 1;
+                        if ($model_trans->save(false)) {
+                            $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
+                            if ($model) {
+                                $model->qty += $qty;
+                                if ($model->reserv_qty >= ($qty)) { // remove reserve qty
+                                    $model->reserv_qty = ($model->reserv_qty - $qty);
+                                }
+                                if ($model->save(false)) {
+                                    $this->updateProductStock($product_id);
+                                }
+                            } else {
+                                $model = new \common\models\StockSum();
+                                $model->product_id = $product_id;
+                                $model->warehouse_id = $warehouse_id;
+                                $model->qty = $qty;
+                                $model->reserv_qty = 0;
+                                $model->updated_at = date('Y-m-d H:i:s');
+                                if ($model->save(false)) {
+                                    $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
+                                    if ($model_update_reserve) {
+                                        foreach ($model_update_reserve as $model_reserve) {
+                                            if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
+                                                $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
+                                                $model_reserve->save(false);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    $this->updateProductStock($product_id);
+                                }
                             }
-                            if ($model->save(false)) {
-                                $this->updateProductStock($product_id);
-                            }
-                        } else {
-                            $model = new \common\models\StockSum();
-                            $model->product_id = $product_id;
-                            $model->warehouse_id = $warehouse_id;
-                            $model->qty = $qty;
-                            $model->reserv_qty = 0;
-                            $model->updated_at = date('Y-m-d H:i:s');
-                            if ($model->save(false)) {
-                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
-                                if ($model_update_reserve) {
-                                    foreach ($model_update_reserve as $model_reserve) {
-                                        if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
-                                            $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
-                                            $model_reserve->save(false);
-                                            break;
+                        }
+
+                    } else {
+                        $model_trans = new \backend\models\Stocktrans();
+                        $model_trans->product_id = $product_id;
+                        $model_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
+                        $model_trans->qty = $qty;
+                        $model_trans->status = 1;
+                        if ($model_trans->save(false)) {
+                            $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
+                            if ($model) {
+                                // $model->qty = ($model->qty - $qty); //
+                                $model->reserv_qty = ($model->reserv_qty - $qty); //reduce reserve qty original product
+
+                                if ($model->save(false)) {
+                                    $this->updateProductStock($original_product_id); // update stock qty
+
+                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // ตรวจสอบสต๊อกสินค้าใหม่
+                                    if ($modelx) { // ถ้ามีเพิ่มยอด
+                                        $modelx->qty += $qty;
+                                        if ($modelx->save(false)) {
+                                            $this->updateProductStock($product_id);
+                                        }
+                                    } else { //ไม่มีก็เพิ่มสต๊อกใน warehouse ใหม่
+                                        $modelx = new \common\models\StockSum();
+                                        $modelx->product_id = $product_id;
+                                        $modelx->warehouse_id = $warehouse_id;
+                                        $modelx->qty = $qty;
+                                        $modelx->reserv_qty = 0;
+                                        $modelx->updated_at = date('Y-m-d H:i:s');
+                                        if ($modelx->save(false)) {
+                                            $this->updateProductStock($product_id);
                                         }
                                     }
                                 }
-                                $this->updateProductStock($product_id);
                             }
                         }
-                    } else {
-                        $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
-                        if ($model) {
-                            // $model->qty = ($model->qty - $qty); //
-                            $model->reserv_qty = ($model->reserv_qty - $qty); //reduce reserve qty original product
 
-                            if ($model->save(false)) {
-                                $this->updateProductStock($original_product_id); // update stock qty
-
-                                $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // ตรวจสอบสต๊อกสินค้าใหม่
-                                if ($modelx) { // ถ้ามีเพิ่มยอด
-                                    $modelx->qty += $qty;
-                                    if ($modelx->save(false)) {
-                                        $this->updateProductStock($product_id);
-                                    }
-                                } else { //ไม่มีก็เพิ่มสต๊อกใน warehouse ใหม่
-                                    $modelx = new \common\models\StockSum();
-                                    $modelx->product_id = $product_id;
-                                    $modelx->warehouse_id = $warehouse_id;
-                                    $modelx->qty = $qty;
-                                    $modelx->reserv_qty = 0;
-                                    $modelx->updated_at = date('Y-m-d H:i:s');
-                                    if ($modelx->save(false)) {
-                                        $this->updateProductStock($product_id);
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             }
