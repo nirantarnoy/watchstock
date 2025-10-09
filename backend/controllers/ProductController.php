@@ -239,12 +239,16 @@ class ProductController extends Controller
                     $model_journal_trans->warehouse_id = 0;
 
                     if($model_journal_trans->save(false)){
-                        if($line_warehouse!=null){
-                            \backend\models\Stocksum::updateAll(['qty'=>0],['product_id'=>$model->id]);
-                        }
+//                        if($line_warehouse!=null){
+//                            \backend\models\Stocksum::updateAll(['qty'=>0],['product_id'=>$model->id]);
+//                        }
                         for($i=0;$i<=count($line_warehouse)-1;$i++){
 
                             if($line_warehouse[$i] == null || $line_qty[$i] == null || $line_warehouse[$i] <= 0 || $line_warehouse[$i] == ''){
+                                continue;
+                            }
+
+                            if($this->checkEditChange($model->id,$line_warehouse[$i],$line_qty[$i]) == 0){ // check is edited
                                 continue;
                             }
 
@@ -257,7 +261,8 @@ class ProductController extends Controller
                             if($model_trans->save(false)){
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
                                 if($model_sum){
-                                    $model_sum->qty = $line_qty[$i] + ($model_sum->qty ?? 0);
+                                    $model_sum->qty = $line_qty[$i];
+                                 //   $model_sum->qty = $line_qty[$i] + ($model_sum->qty ?? 0);
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
@@ -302,6 +307,19 @@ class ProductController extends Controller
             'model_line' => $model_line,
             'model_customer_line'=>null,
         ]);
+    }
+
+    function checkEditChange($product_id,$warehouse_id,$qty){
+        $res = 0;
+        $model = \backend\models\Stocksum::find()->where(['product_id'=>$product_id,'warehouse_id'=>$warehouse_id])->one();
+        if($model){
+            if($model->qty != $qty){ // is edited
+                $res = 1;
+            }
+        }else{
+            $res = 1;
+        }
+        return $res;
     }
 
     function updateProductStock($product_id){
