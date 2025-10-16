@@ -1142,6 +1142,7 @@ class ProductController extends Controller
         // Fill data rows
         $row = 2;
         foreach ($users as $user) {
+            if((int)$user['qty']<=0)continue;
             $sheet->setCellValue('A' . $row, $user['name']);
             $sheet->setCellValue('B' . $row, $user['description']);
             $sheet->setCellValue('C' . $row, $user['product_group_name']); // แสดงชื่อแทน ID
