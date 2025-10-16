@@ -170,6 +170,7 @@ $this->registerCss('
                     <tbody>
                     <?php if ($model_warehouse_product != null): ?>
                         <?php for ($i = 0; $i <= count($model_warehouse_product) - 1; $i++): ?>
+                            <?php if((int)$model_warehouse_product[$i]['qty'] <= 0 && (int)$model_warehouse_product[$i]['reserv_qty'] <= 0)continue;?>
                             <tr>
                                 <td><?= $model_warehouse_product[$i]['warehouse_name'] ?></td>
                                 <td><?= number_format($model_warehouse_product[$i]['qty'], 0) ?></td>
@@ -286,6 +287,7 @@ $this->registerCss('
                             <tbody>
                             <?php if ($model_line != null): ?>
                                 <?php foreach ($model_line as $value): ?>
+
                                     <tr data-var="<?= $value->id; ?>">
                                         <td>
                                             <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
