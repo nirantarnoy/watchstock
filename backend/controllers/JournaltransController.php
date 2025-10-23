@@ -119,7 +119,8 @@ class JournaltransController extends Controller
 
             // Validate all models
             $valid = $model->validate();
-            // $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
+            $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
+
 
             if ($valid) {
                 //$transaction = \Yii::$app->db->beginTransaction();
@@ -136,7 +137,6 @@ class JournaltransController extends Controller
                 }
 
                 if ($flag) {
-
                     $total_qty = 0;
                     foreach ($modelLines as $modelLine) {
                         $total_qty += (int)$modelLine->qty;
