@@ -208,8 +208,15 @@ class ProductController extends Controller
             $removelist = \Yii::$app->request->post('remove_list');
             $old_photo = \Yii::$app->request->post('old_photo');
 
-            $line_warehouse = \Yii::$app->request->post('warehouse_id');
+            $line_warehouse = \Yii::$app->request->post('warehouse_id',[]);
             $line_qty = \Yii::$app->request->post('line_qty');
+
+            foreach ($line_warehouse as $i => $wid) {
+                if ($wid == -1 || empty($wid)) {
+                    Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
+                    return $this->refresh();
+                }
+            }
 
             //  print_r($line_customer_rec_id);return;
 
