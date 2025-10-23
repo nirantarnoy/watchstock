@@ -119,10 +119,16 @@ class ProductController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
-                $line_warehouse = \Yii::$app->request->post('warehouse_id');
+                $line_warehouse = \Yii::$app->request->post('warehouse_id',[]);
                 $line_qty = \Yii::$app->request->post('line_qty');
                 $line_exp_date = \Yii::$app->request->post('line_exp_date');
 
+                foreach ($line_warehouse as $i => $wid) {
+                    if ($wid == -1 || empty($wid)) {
+                        Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
+                        return $this->refresh();
+                    }
+                }
 
                  $model->code = $model->name;
                 if ($model->save()) {
