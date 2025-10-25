@@ -365,7 +365,7 @@ class SiteController extends Controller
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => 3]) // สมมติว่า status 1 = ขายสำเร็จ
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3,9]]) // สมมติว่า status 1 = ขายสำเร็จ
             ->groupBy(['p.id', 'p.code', 'p.name', 'p.cost_price'])
             ->orderBy(['total_sales' => SORT_DESC]);
 
@@ -388,7 +388,7 @@ class SiteController extends Controller
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => 3])
+            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
             ->groupBy(['p.id', 'p.name', 'p.cost_price'])
             ->having('SUM(jt.qty) > 0')
             ->orderBy(['total_qty' => SORT_DESC])
@@ -433,7 +433,7 @@ class SiteController extends Controller
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => 3])
+            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
             ->groupBy(['p.id', 'p.name', 'p.code'])
             ->orderBy(['total_qty' => SORT_DESC])
             ->limit(10);
