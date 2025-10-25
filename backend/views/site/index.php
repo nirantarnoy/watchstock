@@ -254,7 +254,7 @@ Highcharts.chart('price-comparison-chart', {
         }
     },
     series: [{
-        name: 'ราคาขาย',
+        name: 'ยอดขาย',
         data: {$priceComparisonJson}.salePrices,
         color: '#00a65a'
     }, {
