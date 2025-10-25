@@ -51,6 +51,7 @@ class JournaltransController extends Controller
         $pageSize = \Yii::$app->request->post("perpage");
         $searchModel = new \backend\models\JournalTransSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->query->andFilterWhere(['>','journal_trans_line.product_id',0]);
         $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
         $dataProvider->pagination->pageSize = $pageSize;
 
