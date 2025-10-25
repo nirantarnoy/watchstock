@@ -380,7 +380,7 @@ class SiteController extends Controller
         $query = (new Query())
             ->select([
                 'pb.name',
-                'p.cost_price',
+                'SUM(p.cost_price) as cost_price',
                 'SUM(jtl.sale_price * jtl.qty) as avg_sale_price',
                 'SUM(jtl.qty) as total_qty'
             ])
