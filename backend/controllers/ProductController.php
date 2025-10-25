@@ -217,10 +217,13 @@ class ProductController extends Controller
             $line_warehouse = \Yii::$app->request->post('warehouse_id',[]);
             $line_qty = \Yii::$app->request->post('line_qty');
 
-            foreach ($line_warehouse as $i => $wid) {
-                if ($wid == -1 || empty($wid)) {
-                    Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
-                    return $this->refresh();
+           // echo $model->edit_stock_qty;return;
+            if($model->edit_stock_qty == 1) {
+                foreach ($line_warehouse as $i => $wid) {
+                    if ($wid == -1 || empty($wid)) {
+                        Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
+                        return $this->refresh();
+                    }
                 }
             }
 
@@ -241,7 +244,7 @@ class ProductController extends Controller
 
                 }
 
-                if($line_warehouse != null){
+                if($line_warehouse != null && $model->edit_stock_qty ==1){
                     $model_journal_trans = new \common\models\JournalTrans();
                     $model_journal_trans->trans_date = date('Y-m-d H:i:s');
                     $model_journal_trans->journal_no = '';

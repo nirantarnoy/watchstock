@@ -26,6 +26,7 @@ use Yii;
  */
 class Product extends \yii\db\ActiveRecord
 {
+    public $edit_stock_qty;
     /**
      * {@inheritdoc}
      */
@@ -44,6 +45,7 @@ class Product extends \yii\db\ActiveRecord
             [['status', 'product_group_id', 'unit_id', 'created_at', 'created_by', 'updated_at', 'updated_by','type_id','product_type_id','brand_id'], 'integer'],
             [['cost_price', 'sale_price', 'stock_qty'], 'number'],
             [['code', 'name', 'description', 'remark', 'photo'], 'string', 'max' => 255],
+            [['edit_stock_qty'],'safe'],
 
             // ตรวจสอบซ้ำ name + description
             [['name', 'description'], 'unique',
@@ -78,6 +80,7 @@ class Product extends \yii\db\ActiveRecord
             'type_id' => 'สภาพสินค้า',
             'product_type_id' => 'ประเภทสินค้า',
             'brand_id' => 'ยี่ห้อ',
+            'edit_stock_qty' => 'แก้ไขจำนวนสินค้า',
         ];
     }
 }

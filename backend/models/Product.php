@@ -11,6 +11,7 @@ date_default_timezone_set('Asia/Bangkok');
 
 class Product extends \common\models\Product
 {
+
     public function behaviors()
     {
         return [
