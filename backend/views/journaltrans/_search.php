@@ -34,6 +34,9 @@ use yii\widgets\ActiveForm;
                 ['id'=>'4','name' => 'Cancel'],
             ],'id','name'),'options'=>['placeholder'=>'-- เลือกสถานะ --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
         </div>
+        <div class="col-lg-2">
+            <?= $form->field($model, 'created_by')->widget(\kartik\select2\Select2::className(),['data'=>\yii\helpers\ArrayHelper::map(\backend\models\User::find()->all(),'id','username'),'options'=>['placeholder'=>'-- User --','onchange'=>'$(this).submit()',],'pluginOptions'=>['allowClear'=>true,]])->label(false) ?>
+        </div>
     </div>
     <?php ActiveForm::end(); ?>
 

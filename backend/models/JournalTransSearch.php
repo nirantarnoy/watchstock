@@ -66,7 +66,7 @@ class JournalTransSearch extends JournalTrans
             'qty' => $this->qty,
             'journal_trans.status' => $this->status,
             'created_at' => $this->created_at,
-            'created_by' => $this->created_by,
+            'journal_trans.created_by' => $this->created_by,
             'updated_at' => $this->updated_at,
             'updated_by' => $this->updated_by,
             'party_id' => $this->party_id,
