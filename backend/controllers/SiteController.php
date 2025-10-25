@@ -379,17 +379,18 @@ class SiteController extends Controller
     {
         $query = (new Query())
             ->select([
-                'p.name',
+                'pb.name',
                 'p.cost_price',
                 'AVG(jtl.sale_price) as avg_sale_price',
                 'SUM(jtl.qty) as total_qty'
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
+            ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
             ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
-            ->groupBy(['p.id', 'p.name', 'p.cost_price'])
+            ->groupBy(['pb.name'])
             ->having('SUM(jt.qty) > 0')
             ->orderBy(['total_qty' => SORT_DESC])
             ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
@@ -398,24 +399,64 @@ class SiteController extends Controller
 
         // จัดรูปแบบข้อมูลสำหรับ Highcharts
         $categories = [];
-        $costPrices = [];
         $salePrices = [];
         $profits = [];
 
         foreach ($data as $item) {
             $categories[] = $item['name'];
-            $costPrices[] = floatval($item['cost_price']);
             $salePrices[] = floatval($item['avg_sale_price']);
             $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
         }
 
         return [
             'categories' => $categories,
-            'costPrices' => $costPrices,
+            'costPrices' => null,
             'salePrices' => $salePrices,
             'profits' => $profits
         ];
     }
+
+//    private function getPriceComparisonData($fromTimestamp, $toTimestamp)
+//    {
+//        $query = (new Query())
+//            ->select([
+//                'p.name',
+//                'p.cost_price',
+//                'AVG(jtl.sale_price) as avg_sale_price',
+//                'SUM(jtl.qty) as total_qty'
+//            ])
+//            ->from(['jtl' => 'journal_trans_line'])
+//            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
+//            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
+//            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
+//            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
+//            ->groupBy(['p.id', 'p.name', 'p.cost_price'])
+//            ->having('SUM(jt.qty) > 0')
+//            ->orderBy(['total_qty' => SORT_DESC])
+//            ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
+//
+//        $data = $query->all();
+//
+//        // จัดรูปแบบข้อมูลสำหรับ Highcharts
+//        $categories = [];
+//        $costPrices = [];
+//        $salePrices = [];
+//        $profits = [];
+//
+//        foreach ($data as $item) {
+//            $categories[] = $item['name'];
+//            $costPrices[] = floatval($item['cost_price']);
+//            $salePrices[] = floatval($item['avg_sale_price']);
+//            $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
+//        }
+//
+//        return [
+//            'categories' => $categories,
+//            'costPrices' => $costPrices,
+//            'salePrices' => $salePrices,
+//            'profits' => $profits
+//        ];
+//    }
 
     /**
      * ดึงข้อมูลสินค้าขายดี 10 อันดับ
