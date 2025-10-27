@@ -40,7 +40,8 @@ $this->registerCss('
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle me-2"></i>
         <?= \Yii::$app->session->getFlash('success') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="closeAlert();"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+                onclick="closeAlert();"></button>
     </div>
 <?php endif; ?>
 
@@ -48,7 +49,8 @@ $this->registerCss('
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle me-2"></i>
         <?= \Yii::$app->session->getFlash('error') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="closeAlert();"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+                onclick="closeAlert();"></button>
     </div>
 <?php endif; ?>
     <div class="product-form">
@@ -185,7 +187,7 @@ $this->registerCss('
                     <tbody>
                     <?php if ($model_warehouse_product != null): ?>
                         <?php for ($i = 0; $i <= count($model_warehouse_product) - 1; $i++): ?>
-                            <?php if((int)$model_warehouse_product[$i]['qty'] <= 0 && (int)$model_warehouse_product[$i]['reserv_qty'] <= 0)continue;?>
+                            <?php if ((int)$model_warehouse_product[$i]['qty'] <= 0 && (int)$model_warehouse_product[$i]['reserv_qty'] <= 0) continue; ?>
                             <tr>
                                 <td><?= $model_warehouse_product[$i]['warehouse_name'] ?></td>
                                 <td><?= number_format($model_warehouse_product[$i]['qty'], 0) ?></td>
@@ -228,7 +230,8 @@ $this->registerCss('
                                     <td>
                                         <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
                                                value="<?= $value->id ?>">
-                                        <select name="warehouse_id[]" id="" class="form-control line-warehouse-id" required>
+                                        <select name="warehouse_id[]" id="" class="form-control line-warehouse-id"
+                                                required>
                                             <option value="-1">--เลือก-</option>
                                             <?php foreach ($data_warehouse as $xvalue): ?>
                                                 <?php
@@ -312,7 +315,8 @@ $this->registerCss('
                                         <td>
                                             <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
                                                    value="<?= $value->id ?>">
-                                            <select name="warehouse_id[]" id="" class="form-control line-warehouse-id" required>
+                                            <select name="warehouse_id[]" id="" class="form-control line-warehouse-id"
+                                                    required>
                                                 <option value="-1">--เลือก-</option>
                                                 <?php foreach ($data_warehouse as $xvalue): ?>
                                                     <?php
@@ -342,7 +346,8 @@ $this->registerCss('
                                         <!--                            <input type="text" class="form-control line-warehouse-id" name="warehouse_id[]" value="">-->
                                         <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
                                                value="0">
-                                        <select name="warehouse_id[]" id="" class="form-control line-warehouse-id" required>
+                                        <select name="warehouse_id[]" id="" class="form-control line-warehouse-id"
+                                                required>
                                             <option value="-1">--เลือก-</option>
                                             <?php foreach ($data_warehouse as $xvalue): ?>
                                                 <option value="<?= $xvalue->id ?>"><?= $xvalue->name ?></option>
@@ -373,6 +378,61 @@ $this->registerCss('
                 <br/>
             <?php endif; ?>
         <?php endif; ?>
+        <div class="row">
+            <div class="col-lg-12">
+                <h4>ย้ายที่เก็บสินค้า</h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                    <tr>
+                        <th>คลังปัจจุบัน</th>
+                        <th>จำนวนคงเหลือ</th>
+                        <th>คลังปลายทาง</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ($model_line != null): ?>
+                        <?php foreach ($model_line as $value): ?>
+                            <tr data-var="<?= $value->id; ?>">
+                                <td>
+                                    <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
+                                           value="<?= $value->id ?>">
+                                    <select name="from_warehouse_id[]" id="" class="form-control line-from-warehouse-id" readonly>
+                                        <?php foreach ($data_warehouse as $xvalue): ?>
+                                            <?php
+                                            $selected = '';
+                                            if ($value->warehouse_id == $xvalue->id) {
+                                                $selected = 'selected';
+                                            }
+                                            ?>
+                                            <option value="<?= $xvalue->id ?>" <?= $selected ?>><?= $xvalue->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control line-transfer-qty" name="line_transfer_qty[]"
+                                           value="<?= $value->qty ?>" readonly>
+                                </td>
+                                <td>
+                                    <select name="to_warehouse_id[]" id="" class="form-control line-to-warehouse-id" required>
+                                        <option value="0">--เลือกคลังปลายทาง--</option>
+                                        <?php foreach ($data_warehouse as $xvalue): ?>
+                                            <option value="<?= $xvalue->id ?>"><?= $xvalue->name ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="form-group">
             <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
         </div>

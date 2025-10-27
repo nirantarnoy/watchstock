@@ -1315,6 +1315,24 @@ class JournaltransController extends Controller
                         $model_stock_trans->created_by = \Yii::$app->user->id;
                         $model_stock_trans->save(false);
                     }
+                }else{
+                    // sometime is drop ship not have warehouse in stock sum
+                    if($model->trans_type_id == 9){
+
+                        $model_stock_trans = new \common\models\StockTrans();
+                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_stock_trans->journal_trans_id = $model->id;
+                        $model_stock_trans->trans_type_id = $model->trans_type_id;
+                        $model_stock_trans->product_id = $model_line->product_id;
+                        $model_stock_trans->qty = (int)$model_line->qty;
+                        $model_stock_trans->warehouse_id = 0;//$model_line->warehouse_id;
+                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
+                        $model_stock_trans->remark = $model_line->remark;
+                        $model_stock_trans->created_by = \Yii::$app->user->id;
+                        if($model_stock_trans->save(false)){
+                            $res += 1;
+                        }
+                    }
                 }
                 $this->updateProductStock($model_line->product_id);
                if($res > 0){
