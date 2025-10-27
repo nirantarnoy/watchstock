@@ -358,15 +358,15 @@ class SiteController extends Controller
                 'SUM(jtl.qty) as total_qty',
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 'AVG(jtl.sale_price) as avg_price',
-                'AVG(p.cost_price) as cost_price',
-                'SUM(jtl.qty * jtl.sale_price) - SUM(jtl.qty * p.cost_price) as profit'
+                'AVG(jtl.line_price) as cost_price',
+                'SUM(jtl.qty * jtl.sale_price) - SUM(jtl.qty * jtl.line_price) as profit'
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3,9]]) // สมมติว่า status 1 = ขายสำเร็จ
-            ->groupBy(['p.id', 'p.code', 'p.name', 'p.cost_price'])
+            ->groupBy(['p.id', 'p.code', 'p.name'])
             ->orderBy(['total_sales' => SORT_DESC]);
 
         return $query->all();
