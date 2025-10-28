@@ -134,7 +134,7 @@ class JournaltransController extends Controller
                             $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
                         }
                         $modelLine->journal_trans_id = $model->id;
-                        if($type == 5){
+                        if($type == 5 || $type == 7){
                             $modelLine->status = 0; // ยังไม่คืน
                         }
                         if (!($flag = $modelLine->save(false))) {
