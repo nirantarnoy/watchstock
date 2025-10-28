@@ -610,6 +610,7 @@ class JournaltransController extends Controller
                         $model_trans->trans_date = date('Y-m-d H:i:s');
                         $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
                         $model_trans->qty = $qty;
+                        $model_trans->warehouse_id = $warehouse_id;
                         $model_trans->status = 1;
                         if ($model_trans->save(false)) {
                             $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
@@ -650,6 +651,7 @@ class JournaltransController extends Controller
                         $model_trans->trans_date = date('Y-m-d H:i:s');
                         $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
                         $model_trans->qty = $qty;
+                        $model_trans->warehouse_id = $warehouse_id;
                         $model_trans->status = 1;
                         if ($model_trans->save(false)) {
                             $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
@@ -1121,6 +1123,7 @@ class JournaltransController extends Controller
                     $model_trans->trans_date = date('Y-m-d H:i:s');
                     $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
                     $model_trans->qty = $qty;
+                    $model_trans->warehouse_id = $warehouse_id;
                     $model_trans->status = 1;
                     if ($model_trans->save(false)) {
                         $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_new->id, 'warehouse_id' => $warehouse_id])->one();
