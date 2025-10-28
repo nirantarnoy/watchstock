@@ -470,7 +470,12 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     'label' => 'ยกเลิกการทำรายการ',
                     'format' => 'raw',
                     'value' => function ($data) {
-                        return '<div class="btn btn-danger" data-var="'.$data->id.'" onclick="canelline($(this))">ยกเลิก</div>';
+                        if($data->status ==1){
+                            return '<div class="text-success">รับคืนสินค้าแล้ว</div>';
+                        }else{
+                            return '<div class="btn btn-danger" data-var="'.$data->id.'" onclick="canelline($(this))">ยกเลิก</div>';
+                        }
+
                     }
                 ]
             ],
