@@ -303,6 +303,37 @@ class ProductController extends Controller
 
                 }
 
+                if($model->transfer_warehouse_stock == 1){
+                    $from_warehouse = \Yii::$app->request->post('from_warehouse_id');
+                    $to_warehouse = \Yii::$app->request->post('to_warehouse_id');
+                    if($from_warehouse != null){
+                        for($x=0;$x<=count($from_warehouse)-1;$x++){
+                            if($to_warehouse[$x] == null || $to_warehouse[$x] == 0 || $to_warehouse[$x] =='0' || $to_warehouse[$x] =='')continue;
+                            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$from_warehouse[$x]])->one();
+                            if($model_stock){
+                              $model_to_stock = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$to_warehouse[$x]])->one();
+                              if($model_to_stock){
+                                $model_to_stock->qty = $model_stock->qty;
+                                if($model_to_stock->save(false)){
+                                    $model_stock->qty = 0;
+                                    $model_stock->save(false);
+                                }
+                              }else{
+                                $model_to_stock = new \backend\models\Stocksum();
+                                $model_to_stock->product_id = $model->id;
+                                $model_to_stock->warehouse_id = $to_warehouse[$x];
+                                $model_to_stock->qty = $model_stock->qty;
+                                if($model_to_stock->save(false)){
+                                    $model_stock->qty = 0;
+                                    $model_stock->save(false);
+                                }
+                              }
+                            }
+                        }
+                    }
+
+                }
+
                 $this->updateProductStock($model->id);
                 if($removelist!=null){
                     $xdel = explode(',', $removelist);

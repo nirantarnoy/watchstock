@@ -130,7 +130,9 @@ class JournaltransController extends Controller
                 if ($flag = $model->save(false)) {
                     // echo "ok";return;
                     foreach ($modelLines as $modelLine) {
-                        $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
+                        if($type != 9){
+                            $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
+                        }
                         $modelLine->journal_trans_id = $model->id;
                         if (!($flag = $modelLine->save(false))) {
                             break;

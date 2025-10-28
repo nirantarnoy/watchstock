@@ -378,6 +378,13 @@ $this->registerCss('
                 <br/>
             <?php endif; ?>
         <?php endif; ?>
+        <br/>
+        <div class="row">
+            <div class="col-lg-12">
+                <?php echo $form->field($model, 'transfer_warehouse_stock')->widget(\toxor88\switchery\Switchery::className(), ['options' => ['label' => '', 'class' => 'form-control']])->label() ?>
+            </div>
+        </div>
+        <br/>
         <div class="row">
             <div class="col-lg-12">
                 <h4>ย้ายที่เก็บสินค้า</h4>
