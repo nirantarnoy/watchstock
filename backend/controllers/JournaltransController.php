@@ -134,6 +134,9 @@ class JournaltransController extends Controller
                             $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
                         }
                         $modelLine->journal_trans_id = $model->id;
+                        if($type == 5){
+                            $modelLine->status = 0; // ยังไม่คืน
+                        }
                         if (!($flag = $modelLine->save(false))) {
                             break;
                         }
@@ -1069,6 +1072,7 @@ class JournaltransController extends Controller
             if ($model_stock_sum) {
                 $html .= '<option value="-1">--เลือกคลัง--</option>';
                 foreach ($model_stock_sum as $model) {
+                    if($model->qty <=0)continue;
                     $html .= '<option value="' . $model->warehouse_id . '">' . \backend\models\Warehouse::findName($model->warehouse_id) . '</option>';
                 }
             }
