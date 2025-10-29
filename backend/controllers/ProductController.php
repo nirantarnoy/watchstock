@@ -268,6 +268,36 @@ class ProductController extends Controller
                                 continue;
                             }
 
+                            /// create stock trans
+                            $check_stock_change = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
+                            $find_stock_type_id = 0;
+                            $diff_qty = 0;
+                            if($check_stock_change){
+                                if((int)$check_stock_change->qty < (int)$line_qty[$i]){
+                                    $diff_qty = (int)$line_qty[$i]-(int)$check_stock_change->qty;
+                                    $find_stock_type_id = 1;
+                                }else if((int)$check_stock_change->qty > (int)$line_qty[$i]){
+                                    $diff_qty = (int)$check_stock_change->qty - (int)$line_qty[$i];
+                                    $find_stock_type_id = 2;
+                                }
+                            }
+                            if($diff_qty != 0){
+                                $model_stock_trans = new \common\models\StockTrans();
+                                $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                                $model_stock_trans->journal_trans_id =$model_journal_trans->id;
+                                $model_stock_trans->trans_type_id = JournalTrans::TYPE_ADJUST;
+                                $model_stock_trans->product_id = $model->id;
+                                $model_stock_trans->qty = (int)$line_qty[$i];
+                                $model_stock_trans->warehouse_id = $line_warehouse[$i];
+                                $model_stock_trans->stock_type_id =$find_stock_type_id; // 1 IN , 2 OUT
+                                $model_stock_trans->remark = '';
+                                $model_stock_trans->created_by = \Yii::$app->user->id;
+                                $model_stock_trans->save(false);
+                            }
+
+
+
+
                             $model_trans = new \common\models\JournalTransLine();
                             $model_trans->product_id = $model->id;
                             $model_trans->journal_trans_id = $model_journal_trans->id;
@@ -296,7 +326,6 @@ class ProductController extends Controller
                                        // $this->updateProductStock($model->id);
                                     }
                                 }
-
                             }
                         }
                     }
