@@ -93,7 +93,7 @@ class JournaltransController extends Controller
             $modelLines = $this->createMultiple(JournalTransLine::class);
             JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
 
-            if($modelLines != null){
+            if($modelLines != null && $type !=9){
                 foreach ($modelLines as $i => $wid) {
                     if ($wid->warehouse_id == -1 || empty($wid->warehouse_id)) {
                         Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
