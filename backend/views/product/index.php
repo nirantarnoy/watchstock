@@ -71,7 +71,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     'value' => function ($data) {
                         $url = Yii::$app->request->hostInfo . Yii::$app->request->baseUrl . '/uploads/product_photo/' . $data->photo;
                         return Html::a(
-                            Html::img($url, ['style' => 'max-width:50px']),
+                            Html::img($url, ['style' => 'max-width:100px']),
                             $url,
                             [
                               'target' => '_blank',
