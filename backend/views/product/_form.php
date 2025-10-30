@@ -113,12 +113,12 @@ $this->registerCss('
             </div>
         </div>
         <div class="row">
-            <?php if (\Yii::$app->user->can('ViewCostPrice')): ?>
+            <?php //if (\Yii::$app->user->can('ViewCostPrice')): ?>
                 <div class="col-lg-3">
                     <?= $form->field($model, 'cost_price')->textInput() ?>
 
                 </div>
-            <?php endif; ?>
+            <?php //endif; ?>
             <?php if (\Yii::$app->user->can('ViewSalePrice')): ?>
                 <div class="col-lg-3">
                     <?= $form->field($model, 'sale_price')->textInput() ?>
