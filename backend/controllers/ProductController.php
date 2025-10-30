@@ -130,6 +130,7 @@ class ProductController extends Controller
                     }
                 }
 
+
                  $model->code = $model->name;
                 if ($model->save()) {
                     $uploaded = UploadedFile::getInstanceByName('product_photo');

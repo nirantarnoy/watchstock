@@ -93,6 +93,14 @@ class JournaltransController extends Controller
             $modelLines = $this->createMultiple(JournalTransLine::class);
             JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
 
+            if($modelLines != null){
+                foreach ($modelLines as $i => $wid) {
+                    if ($wid->warehouse_id == -1 || empty($wid->warehouse_id)) {
+                        Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
+                        return $this->refresh();
+                    }
+                }
+            }
 
             // Ajax validation
             if (\Yii::$app->request->isAjax) {
@@ -102,7 +110,6 @@ class JournaltransController extends Controller
                     ActiveForm::validate($model)
                 );
             }
-
 
             //custom model data
             if ($type == 10) {
@@ -146,6 +153,8 @@ class JournaltransController extends Controller
                 if ($flag) {
                     $total_qty = 0;
                     foreach ($modelLines as $modelLine) {
+                        if($modelLine->warehouse_id == -1 || empty($modelLine->warehouse_id))
+                            continue;
                         $total_qty += (int)$modelLine->qty;
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
