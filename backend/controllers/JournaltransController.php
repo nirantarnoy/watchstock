@@ -153,8 +153,8 @@ class JournaltransController extends Controller
                 if ($flag) {
                     $total_qty = 0;
                     foreach ($modelLines as $modelLine) {
-                        if($modelLine->warehouse_id == -1 || empty($modelLine->warehouse_id))
-                            continue;
+//                        if($modelLine->warehouse_id == -1 || empty($modelLine->warehouse_id))
+//                            continue;
                         $total_qty += (int)$modelLine->qty;
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
