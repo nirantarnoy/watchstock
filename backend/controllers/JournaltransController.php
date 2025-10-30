@@ -156,7 +156,7 @@ class JournaltransController extends Controller
                         $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
                         $model_stock_trans->stock_type_id = $model->stock_type_id;
                         $model_stock_trans->remark = $modelLine->remark;
-                        $model_stock_trans->created_by = $model->created_by;
+                        $model_stock_trans->created_by = \Yii::$app->user->id;
                         if ($model_stock_trans->save(false)) {
                             $this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id);
                             if($type == 10){
@@ -322,6 +322,7 @@ class JournaltransController extends Controller
                     $model_stock_trans->remark = '';
                     $model_stock_trans->stock_type_id = $original_stock_type_id==1?2:1;
                     $model_stock_trans->warehouse_id = $warehouse_id;
+                    $model_stock_trans->created_by = \Yii::$app->user->id;
                     if($model_stock_trans->save(false)){
                         $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->sum('qty');
                         if ($model_stock) {
@@ -934,6 +935,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->remark = $remarkVal;
                                 $model_stock_trans->stock_type_id = 1;
                                 $model_stock_trans->warehouse_id = $whVal;
+                                $model_stock_trans->created_by = \Yii::$app->user->id;
 
                                 if ($model_stock_trans->save(false)) {
                                     if ($trans_type_id == 6) {
