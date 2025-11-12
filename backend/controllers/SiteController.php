@@ -358,8 +358,20 @@ class SiteController extends Controller
                 'SUM(jtl.qty) as total_qty',
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 'AVG(jtl.sale_price) as avg_price',
-                'AVG(jtl.line_price) as cost_price',
-                'SUM(jtl.qty * jtl.sale_price) - SUM(jtl.qty * jtl.line_price) as profit'
+//                'AVG(jtl.line_price) as cost_price',
+//                'SUM(jtl.qty * jtl.sale_price) - SUM(jtl.qty * jtl.line_price) as profit'
+                new \yii\db\Expression("
+                    CASE 
+                        WHEN COALESCE(AVG(jtl.line_price), 0) = 0 
+                        THEN p.cost_price 
+                        ELSE AVG(jtl.line_price) 
+                    END AS cost_price
+                "),
+                new \yii\db\Expression("
+                    SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
+                    AS profit
+                ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
