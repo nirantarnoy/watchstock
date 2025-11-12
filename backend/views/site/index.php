@@ -212,6 +212,7 @@ $topProductsJson = json_encode($topProducts);
 
 $js = <<<JS
 // Price Comparison Chart
+// Price Comparison Chart
 Highcharts.chart('price-comparison-chart', {
     chart: {
         type: 'column'
@@ -245,6 +246,7 @@ Highcharts.chart('price-comparison-chart', {
     },
     plotOptions: {
         column: {
+            stacking: 'normal',
             pointPadding: 0.2,
             borderWidth: 0,
             dataLabels: {
