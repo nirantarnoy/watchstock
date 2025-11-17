@@ -6,14 +6,17 @@ use yii\widgets\ActiveForm;
 /** @var yii\web\View $this */
 /** @var backend\models\Productgroup $model */
 /** @var yii\widgets\ActiveForm $form */
-
-$sql = "SELECT jt.journal_no, jt.trans_date, jtl.product_id,p.name,p.description, jtl.qty 
+$model_has_product = [];
+if($model != null && $model->id !=null){
+    $sql = "SELECT jt.journal_no, jt.trans_date, jtl.product_id,p.name,p.description, jtl.qty 
 FROM journal_trans as jt 
     inner join journal_trans_line as jtl on jt.id = jtl.journal_trans_id 
     inner join product as p on jtl.product_id = p.id 
 where jt.status = 1 and jt.party_id = " . $model->id;
 
-$model_has_product = Yii::$app->db->createCommand($sql)->queryAll();
+    $model_has_product = Yii::$app->db->createCommand($sql)->queryAll();
+}
+
 
 ?>
 
