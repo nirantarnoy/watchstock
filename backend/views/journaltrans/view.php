@@ -473,7 +473,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                         if($data->status ==1 and ($data->journalTrans->trans_type_id == 5 || $data->journalTrans->trans_type_id == 6 || $data->journalTrans->trans_type_id == 7 || $data->journalTrans->trans_type_id == 8)){
                             return '<div class="text-success">รับคืนสินค้าแล้ว</div>';
                         }else{
-                            return '<div class="btn btn-danger" data-var="'.$data->id.'" onclick="canelline($(this))">ยกเลิก</div>';
+                            return '<div class="btn btn-danger" data-var="'.$data->id.'" data-value="'.$data->qty.'" onclick="canelline($(this))">ยกเลิก</div>';
                         }
 
                     }
@@ -681,7 +681,41 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
     </div>
     <form id="form-cancel-line" action="<?=Url::to(['journaltrans/cancelbyline'],true)?>" method="post">
         <input type="hidden" class="cancel-id" name="cancel_id" value="">
+        <input type="hidden" name="cancel_qty" id="real-cancel-qty">
     </form>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal-cancel" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">ยกเลิกรายการ</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="cancel-id" name="cancel_id">
+                    <input type="hidden" id="max-sale-qty">
+
+                    <div class="form-group">
+                        <label>จำนวนที่ต้องการยกเลิก</label>
+                        <input type="number" id="cancel-qty" class="form-control" min="1">
+                        <small class="text-danger d-none" id="qty-error">กรอกจำนวนเกินยอดขาย!</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-submit-cancel" class="btn btn-danger">ยืนยัน</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 
 <?php
 function getReturnProduct($journal_trans_id, $product_id, $original_qty)
@@ -800,15 +834,53 @@ function validateForm() {
     return true;
 }
 
-function canelline(e){
+
+
+
+// function canelline(e){
+//     var id = e.attr("data-var");
+//     var sale_qty = e.attr("data-value");
+//     if(id){
+//         if(confirm("ต้องการยกเลิกรายการใช่หรือไม่")){
+//             $(".cancel-id").val(id);
+//             $("#form-cancel-line").submit();
+//         }
+//     }
+// }
+
+function canelline(e) {
     var id = e.attr("data-var");
-    if(id){
-        if(confirm("ต้องการยกเลิกรายการใช่หรือไม่")){
-            $(".cancel-id").val(id);
-            $("#form-cancel-line").submit();
-        }
+    var sale_qty = parseFloat(e.attr("data-value"));
+
+    if (id) {
+        // ใส่ค่าใน modal
+        $("#cancel-id").val(id);
+        $("#max-sale-qty").val(sale_qty);
+        $("#cancel-qty").val(sale_qty);
+        $("#qty-error").addClass("d-none");
+
+        // เปิด modal
+        $("#modal-cancel").modal("show");
     }
 }
+
+
+// เมื่อกดปุ่มยืนยันใน modal
+$("#btn-submit-cancel").on("click", function() {
+    var maxQty = parseFloat($("#max-sale-qty").val());
+    var inputQty = parseFloat($("#cancel-qty").val());
+
+    if (inputQty > maxQty) {
+        $("#qty-error").removeClass("d-none");
+        return;
+    }
+
+    // ส่งค่าเข้าฟอร์มจริง
+    $(".cancel-id").val($("#cancel-id").val());
+    $("#real-cancel-qty").val(inputQty);
+
+    $("#form-cancel-line").submit();
+});
 JS;
 $this->registerJs($js, static::POS_END);
 ?>

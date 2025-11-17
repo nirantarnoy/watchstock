@@ -1300,73 +1300,201 @@ class JournaltransController extends Controller
     public function actionCancelbyline()
     {
         $res = 0;
-         $id = \Yii::$app->request->post('cancel_id');
-        //  echo $id;return;
+        $id = \Yii::$app->request->post('cancel_id');
+        $cancel_qty = \Yii::$app->request->post('cancel_qty');
+
         $journal_id = 0;
+
         if ($id) {
             $model_line = JournalTransLine::find()->where(['id' => $id])->one();
+
             if ($model_line) {
-                $model = \backend\models\JournalTrans::find()->where(['id'=>$model_line->journal_trans_id])->one();
-                $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_line->product_id, 'warehouse_id' => $model_line->warehouse_id])->one();
+
+                // ❗ ป้องกัน cancel_qty มากกว่า qty จริง
+                if ($cancel_qty > $model_line->qty) {
+                    Yii::$app->session->setFlash('msg-error', 'จำนวนยกเลิกมากกว่ายอดขายจริง');
+                    return $this->redirect(Yii::$app->request->referrer);
+                }
+
+                $model = \backend\models\JournalTrans::find()
+                    ->where(['id' => $model_line->journal_trans_id])->one();
+
+                $model_sum = \backend\models\Stocksum::find()
+                    ->where(['product_id' => $model_line->product_id, 'warehouse_id' => $model_line->warehouse_id])
+                    ->one();
+
                 $journal_id = $model->id;
+
                 if ($model_sum) {
-                    if ($model->stock_type_id == 2) { // stock out
+
+                    // --------------------------------
+                    //  ปรับยอดสต๊อกตามจำนวนยกเลิกจริง
+                    // --------------------------------
+                    if ($model->stock_type_id == 2) { // stock out (ขาย)
                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
-                            $model_sum->qty = (float)$model_sum->qty + (float)$model_line->qty;
-                            $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$model_line->qty;
+
+                            $model_sum->qty += (float)$cancel_qty;
+                            $model_sum->reserv_qty -= (float)$cancel_qty;
+
                         } else {
-                            $model_sum->qty = (float)$model_sum->qty + (float)$model_line->qty;
+
+                            $model_sum->qty += (float)$cancel_qty;
+
                         }
 
                     } else if ($model->stock_type_id == 1) { // stock in
-                        $model_sum->qty = (float)$model_sum->qty - (float)$model_line->qty;
+                        $model_sum->qty -= (float)$cancel_qty;
                     }
 
                     if ($model_sum->save(false)) {
                         $res += 1;
+
+                        // --------------------------------
+                        //  บันทึก StockTrans เฉพาะ cancel_qty
+                        // --------------------------------
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                         $model_stock_trans->journal_trans_id = $model->id;
                         $model_stock_trans->trans_type_id = $model->trans_type_id;
                         $model_stock_trans->product_id = $model_line->product_id;
-                        $model_stock_trans->qty = (int)$model_line->qty;
+                        $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                         $model_stock_trans->warehouse_id = $model_line->warehouse_id;
-                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
+                        $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
                         $model_stock_trans->remark = $model_line->remark;
-                        $model_stock_trans->created_by = \Yii::$app->user->id;
+                        $model_stock_trans->created_by = Yii::$app->user->id;
                         $model_stock_trans->save(false);
                     }
-                }else{
-                    // sometime is drop ship not have warehouse in stock sum
-                    if($model->trans_type_id == 9){
+                }
+                else {
+                    // case drop ship ไม่ต้องปรับ logic
+                    if ($model->trans_type_id == 9) {
 
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                         $model_stock_trans->journal_trans_id = $model->id;
                         $model_stock_trans->trans_type_id = $model->trans_type_id;
                         $model_stock_trans->product_id = $model_line->product_id;
-                        $model_stock_trans->qty = (int)$model_line->qty;
-                        $model_stock_trans->warehouse_id = 0;//$model_line->warehouse_id;
-                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
+                        $model_stock_trans->qty = (float)$cancel_qty;      // ← ใช้ยอดยกเลิกจริง
+                        $model_stock_trans->warehouse_id = 0;
+                        $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
                         $model_stock_trans->remark = $model_line->remark;
-                        $model_stock_trans->created_by = \Yii::$app->user->id;
-                        if($model_stock_trans->save(false)){
+                        $model_stock_trans->created_by = Yii::$app->user->id;
+
+                        if ($model_stock_trans->save(false)) {
                             $res += 1;
                         }
                     }
                 }
-                $this->updateProductStock($model_line->product_id);
-               if($res > 0){
-                   \common\models\JournalTransLine::deleteAll(['id'=>$model_line->id]);
-               }
-            }
 
+                // อัปเดต product stock
+                $this->updateProductStock($model_line->product_id);
+
+                // --------------------------------
+                //   UPDATE OR REMOVE LINE
+                // --------------------------------
+                $new_qty = $model_line->qty - $cancel_qty;
+
+                if ($new_qty > 0) {
+                    // ลดจำนวนลงตามที่ยกเลิก
+                    $model_line->qty = $new_qty;
+                    $model_line->save(false);
+                } else {
+                    // ถ้าหมดแล้วลบทั้งบรรทัด
+                    $model_line->delete();
+                }
+
+//                // ❗ โครงสร้างเดิมของคุณคือ *ลบบรรทัดเสมอ* ผมไม่แก้ให้ตามที่ขอ
+//                if ($res > 0) {
+//                    \common\models\JournalTransLine::deleteAll(['id' => $model_line->id]);
+//                }
+            }
         }
+
         if ($res > 0) {
-            \Yii::$app->session->setFlash('msg-success', 'บันทึกรายการสำเร็จ');
+            Yii::$app->session->setFlash('msg-success', 'บันทึกรายการสำเร็จ');
         }
+
         return $this->redirect(['view', 'id' => $journal_id]);
     }
+
+
+//    public function actionCancelbyline()
+//    {
+//        $res = 0;
+//         $id = \Yii::$app->request->post('cancel_id');
+//         $cancel_qty = \Yii::$app->request->post('cancel_qty');
+//        //  echo $id;return;
+//        $journal_id = 0;
+//        if ($id) {
+//            $model_line = JournalTransLine::find()->where(['id' => $id])->one();
+//            if ($model_line) {
+//                // ❗ ตรวจสอบว่าจำนวนที่ยกเลิกไม่เกินจำนวนที่ขาย
+//                if ($cancel_qty > $model_line->qty) {
+//                    Yii::$app->session->setFlash('msg-error', 'จำนวนยกเลิกมากกว่ายอดขาย');
+//                    return $this->redirect(Yii::$app->request->referrer);
+//                }
+//
+//                $model = \backend\models\JournalTrans::find()->where(['id'=>$model_line->journal_trans_id])->one();
+//                $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_line->product_id, 'warehouse_id' => $model_line->warehouse_id])->one();
+//                $journal_id = $model->id;
+//                if ($model_sum) {
+//                    if ($model->stock_type_id == 2) { // stock out
+//                        if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
+//                            $model_sum->qty = (float)$model_sum->qty + (float)$model_line->qty;
+//                            $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$model_line->qty;
+//                        } else {
+//                            $model_sum->qty = (float)$model_sum->qty + (float)$model_line->qty;
+//                        }
+//
+//                    } else if ($model->stock_type_id == 1) { // stock in
+//                        $model_sum->qty = (float)$model_sum->qty - (float)$model_line->qty;
+//                    }
+//
+//                    if ($model_sum->save(false)) {
+//                        $res += 1;
+//                        $model_stock_trans = new \common\models\StockTrans();
+//                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+//                        $model_stock_trans->journal_trans_id = $model->id;
+//                        $model_stock_trans->trans_type_id = $model->trans_type_id;
+//                        $model_stock_trans->product_id = $model_line->product_id;
+//                        $model_stock_trans->qty = (int)$model_line->qty;
+//                        $model_stock_trans->warehouse_id = $model_line->warehouse_id;
+//                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
+//                        $model_stock_trans->remark = $model_line->remark;
+//                        $model_stock_trans->created_by = \Yii::$app->user->id;
+//                        $model_stock_trans->save(false);
+//                    }
+//                }else{
+//                    // sometime is drop ship not have warehouse in stock sum
+//                    if($model->trans_type_id == 9){
+//
+//                        $model_stock_trans = new \common\models\StockTrans();
+//                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+//                        $model_stock_trans->journal_trans_id = $model->id;
+//                        $model_stock_trans->trans_type_id = $model->trans_type_id;
+//                        $model_stock_trans->product_id = $model_line->product_id;
+//                        $model_stock_trans->qty = (int)$model_line->qty;
+//                        $model_stock_trans->warehouse_id = 0;//$model_line->warehouse_id;
+//                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
+//                        $model_stock_trans->remark = $model_line->remark;
+//                        $model_stock_trans->created_by = \Yii::$app->user->id;
+//                        if($model_stock_trans->save(false)){
+//                            $res += 1;
+//                        }
+//                    }
+//                }
+//                $this->updateProductStock($model_line->product_id);
+//               if($res > 0){
+//                   \common\models\JournalTransLine::deleteAll(['id'=>$model_line->id]);
+//               }
+//            }
+//
+//        }
+//        if ($res > 0) {
+//            \Yii::$app->session->setFlash('msg-success', 'บันทึกรายการสำเร็จ');
+//        }
+//        return $this->redirect(['view', 'id' => $journal_id]);
+//    }
 
     public function actionCalallstock()
     {
