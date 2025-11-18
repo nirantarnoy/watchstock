@@ -7,11 +7,13 @@ class ProductType
     private static $data = [
         '1' => 'Normal',
         '2' => 'Custom (ปรับแต่ง)',
+        '3' => 'ฝากขาย',
     ];
 
     private static $dataobj = [
         ['id'=>'1','name' => 'Normal'],
         ['id'=>'2','name' => 'Custom (ปรับแต่ง)'],
+        ['id'=>'3','name' => 'ฝากขาย'],
     ];
     public static function asArray()
     {
