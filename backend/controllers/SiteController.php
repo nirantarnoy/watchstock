@@ -427,7 +427,7 @@ class SiteController extends Controller
         foreach ($data as $item) {
             $categories[] = $item['name'];
             $salePrices[] = floatval($item['cost_price']);// floatval($item['avg_sale_price']);
-            $profits[] = floatval($item['profit']);// floatval($item['avg_sale_price']) - floatval($item['cost_price']);
+            $profits[] =  floatval($item['avg_sale_price']) - floatval($item['cost_price']);
         }
 
         return [
