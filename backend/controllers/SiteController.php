@@ -392,31 +392,20 @@ class SiteController extends Controller
         $query = (new Query())
             ->select([
                 'pb.name',
-                'SUM(jtl.qty) as total_qty',
-                'SUM(jtl.sale_price * jtl.qty) as total_sale',
-                'AVG(jtl.sale_price) as avg_sale_price',
-                new \yii\db\Expression("
-            (
-                SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
-                / SUM(jtl.qty)
-            ) AS cost_price
-        "),
-                new \yii\db\Expression("
-            SUM(jtl.sale_price * jtl.qty) -
-            SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
-            AS profit
-        ")
+                'SUM(p.cost_price) as cost_price',
+                'SUM(jtl.sale_price * jtl.qty) as avg_sale_price',
+                'SUM(jtl.qty) as total_qty'
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
+            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
             ->groupBy(['pb.name'])
-            ->having('SUM(jtl.qty) > 0')
+            ->having('SUM(jt.qty) > 0')
             ->orderBy(['total_qty' => SORT_DESC])
-            ->limit(20);
+            ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
 
         $data = $query->all();
 
@@ -427,8 +416,8 @@ class SiteController extends Controller
 
         foreach ($data as $item) {
             $categories[] = $item['name'];
-            $salePrices[] = floatval($item['cost_price']);// floatval($item['avg_sale_price']);
-            $profits[] =  floatval($item['avg_sale_price']) - floatval($item['cost_price']);
+            $salePrices[] = floatval($item['avg_sale_price']);
+            $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
         }
 
         return [
