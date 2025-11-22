@@ -387,46 +387,104 @@ class SiteController extends Controller
     /**
      * ดึงข้อมูลสำหรับกราฟเปรียบเทียบราคาขายกับต้นทุน
      */
+//    private function getPriceComparisonData($fromTimestamp, $toTimestamp)
+//    {
+//        $query = (new Query())
+//            ->select([
+//                'pb.name',
+//                'SUM(p.cost_price) as cost_price',
+//                'SUM(jtl.sale_price * jtl.qty) as avg_sale_price',
+//                'SUM(jtl.qty) as total_qty'
+//            ])
+//            ->from(['jtl' => 'journal_trans_line'])
+//            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
+//            ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
+//            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
+//            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
+//            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
+//            ->groupBy(['pb.name'])
+//            ->having('SUM(jt.qty) > 0')
+//            ->orderBy(['total_qty' => SORT_DESC])
+//            ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
+//
+//        $data = $query->all();
+//
+//        // จัดรูปแบบข้อมูลสำหรับ Highcharts
+//        $categories = [];
+//        $salePrices = [];
+//        $profits = [];
+//
+//        foreach ($data as $item) {
+//            $categories[] = $item['name'];
+//            $salePrices[] = floatval($item['avg_sale_price']);
+//            $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
+//        }
+//
+//        return [
+//            'categories' => $categories,
+//            'costPrices' => null,
+//            'salePrices' => $salePrices,
+//            'profits' => $profits
+//        ];
+//    }
+
     private function getPriceComparisonData($fromTimestamp, $toTimestamp)
     {
         $query = (new Query())
             ->select([
                 'pb.name',
-                'SUM(p.cost_price) as cost_price',
-                'SUM(jtl.sale_price * jtl.qty) as avg_sale_price',
-                'SUM(jtl.qty) as total_qty'
+                'SUM(jtl.qty) as total_qty',
+
+                // รวมยอดขายทั้งหมด
+                'SUM(jtl.sale_price * jtl.qty) AS total_sale',
+
+                // ต้นทุนถ่วงน้ำหนัก (ใช้ line_price ถ้ามี ไม่งั้นใช้ p.cost_price)
+                new \yii\db\Expression("
+                (
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
+                    / SUM(jtl.qty)
+                ) AS cost_price
+            "),
+
+                // กำไรรวม
+                new \yii\db\Expression("
+                SUM(jtl.sale_price * jtl.qty)
+                -
+                SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
+                AS profit
+            ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3,9]])
             ->groupBy(['pb.name'])
-            ->having('SUM(jt.qty) > 0')
+            ->having('SUM(jtl.qty) > 0')
             ->orderBy(['total_qty' => SORT_DESC])
-            ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
+            ->limit(20);
 
         $data = $query->all();
 
-        // จัดรูปแบบข้อมูลสำหรับ Highcharts
+        // ส่งข้อมูลให้ Highcharts
         $categories = [];
         $salePrices = [];
         $profits = [];
 
         foreach ($data as $item) {
             $categories[] = $item['name'];
-            $salePrices[] = floatval($item['avg_sale_price']);
-            $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
+            $salePrices[] = floatval($item['total_sale']); // ยอดขายรวม
+            $profits[]    = floatval($item['profit']);      // กำไร
         }
 
         return [
             'categories' => $categories,
-            'costPrices' => null,
             'salePrices' => $salePrices,
-            'profits' => $profits
+            'profits'    => $profits
         ];
     }
+
 
 //    private function getPriceComparisonData($fromTimestamp, $toTimestamp)
 //    {
