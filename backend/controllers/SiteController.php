@@ -394,6 +394,7 @@ class SiteController extends Controller
                 'pb.name',
                 'SUM(jtl.qty) as total_qty',
                 'SUM(jtl.sale_price * jtl.qty) as total_sale',
+                'AVG(jtl.sale_price) as avg_sale_price',
                 new \yii\db\Expression("
             (
                 SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
