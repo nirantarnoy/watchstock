@@ -237,21 +237,35 @@ Highcharts.chart('price-comparison-chart', {
         }
     },
     tooltip: {
-        headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
-        pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
-            '<td style="padding:0"><b>฿{point.y:.2f}</b></td></tr>',
-        footerFormat: '</table>',
-        shared: true,
-        useHTML: true
-    },
-    plotOptions: {
+    shared: true,
+    useHTML: true,
+    formatter: function () {
+        let s = '<span style="font-size:10px">' + this.x + '</span><table>';
+
+        this.points.forEach(p => {
+            s += '<tr><td style="color:' + p.series.color + ';padding:0">' + 
+                 p.series.name + ':</td>' +
+                 '<td style="padding:0"><b>' + (p.y / 1000).toFixed(1) + 'K' + '</b></td></tr>';
+        });
+
+        s += '</table>';
+        return s;
+    }
+},
+
+   plotOptions: {
         column: {
             stacking: 'normal',
             pointPadding: 0.2,
             borderWidth: 0,
             dataLabels: {
                 enabled: true,
-                format: '฿{y:.0f}'
+                formatter: function() { // ย่อค่าตัวเลขใน labels
+                    if (this.y >= 1000) {
+                        return (this.y / 1000).toFixed(1) + 'K';
+                    }
+                    return  this.y;
+                }
             }
         }
     },
