@@ -240,7 +240,8 @@ Highcharts.chart('price-comparison-chart', {
     shared: true,
     useHTML: true,
     formatter: function () {
-        let s = '<span style="font-size:10px">' + this.x + '</span><table>';
+      //  let s = '<span style="font-size:10px">' + this.x + '</span><table>';
+       let s = '<span style="font-size:10px"></span><table>';
 
         this.points.forEach(p => {
             s += '<tr><td style="color:' + p.series.color + ';padding:0">' + 
