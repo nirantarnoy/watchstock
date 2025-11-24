@@ -211,8 +211,24 @@ $priceComparisonJson = json_encode($priceComparisonData);
 $topProductsJson = json_encode($topProducts);
 
 $js = <<<JS
-// Price Comparison Chart
-// Price Comparison Chart
+// Price Comparison Chart - เรียงตามกำไรมากสุด
+let chartData = {$priceComparisonJson};
+
+// รวมข้อมูลและเรียงลำดับ
+let combinedData = chartData.categories.map((category, index) => ({
+    category: category,
+    salePrice: chartData.salePrices[index],
+    profit: chartData.profits[index]
+}));
+
+// เรียงตามกำไรจากมากไปน้อย
+combinedData.sort((a, b) => b.profit - a.profit);
+
+// แยกข้อมูลที่เรียงแล้ว
+let sortedCategories = combinedData.map(item => item.category);
+let sortedSalePrices = combinedData.map(item => item.salePrice);
+let sortedProfits = combinedData.map(item => item.profit);
+
 Highcharts.chart('price-comparison-chart', {
     chart: {
         type: 'column'
@@ -221,7 +237,7 @@ Highcharts.chart('price-comparison-chart', {
         text: ''
     },
     xAxis: {
-        categories: {$priceComparisonJson}.categories,
+        categories: sortedCategories,
         crosshair: true,
         labels: {
             rotation: -45,
@@ -237,47 +253,46 @@ Highcharts.chart('price-comparison-chart', {
         }
     },
     tooltip: {
-    shared: true,
-    useHTML: true,
-    formatter: function () {
-         let categoryName = this.points[0].point.category;
-       let s = '<span style="font-size:10px">' + categoryName + '</span><table>';
-      // let s = '<span style="font-size:10px"></span><table>';
+        shared: true,
+        useHTML: true,
+        formatter: function () {
+            let categoryName = this.points[0].point.category;
+            let s = '<span style="font-size:10px">' + categoryName + '</span><table>';
 
-        this.points.forEach(p => {
-            s += '<tr><td style="color:' + p.series.color + ';padding:0">' + 
-                 p.series.name + ':</td>' +
-                 '<td style="padding:0"><b>' + (p.y / 1000).toFixed(1) + 'K' + '</b></td></tr>';
-        });
+            this.points.forEach(p => {
+                s += '<tr><td style="color:' + p.series.color + ';padding:0">' + 
+                     p.series.name + ':</td>' +
+                     '<td style="padding:0"><b>' + (p.y / 1000).toFixed(1) + 'K' + '</b></td></tr>';
+            });
 
-        s += '</table>';
-        return s;
-    }
-},
+            s += '</table>';
+            return s;
+        }
+    },
 
-   plotOptions: {
+    plotOptions: {
         column: {
             stacking: 'normal',
             pointPadding: 0.2,
             borderWidth: 0,
             dataLabels: {
                 enabled: true,
-                formatter: function() { // ย่อค่าตัวเลขใน labels
+                formatter: function() {
                     if (this.y >= 1000) {
                         return (this.y / 1000).toFixed(1) + 'K';
                     }
-                    return  this.y;
+                    return this.y;
                 }
             }
         }
     },
     series: [{
         name: 'ยอดขาย',
-        data: {$priceComparisonJson}.salePrices,
+        data: sortedSalePrices,
         color: '#00a65a'
     }, {
         name: 'กำไร',
-        data: {$priceComparisonJson}.profits,
+        data: sortedProfits,
         color: '#3c8dbc'
     }]
 });
