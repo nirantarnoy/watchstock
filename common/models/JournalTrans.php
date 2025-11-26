@@ -287,6 +287,7 @@ class JournalTrans extends \yii\db\ActiveRecord
             self::TYPE_RETURN_SEND => 'คืนส่งช่าง',
             self::TYPE_DROP => 'ขาย Drop Ship',
             self::TYPE_ADJUST_IN => 'ปรับยอดเข้า',
+            self::TYPE_TRANSFER => 'ย้ายที่จัดเก็บ',
         ];
     }
 
