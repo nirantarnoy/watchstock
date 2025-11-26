@@ -162,6 +162,25 @@ if ($create_type == 7) {
 }
 ?>
 
+    <!-- Flash Messages -->
+<?php if (\Yii::$app->session->hasFlash('success')): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <?= \Yii::$app->session->getFlash('success') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+                onclick="closeAlert();"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (\Yii::$app->session->hasFlash('error')): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <?= \Yii::$app->session->getFlash('error') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+                onclick="closeAlert();"></button>
+    </div>
+<?php endif; ?>
+
     <div class="journal-trans-form">
         <input type="hidden" id="create-type" value="<?= $create_type ?>">
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>

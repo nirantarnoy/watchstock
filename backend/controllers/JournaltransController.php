@@ -179,6 +179,14 @@ class JournaltransController extends Controller
 
                     \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
                     return $this->redirect(['view', 'id' => $model->id]);
+                }else{
+                    Yii::$app->session->setFlash(
+                        'error',
+                        'เกิดข้อผิดพลาด: ' . implode('; ', array_map(function ($e) {
+                            return implode(', ', $e);
+                        }, $model->getErrors()))
+                    );
+                    return $this->refresh();
                 }
 
 //                    if ($flag) {
@@ -190,7 +198,13 @@ class JournaltransController extends Controller
 //                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
 //                }
             } else {
-
+                Yii::$app->session->setFlash(
+                    'error',
+                    'เกิดข้อผิดพลาด: ' . implode('; ', array_map(function ($e) {
+                        return implode(', ', $e);
+                    }, $model->getErrors()))
+                );
+                return $this->refresh();
             }
         }
 
