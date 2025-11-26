@@ -246,6 +246,7 @@ $this->registerCss('
                                         </select>
                                     </td>
                                     <td>
+                                        <input type="hidden" name="line_old_qty[]" value="<?=$value->qty?>">
                                         <input type="number" class="form-control line-qty" name="line_qty[]"
                                                value="<?= $value->qty ?>">
                                     </td>
@@ -270,6 +271,7 @@ $this->registerCss('
                                     </select>
                                 </td>
                                 <td>
+                                    <input type="hidden" name="line_old_qty[]" value="0">
                                     <input type="number" class="form-control line-qty" name="line_qty[]" value="">
                                 </td>
                                 <td>

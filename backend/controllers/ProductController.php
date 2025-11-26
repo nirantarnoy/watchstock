@@ -217,6 +217,7 @@ class ProductController extends Controller
 
             $line_warehouse = \Yii::$app->request->post('warehouse_id',[]);
             $line_qty = \Yii::$app->request->post('line_qty');
+            $line_old_qty = \Yii::$app->request->post('line_old_qty');
 
            // echo $model->edit_stock_qty;return;
             if($model->edit_stock_qty == 1) {
@@ -265,36 +266,54 @@ class ProductController extends Controller
                                 continue;
                             }
 
-                            if($this->checkEditChange($model->id,$line_warehouse[$i],$line_qty[$i]) == 0){ // check is edited
+                            if($this->checkEditChange($model->id,$line_warehouse[$i],$line_qty[$i]) == 0){ // check is not edited
                                 continue;
                             }
 
                             /// create stock trans
-                            $check_stock_change = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
-                            $find_stock_type_id = 0;
+                            $check_stock_change = \backend\models\Stocksum::find()
+                                ->where(['product_id' => $model->id, 'warehouse_id' => $line_warehouse[$i]])
+                                ->one();
+
+                            $find_stock_type_id = 0; // 1 = IN, 2 = OUT
                             $diff_qty = 0;
-                            if($check_stock_change){
-                                if((int)$check_stock_change->qty < (int)$line_qty[$i]){
-                                    $diff_qty = (int)$line_qty[$i]-(int)$check_stock_change->qty;
+
+                            if ($check_stock_change) {
+
+                                $old_qty = (int)$check_stock_change->qty;
+                                $new_qty = (int)$line_qty[$i];
+
+                                // มากกว่า = Stock IN
+                                if ($new_qty > $old_qty) {
+                                    $diff_qty = $new_qty - $old_qty;
                                     $find_stock_type_id = 1;
-                                }else if((int)$check_stock_change->qty > (int)$line_qty[$i]){
-                                    $diff_qty = (int)$check_stock_change->qty - (int)$line_qty[$i];
+                                }
+                                // น้อยกว่า = Stock OUT
+                                else if ($new_qty < $old_qty) {
+                                    $diff_qty = $old_qty - $new_qty;
                                     $find_stock_type_id = 2;
                                 }
                             }
-                            if($diff_qty != 0){
+
+                            // ถ้ามีการเปลี่ยนแปลงค่อยบันทึก StockTrans
+                            if ($diff_qty > 0) {
+
                                 $model_stock_trans = new \common\models\StockTrans();
                                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                                $model_stock_trans->journal_trans_id =$model_journal_trans->id;
+                                $model_stock_trans->journal_trans_id = $model_journal_trans->id;
                                 $model_stock_trans->trans_type_id = JournalTrans::TYPE_ADJUST;
                                 $model_stock_trans->product_id = $model->id;
-                                $model_stock_trans->qty = (int)$line_qty[$i];
+
+                                // ❗ Qty ของรายการควรเป็น diff จริง ไม่ใช่ qty ใหม่ทั้งหมด
+                                $model_stock_trans->qty = $diff_qty;
+
                                 $model_stock_trans->warehouse_id = $line_warehouse[$i];
-                                $model_stock_trans->stock_type_id =$find_stock_type_id; // 1 IN , 2 OUT
+                                $model_stock_trans->stock_type_id = $find_stock_type_id; // 1 IN , 2 OUT
                                 $model_stock_trans->remark = '';
-                                $model_stock_trans->created_by = \Yii::$app->user->id;
+                                $model_stock_trans->created_by = Yii::$app->user->id;
                                 $model_stock_trans->save(false);
                             }
+
 
 
 
