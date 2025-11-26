@@ -358,75 +358,94 @@ class ProductController extends Controller
                     $to_warehouse = Yii::$app->request->post('to_warehouse_id');
 
                     if ($from_warehouse) {
-                        for ($x = 0; $x < count($from_warehouse); $x++) {
+                        $model_journal_trans = new \common\models\JournalTrans();
+                        $model_journal_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_journal_trans->journal_no = '';
+                        $model_journal_trans->remark = '';
+                        $model_journal_trans->trans_type_id = JournalTrans::TYPE_TRANSFER;
+                        $model_journal_trans->status = 3; // 3 complete
+                        $model_journal_trans->stock_type_id = 0;
+                        $model_journal_trans->warehouse_id = 0;
 
-                            // ข้ามถ้าปลายทางไม่มีค่า
-                            if (empty($to_warehouse[$x])) continue;
+                        if($model_journal_trans->save(false)) {
+                            for ($x = 0; $x < count($from_warehouse); $x++) {
 
-                            $from_wh = (int)$from_warehouse[$x];
-                            $to_wh = (int)$to_warehouse[$x];
+                                // ข้ามถ้าปลายทางไม่มีค่า
+                                if (empty($to_warehouse[$x])) continue;
 
-                            // หา stock คลังต้นทาง
-                            $stock_from = \backend\models\Stocksum::find()
-                                ->where(['product_id' => $model->id, 'warehouse_id' => $from_wh])
-                                ->one();
+                                $model_trans = new \common\models\JournalTransLine();
+                                $model_trans->product_id = $model->id;
+                                $model_trans->journal_trans_id = $model_journal_trans->id;
+                                $model_trans->warehouse_id = $line_warehouse[$x];
+                                $model_trans->qty = $line_qty[$x];
+                                $model_trans->status = 1;
+                                if($model_trans->save(false)){}
 
-                            if (!$stock_from || $stock_from->qty <= 0) continue;
+                                $from_wh = (int)$from_warehouse[$x];
+                                $to_wh = (int)$to_warehouse[$x];
 
-                            $move_qty = (int)$stock_from->qty;  // ปริมาณที่จะย้ายทั้งหมด
+                                // หา stock คลังต้นทาง
+                                $stock_from = \backend\models\Stocksum::find()
+                                    ->where(['product_id' => $model->id, 'warehouse_id' => $from_wh])
+                                    ->one();
 
-                            // หา stock คลังปลายทาง
-                            $stock_to = \backend\models\Stocksum::find()
-                                ->where(['product_id' => $model->id, 'warehouse_id' => $to_wh])
-                                ->one();
+                                if (!$stock_from || $stock_from->qty <= 0) continue;
 
-                            //------------------------------
-                            // 1) บันทึก StockTrans – OUT (คลังต้นทาง)
-                            //------------------------------
-                            $trans_out = new \common\models\StockTrans();
-                            $trans_out->trans_date = date('Y-m-d H:i:s');
-                            $trans_out->journal_trans_id = $model_journal_trans->id;
-                            $trans_out->trans_type_id = JournalTrans::TYPE_TRANSFER;
-                            $trans_out->product_id = $model->id;
-                            $trans_out->qty = $move_qty;          // จำนวนที่ออก
-                            $trans_out->warehouse_id = $from_wh;
-                            $trans_out->stock_type_id = 2;        // OUT
-                            $trans_out->remark = 'Transfer OUT';
-                            $trans_out->created_by = Yii::$app->user->id;
-                            $trans_out->save(false);
+                                $move_qty = (int)$stock_from->qty;  // ปริมาณที่จะย้ายทั้งหมด
 
-                            //------------------------------
-                            // 2) บันทึก StockTrans – IN (คลังปลายทาง)
-                            //------------------------------
-                            $trans_in = new \common\models\StockTrans();
-                            $trans_in->trans_date = date('Y-m-d H:i:s');
-                            $trans_in->journal_trans_id = $model_journal_trans->id;
-                            $trans_in->trans_type_id = JournalTrans::TYPE_TRANSFER;
-                            $trans_in->product_id = $model->id;
-                            $trans_in->qty = $move_qty;           // จำนวนที่เข้า
-                            $trans_in->warehouse_id = $to_wh;
-                            $trans_in->stock_type_id = 1;         // IN
-                            $trans_in->remark = 'Transfer IN';
-                            $trans_in->created_by = Yii::$app->user->id;
-                            $trans_in->save(false);
+                                // หา stock คลังปลายทาง
+                                $stock_to = \backend\models\Stocksum::find()
+                                    ->where(['product_id' => $model->id, 'warehouse_id' => $to_wh])
+                                    ->one();
 
-                            //------------------------------
-                            // 3) อัปเดตรายการสต๊อกจริง
-                            //------------------------------
-                            // ต้นทาง = จำนวนเดิม - ปริมาณที่ย้าย
-                            $stock_from->qty = 0;
-                            $stock_from->save(false);
+                                //------------------------------
+                                // 1) บันทึก StockTrans – OUT (คลังต้นทาง)
+                                //------------------------------
+                                $trans_out = new \common\models\StockTrans();
+                                $trans_out->trans_date = date('Y-m-d H:i:s');
+                                $trans_out->journal_trans_id = $model_journal_trans->id;
+                                $trans_out->trans_type_id = JournalTrans::TYPE_TRANSFER;
+                                $trans_out->product_id = $model->id;
+                                $trans_out->qty = $move_qty;          // จำนวนที่ออก
+                                $trans_out->warehouse_id = $from_wh;
+                                $trans_out->stock_type_id = 2;        // OUT
+                                $trans_out->remark = 'Transfer OUT';
+                                $trans_out->created_by = Yii::$app->user->id;
+                                $trans_out->save(false);
 
-                            // ปลายทาง = จำนวนเดิม + ปริมาณที่ย้าย
-                            if ($stock_to) {
-                                $stock_to->qty += $move_qty;
-                                $stock_to->save(false);
-                            } else {
-                                $stock_to = new \backend\models\Stocksum();
-                                $stock_to->product_id = $model->id;
-                                $stock_to->warehouse_id = $to_wh;
-                                $stock_to->qty = $move_qty;
-                                $stock_to->save(false);
+                                //------------------------------
+                                // 2) บันทึก StockTrans – IN (คลังปลายทาง)
+                                //------------------------------
+                                $trans_in = new \common\models\StockTrans();
+                                $trans_in->trans_date = date('Y-m-d H:i:s');
+                                $trans_in->journal_trans_id = $model_journal_trans->id;
+                                $trans_in->trans_type_id = JournalTrans::TYPE_TRANSFER;
+                                $trans_in->product_id = $model->id;
+                                $trans_in->qty = $move_qty;           // จำนวนที่เข้า
+                                $trans_in->warehouse_id = $to_wh;
+                                $trans_in->stock_type_id = 1;         // IN
+                                $trans_in->remark = 'Transfer IN';
+                                $trans_in->created_by = Yii::$app->user->id;
+                                $trans_in->save(false);
+
+                                //------------------------------
+                                // 3) อัปเดตรายการสต๊อกจริง
+                                //------------------------------
+                                // ต้นทาง = จำนวนเดิม - ปริมาณที่ย้าย
+                                $stock_from->qty = 0;
+                                $stock_from->save(false);
+
+                                // ปลายทาง = จำนวนเดิม + ปริมาณที่ย้าย
+                                if ($stock_to) {
+                                    $stock_to->qty += $move_qty;
+                                    $stock_to->save(false);
+                                } else {
+                                    $stock_to = new \backend\models\Stocksum();
+                                    $stock_to->product_id = $model->id;
+                                    $stock_to->warehouse_id = $to_wh;
+                                    $stock_to->qty = $move_qty;
+                                    $stock_to->save(false);
+                                }
                             }
                         }
                     }
