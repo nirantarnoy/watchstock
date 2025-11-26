@@ -45,6 +45,8 @@ class JournalTrans extends \yii\db\ActiveRecord
     const TYPE_DROP = 9;       // ขาย Dropship
     const TYPE_ADJUST_IN = 10;
 
+    const TYPE_TRANSFER = 11;
+
 
 
 
@@ -184,6 +186,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_ADJUST_IN:
                 $prefix = 'SIN';
                 break;
+            case self::TYPE_TRANSFER:
+                $prefix = 'TRF';
+                break;
         }
 
         $lastRecord = self::find()
@@ -234,6 +239,9 @@ class JournalTrans extends \yii\db\ActiveRecord
                 break;
             case self::TYPE_ADJUST_IN:
                 $prefix = 'SIN';
+                break;
+            case self::TYPE_TRANSFER:
+                $prefix = 'TRF';
                 break;
 
         }

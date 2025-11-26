@@ -352,36 +352,117 @@ class ProductController extends Controller
 
                 }
 
-                if($model->transfer_warehouse_stock == 1){
-                    $from_warehouse = \Yii::$app->request->post('from_warehouse_id');
-                    $to_warehouse = \Yii::$app->request->post('to_warehouse_id');
-                    if($from_warehouse != null){
-                        for($x=0;$x<=count($from_warehouse)-1;$x++){
-                            if($to_warehouse[$x] == null || $to_warehouse[$x] == 0 || $to_warehouse[$x] =='0' || $to_warehouse[$x] =='')continue;
-                            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$from_warehouse[$x]])->one();
-                            if($model_stock){
-                              $model_to_stock = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$to_warehouse[$x]])->one();
-                              if($model_to_stock){
-                                $model_to_stock->qty = $model_stock->qty;
-                                if($model_to_stock->save(false)){
-                                    $model_stock->qty = 0;
-                                    $model_stock->save(false);
-                                }
-                              }else{
-                                $model_to_stock = new \backend\models\Stocksum();
-                                $model_to_stock->product_id = $model->id;
-                                $model_to_stock->warehouse_id = $to_warehouse[$x];
-                                $model_to_stock->qty = $model_stock->qty;
-                                if($model_to_stock->save(false)){
-                                    $model_stock->qty = 0;
-                                    $model_stock->save(false);
-                                }
-                              }
+                if ($model->transfer_warehouse_stock == 1) {
+
+                    $from_warehouse = Yii::$app->request->post('from_warehouse_id');
+                    $to_warehouse = Yii::$app->request->post('to_warehouse_id');
+
+                    if ($from_warehouse) {
+                        for ($x = 0; $x < count($from_warehouse); $x++) {
+
+                            // ข้ามถ้าปลายทางไม่มีค่า
+                            if (empty($to_warehouse[$x])) continue;
+
+                            $from_wh = (int)$from_warehouse[$x];
+                            $to_wh = (int)$to_warehouse[$x];
+
+                            // หา stock คลังต้นทาง
+                            $stock_from = \backend\models\Stocksum::find()
+                                ->where(['product_id' => $model->id, 'warehouse_id' => $from_wh])
+                                ->one();
+
+                            if (!$stock_from || $stock_from->qty <= 0) continue;
+
+                            $move_qty = (int)$stock_from->qty;  // ปริมาณที่จะย้ายทั้งหมด
+
+                            // หา stock คลังปลายทาง
+                            $stock_to = \backend\models\Stocksum::find()
+                                ->where(['product_id' => $model->id, 'warehouse_id' => $to_wh])
+                                ->one();
+
+                            //------------------------------
+                            // 1) บันทึก StockTrans – OUT (คลังต้นทาง)
+                            //------------------------------
+                            $trans_out = new \common\models\StockTrans();
+                            $trans_out->trans_date = date('Y-m-d H:i:s');
+                            $trans_out->journal_trans_id = $model_journal_trans->id;
+                            $trans_out->trans_type_id = JournalTrans::TYPE_TRANSFER;
+                            $trans_out->product_id = $model->id;
+                            $trans_out->qty = $move_qty;          // จำนวนที่ออก
+                            $trans_out->warehouse_id = $from_wh;
+                            $trans_out->stock_type_id = 2;        // OUT
+                            $trans_out->remark = 'Transfer OUT';
+                            $trans_out->created_by = Yii::$app->user->id;
+                            $trans_out->save(false);
+
+                            //------------------------------
+                            // 2) บันทึก StockTrans – IN (คลังปลายทาง)
+                            //------------------------------
+                            $trans_in = new \common\models\StockTrans();
+                            $trans_in->trans_date = date('Y-m-d H:i:s');
+                            $trans_in->journal_trans_id = $model_journal_trans->id;
+                            $trans_in->trans_type_id = JournalTrans::TYPE_TRANSFER;
+                            $trans_in->product_id = $model->id;
+                            $trans_in->qty = $move_qty;           // จำนวนที่เข้า
+                            $trans_in->warehouse_id = $to_wh;
+                            $trans_in->stock_type_id = 1;         // IN
+                            $trans_in->remark = 'Transfer IN';
+                            $trans_in->created_by = Yii::$app->user->id;
+                            $trans_in->save(false);
+
+                            //------------------------------
+                            // 3) อัปเดตรายการสต๊อกจริง
+                            //------------------------------
+                            // ต้นทาง = จำนวนเดิม - ปริมาณที่ย้าย
+                            $stock_from->qty = 0;
+                            $stock_from->save(false);
+
+                            // ปลายทาง = จำนวนเดิม + ปริมาณที่ย้าย
+                            if ($stock_to) {
+                                $stock_to->qty += $move_qty;
+                                $stock_to->save(false);
+                            } else {
+                                $stock_to = new \backend\models\Stocksum();
+                                $stock_to->product_id = $model->id;
+                                $stock_to->warehouse_id = $to_wh;
+                                $stock_to->qty = $move_qty;
+                                $stock_to->save(false);
                             }
                         }
                     }
-
                 }
+
+
+//                if($model->transfer_warehouse_stock == 1){
+//                    $from_warehouse = \Yii::$app->request->post('from_warehouse_id');
+//                    $to_warehouse = \Yii::$app->request->post('to_warehouse_id');
+//                    if($from_warehouse != null){
+//                        for($x=0;$x<=count($from_warehouse)-1;$x++){
+//                            if($to_warehouse[$x] == null || $to_warehouse[$x] == 0 || $to_warehouse[$x] =='0' || $to_warehouse[$x] =='')continue;
+//                            $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$from_warehouse[$x]])->one();
+//                            if($model_stock){
+//                              $model_to_stock = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$to_warehouse[$x]])->one();
+//                              if($model_to_stock){
+//                                $model_to_stock->qty = $model_stock->qty;
+//                                if($model_to_stock->save(false)){
+//                                    $model_stock->qty = 0;
+//                                    $model_stock->save(false);
+//                                }
+//                              }else{
+//                                $model_to_stock = new \backend\models\Stocksum();
+//                                $model_to_stock->product_id = $model->id;
+//                                $model_to_stock->warehouse_id = $to_warehouse[$x];
+//                                $model_to_stock->qty = $model_stock->qty;
+//                                if($model_to_stock->save(false)){
+//                                    $model_stock->qty = 0;
+//                                    $model_stock->save(false);
+//                                }
+//                              }
+//                            }
+//                        }
+//                    }
+//
+//                }
 
                 $this->updateProductStock($model->id);
                 if($removelist!=null){
