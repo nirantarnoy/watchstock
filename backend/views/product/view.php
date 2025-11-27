@@ -153,6 +153,14 @@ $this->params['breadcrumbs'][] = $this->title;
                         }
                     ],
                     [
+                        'label' => 'ประเภทกิจกรรม',
+                        'headerOptions' => ['style' => 'text-align: center'],
+                        'contentOptions' => ['style' => 'text-align: center'],
+                        'value' => function ($data) {
+                            return \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
+                        }
+                    ],
+                    [
                         'attribute' => 'trans_date',
                         'value' => function ($data) {
                             return date('d/m/Y H:i:s', strtotime($data->trans_date));

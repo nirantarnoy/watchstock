@@ -44,8 +44,11 @@ class JournalTrans extends \yii\db\ActiveRecord
     const TYPE_RETURN_SEND = 8; // คืนส่งช่าง
     const TYPE_DROP = 9;       // ขาย Dropship
     const TYPE_ADJUST_IN = 10;
-
     const TYPE_TRANSFER = 11;
+    const TYPE_SALE_CANCELED = 12;
+    const TYPE_LOAN_CANCELED = 13;
+    const TYPE_SEND_CANCELED = 14;
+    const TYPE_DROP_CANCELED = 15;
 
 
 
@@ -189,6 +192,18 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_TRANSFER:
                 $prefix = 'TRF';
                 break;
+            case self::TYPE_SALE_CANCELED:
+                $prefix = 'CSA';
+                break;
+            case self::TYPE_LOAN_CANCELED:
+                $prefix = 'CLN';
+                break;
+            case self::TYPE_SEND_CANCELED:
+                $prefix = 'CSN';
+                break;
+            case self::TYPE_DROP_CANCELED:
+                $prefix = 'CDS';
+                break;
         }
 
         $lastRecord = self::find()
@@ -243,7 +258,18 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_TRANSFER:
                 $prefix = 'TRF';
                 break;
-
+            case self::TYPE_SALE_CANCELED:
+                $prefix = 'CSA';
+                break;
+            case self::TYPE_LOAN_CANCELED:
+                $prefix = 'CLN';
+                break;
+            case self::TYPE_SEND_CANCELED:
+                $prefix = 'CSN';
+                break;
+            case self::TYPE_DROP_CANCELED:
+                $prefix = 'CDS';
+                break;
         }
 
         $lastRecord = self::find()
@@ -288,6 +314,10 @@ class JournalTrans extends \yii\db\ActiveRecord
             self::TYPE_DROP => 'ขาย Drop Ship',
             self::TYPE_ADJUST_IN => 'ปรับยอดเข้า',
             self::TYPE_TRANSFER => 'ย้ายที่จัดเก็บ',
+            self::TYPE_SALE_CANCELED => 'ยกเลิกขาย',
+            self::TYPE_LOAN_CANCELED => 'ยกเลิกยืมสินค้า',
+            self::TYPE_SEND_CANCELED => 'ยกเลิกส่งช่าง',
+            self::TYPE_DROP_CANCELED => 'ยกเลิกขาย DropShip',
         ];
     }
 

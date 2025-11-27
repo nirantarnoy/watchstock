@@ -1338,6 +1338,7 @@ class JournaltransController extends Controller
                     ->one();
 
                 $journal_id = $model->id;
+                $origin_trans_type_id = $model->trans_type_id;
 
                 if ($model_sum) {
 
@@ -1362,24 +1363,54 @@ class JournaltransController extends Controller
 
                     if ($model_sum->save(false)) {
                         $res += 1;
+                        $new_trans_type_id = 0;
+                        if($origin_trans_type_id == 3){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
+                        }else if($origin_trans_type_id == 5){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_LOAN_CANCELED;
+                        }
+                        else if($origin_trans_type_id == 7){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
+                        }else if($origin_trans_type_id == 9){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
+                        }
 
-                        // --------------------------------
-                        //  บันทึก StockTrans เฉพาะ cancel_qty
-                        // --------------------------------
-                        $model_stock_trans = new \common\models\StockTrans();
-                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                        $model_stock_trans->journal_trans_id = $model->id;
-                        $model_stock_trans->trans_type_id = $model->trans_type_id;
-                        $model_stock_trans->product_id = $model_line->product_id;
-                        $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
-                        $model_stock_trans->warehouse_id = $model_line->warehouse_id;
-                        $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
-                        $model_stock_trans->remark = $model_line->remark;
-                        $model_stock_trans->created_by = Yii::$app->user->id;
-                        $model_stock_trans->save(false);
+                        $model_trans = new \backend\models\JournalTrans();
+                        $model_trans->trans_type_id = $new_trans_type_id;
+                        $model_trans->stock_type_id = 1;
+                        $model_trans->created_by = Yii::$app->user->id;
+                        $model_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_trans->status=3; //3 completed
+                        if($model_trans->save(false)){
+                            $model_trans_line = new \common\models\JournalTransLine();
+                            $model_trans_line->journal_trans_id = $model_trans->id;
+                            $model_trans_line->product_id = $model_line->product_id;
+                            $model_trans_line->warehouse_id = $model_line->warehouse_id;
+                            $model_trans_line->qty = (float)$cancel_qty;
+                            $model_trans_line->line_price = $model_line->line_price;
+                            $model_trans_line->remark = 'ยกเลิกจากการขาย';
+                            if($model_trans_line->save(false)){
+                                // --------------------------------
+                                //  บันทึก StockTrans เฉพาะ cancel_qty
+                                // --------------------------------
+                                $model_stock_trans = new \common\models\StockTrans();
+                                $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                                $model_stock_trans->journal_trans_id = $model_trans->id;
+                                $model_stock_trans->trans_type_id = $model->trans_type_id;
+                                $model_stock_trans->product_id = $model_line->product_id;
+                                $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
+                                $model_stock_trans->warehouse_id = $model_line->warehouse_id;
+                                $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                                $model_stock_trans->remark = $model_line->remark;
+                                $model_stock_trans->created_by = Yii::$app->user->id;
+                                $model_stock_trans->save(false);
+                            }
+
+                        }
+
+
                     }
-                }
-                else {
+                }else {
                     // case drop ship ไม่ต้องปรับ logic
                     if ($model->trans_type_id == 9) {
 
@@ -1396,6 +1427,35 @@ class JournaltransController extends Controller
 
                         if ($model_stock_trans->save(false)) {
                             $res += 1;
+                        }
+                    }else{
+                        $model_trans = new \backend\models\JournalTrans();
+                        $model_trans->trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
+                        $model_trans->stock_type_id = 1;
+                        $model_trans->created_by = Yii::$app->user->id;
+                        $model_trans->trans_date = date('Y-m-d H:i:s');
+                        $model_trans->status=3; //3 completed
+                        if($model_trans->save(false)) {
+                            $model_trans_line = new \common\models\JournalTransLine();
+                            $model_trans_line->journal_trans_id = $model_trans->id;
+                            $model_trans_line->product_id = $model_line->product_id;
+                            $model_trans_line->warehouse_id = $model_line->warehouse_id;
+                            $model_trans_line->qty = (float)$cancel_qty;
+                            $model_trans_line->line_price = $model_line->line_price;
+                            $model_trans_line->remark = 'ยกเลิกจากการขาย';
+                            if ($model_trans_line->save(false)) {
+                                $model_stock_trans = new \common\models\StockTrans();
+                                $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                                $model_stock_trans->journal_trans_id = $model_trans->id;
+                                $model_stock_trans->trans_type_id = $model->trans_type_id;
+                                $model_stock_trans->product_id = $model_line->product_id;
+                                $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
+                                $model_stock_trans->warehouse_id = $model_line->warehouse_id;
+                                $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                                $model_stock_trans->remark = $model_line->remark;
+                                $model_stock_trans->created_by = Yii::$app->user->id;
+                                $model_stock_trans->save(false);
+                            }
                         }
                     }
                 }
@@ -1414,7 +1474,9 @@ class JournaltransController extends Controller
                     $model_line->save(false);
                 } else {
                     // ถ้าหมดแล้วลบทั้งบรรทัด
-                    $model_line->delete();
+                   // $model_line->delete();
+                    $model_line->status  = 300; // ยกเลิก ไม่ใช้งาน
+                    $model_line->save(false);
                 }
 
 //                // ❗ โครงสร้างเดิมของคุณคือ *ลบบรรทัดเสมอ* ผมไม่แก้ให้ตามที่ขอ

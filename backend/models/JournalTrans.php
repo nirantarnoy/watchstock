@@ -93,6 +93,15 @@ class JournalTrans extends \common\models\JournalTrans
         $journal_no = JournalTrans::find()->where(['id'=>$id])->one();
         return $journal_no != null ? $journal_no->journal_no : '';
     }
+    public static function findJournalTypeFromStockTransId($id) {
+        $name = '';
+        $journal_no = JournalTrans::find()->where(['id'=>$id])->one();
+        if($journal_no != null){
+            $list = self::getTransactionTypeList();
+            $name = isset($list[$journal_no->trans_type_id]) ? $list[$journal_no->trans_type_id] : '';
+        }
+        return $name;
+    }
 
     public static function generateJournalNoNew($trans_type_id)
     {

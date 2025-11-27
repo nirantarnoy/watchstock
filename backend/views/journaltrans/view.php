@@ -353,21 +353,21 @@ $product_can_return = null;
 $product_type = \backend\helpers\ProductType::asArrayObject();
 $warehouse_data = \backend\models\Warehouse::find()->where(['status' => 1])->all();
 
-$yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
+$yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
 ?>
     <div class="journal-trans-view">
 
         <p>
             <?= Html::a('แก้ไข', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-            <?= $model->status != 3 && $model->status !=4 ? Html::a('ลบ', ['delete', 'id' => $model->id], [
+            <?= $model->status != 3 && $model->status != 4 ? Html::a('ลบ', ['delete', 'id' => $model->id], [
                 'class' => 'btn btn-danger',
                 'data' => [
                     'confirm' => 'คุณแน่ใจหรือไม่ที่จะลบรายการนี้?',
                     'method' => 'post',
                 ],
             ]) : '' ?>
-            <?php if($model->status != \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL):?>
-            <?php endif;?>
+            <?php if ($model->status != \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL): ?>
+            <?php endif; ?>
             <?= Html::a('สร้างรายการใหม่', ['create'], ['class' => 'btn btn-success']) ?>
         </p>
 
@@ -470,10 +470,14 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     'label' => 'ยกเลิกการทำรายการ',
                     'format' => 'raw',
                     'value' => function ($data) {
-                        if($data->status ==1 and ($data->journalTrans->trans_type_id == 5 || $data->journalTrans->trans_type_id == 6 || $data->journalTrans->trans_type_id == 7 || $data->journalTrans->trans_type_id == 8)){
+                        if ($data->status == 1 and ($data->journalTrans->trans_type_id == 5 || $data->journalTrans->trans_type_id == 6 || $data->journalTrans->trans_type_id == 7 || $data->journalTrans->trans_type_id == 8)) {
                             return '<div class="text-success">รับคืนสินค้าแล้ว</div>';
-                        }else{
-                            return '<div class="btn btn-danger" data-var="'.$data->id.'" data-value="'.$data->qty.'" onclick="canelline($(this))">ยกเลิก</div>';
+                        } else {
+                            if ($data->status != 300) {
+                                return '<div class="btn btn-danger" data-var="' . $data->id . '" data-value="' . $data->qty . '" onclick="canelline($(this))">ยกเลิก</div>';
+                            } else if ($data->status == 300) {
+                                return '<div class="badge badge-danger">ยกเลิกแล้ว</div>';
+                            }
                         }
 
                     }
@@ -503,7 +507,8 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                     <h4>รับสินค้าคืนช่าง</h4>
                 </div>
             </div>
-            <form onsubmit="return validateForm();" action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
+            <form onsubmit="return validateForm();"
+                  action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="8">
                 <div class="row" style="margin-top: 10px">
@@ -531,9 +536,14 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 </div>
                 <?php
                 $row_index = 0; // เพิ่มตัวแปรนับแถว
+                $has_line = 0;
                 foreach ($lines as $value): ?>
                     <?php
-                    if ($value->status == 1) continue; // คืนสินค้าแล้ว
+                    if ($value->status == 1 || $value->status == 300) {
+                        continue; // 1 คืนสินค้าแล้ว 300 ยกเลิก
+                    } else {
+                        $has_line += 1;
+                    }
                     ?>
                     <?php
                     $check_return_qty = getReturnProduct($model->id, $value->product_id, $value->qty);
@@ -594,7 +604,9 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 <br/>
                 <div class="row">
                     <div class="col-lg-3">
-                        <button class="btn btn-success">บันทึกรายการ</button>
+                        <?php if ($has_line > 0): ?>
+                            <button class="btn btn-success">บันทึกรายการ</button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </form>
@@ -629,7 +641,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
                 <?php $has_line = 0; ?>
                 <?php foreach ($lines as $value): ?>
                     <?php
-                    if ($value->status == 1) {
+                    if ($value->status == 1 || $value->status == 300) {
                         continue;
                     } else {
                         $has_line += 1;
@@ -679,7 +691,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'],['id' => 1, 'name' => 'YES']];
         <br/>
 
     </div>
-    <form id="form-cancel-line" action="<?=Url::to(['journaltrans/cancelbyline'],true)?>" method="post">
+    <form id="form-cancel-line" action="<?= Url::to(['journaltrans/cancelbyline'], true) ?>" method="post">
         <input type="hidden" class="cancel-id" name="cancel_id" value="">
         <input type="hidden" name="cancel_qty" id="real-cancel-qty">
     </form>
