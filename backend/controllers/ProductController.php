@@ -152,8 +152,8 @@ class ProductController extends Controller
                     }
 
                     if($line_warehouse != null){
-                        for($i=0;$i<=count($line_warehouse)-1;$i++){
-                            if($line_qty[$i] == 0){
+                        foreach($line_warehouse as $i => $wh_id){
+                            if(empty($line_qty[$i]) || $line_qty[$i] == 0){
                                 continue;
                             }
 
@@ -260,9 +260,9 @@ class ProductController extends Controller
 //                        if($line_warehouse!=null){
 //                            \backend\models\Stocksum::updateAll(['qty'=>0],['product_id'=>$model->id]);
 //                        }
-                        for($i=0;$i<=count($line_warehouse)-1;$i++){
+                        foreach($line_warehouse as $i => $wh_id){
 
-                            if($line_warehouse[$i] == null || $line_qty[$i] == null || $line_warehouse[$i] <= 0 || $line_warehouse[$i] == ''){
+                            if($wh_id == null || empty($line_qty[$i]) || $wh_id <= 0 || $wh_id == ''){
                                 continue;
                             }
 
@@ -373,14 +373,6 @@ class ProductController extends Controller
                                 // ข้ามถ้าปลายทางไม่มีค่า
                                 if (empty($to_warehouse[$x])) continue;
 
-                                $model_trans = new \common\models\JournalTransLine();
-                                $model_trans->product_id = $model->id;
-                                $model_trans->journal_trans_id = $model_journal_trans->id;
-                                $model_trans->warehouse_id = $line_warehouse[$x];
-                                $model_trans->qty = $line_qty[$x];
-                                $model_trans->status = 1;
-                                if($model_trans->save(false)){}
-
                                 $from_wh = (int)$from_warehouse[$x];
                                 $to_wh = (int)$to_warehouse[$x];
 
@@ -392,6 +384,14 @@ class ProductController extends Controller
                                 if (!$stock_from || $stock_from->qty <= 0) continue;
 
                                 $move_qty = (int)$stock_from->qty;  // ปริมาณที่จะย้ายทั้งหมด
+
+                                $model_trans = new \common\models\JournalTransLine();
+                                $model_trans->product_id = $model->id;
+                                $model_trans->journal_trans_id = $model_journal_trans->id;
+                                $model_trans->warehouse_id = $from_wh;
+                                $model_trans->qty = $move_qty;
+                                $model_trans->status = 1;
+                                $model_trans->save(false);
 
                                 // หา stock คลังปลายทาง
                                 $stock_to = \backend\models\Stocksum::find()
