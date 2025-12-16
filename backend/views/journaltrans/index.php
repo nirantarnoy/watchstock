@@ -143,7 +143,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             [
-                'label' => 'คงเหลือปัจจุบัน',
+                'label' => 'คงเหลือ',
                 'headerOptions' => ['style' => 'text-align:right'],
                 'contentOptions' => ['style' => 'text-align:right'],
                 'format' => 'raw',
