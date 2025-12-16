@@ -11,6 +11,9 @@ return [
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
+    'as actionLog' => [
+        'class' => 'backend\components\ActionLogBehavior',
+    ],
     'modules' => [
         'gridview' => [
             'class' => '\kartik\grid\Module'
