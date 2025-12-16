@@ -142,6 +142,22 @@ $this->params['breadcrumbs'][] = $this->title;
                     return \backend\models\JournalTrans::getLineQty($model->id);
                 },
             ],
+            [
+                'label' => 'คงเหลือปัจจุบัน',
+                'headerOptions' => ['style' => 'text-align:right'],
+                'contentOptions' => ['style' => 'text-align:right'],
+                'format' => 'raw',
+                'value' => function ($model) {
+                    $html = '';
+                    foreach ($model->journalTransLines as $line) {
+                        if ($line->product_id) {
+                            $qty = \backend\models\Stocksum::find()->where(['product_id' => $line->product_id])->sum('qty');
+                            $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: flex-end;">' . number_format($qty, 0) . '</div>';
+                        }
+                    }
+                    return $html;
+                }
+            ],
 //            [
 //                'attribute' => 'amount',
 //                'format' => ['decimal', 2],
