@@ -39,6 +39,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'action',
             'query_string:ntext',
             'data:ntext',
+            'sql_query:ntext',
             [
                 'attribute' => 'created_at',
                 'value' => function($model) {

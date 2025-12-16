@@ -13,6 +13,7 @@ use Yii;
  * @property string|null $action
  * @property string|null $query_string
  * @property string|null $data
+ * @property string|null $sql_query
  * @property int|null $created_at
  */
 class ActionLog extends \yii\db\ActiveRecord
@@ -32,7 +33,7 @@ class ActionLog extends \yii\db\ActiveRecord
     {
         return [
             [['user_id', 'created_at'], 'integer'],
-            [['query_string', 'data'], 'string'],
+            [['query_string', 'data', 'sql_query'], 'string'],
             [['controller', 'action'], 'string', 'max' => 255],
         ];
     }
@@ -49,6 +50,7 @@ class ActionLog extends \yii\db\ActiveRecord
             'action' => 'Action',
             'query_string' => 'Query String',
             'data' => 'Data',
+            'sql_query' => 'SQL Query',
             'created_at' => 'Created At',
         ];
     }
