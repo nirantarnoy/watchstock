@@ -12,6 +12,7 @@ use Yii;
  * @property int $product_id
  * @property int $warehouse_id
  * @property float|null $qty
+ * @property float|null $balance
  * @property string|null $remark
  * @property int|null $status
  *
@@ -39,7 +40,7 @@ class JournalTransLine extends \yii\db\ActiveRecord
         return [
             [['product_id'], 'required'],
             [['journal_trans_id', 'product_id', 'warehouse_id', 'status','journal_trans_ref_id','is_return_new'], 'integer'],
-            [['qty','sale_price','line_price'], 'number'],
+            [['qty','sale_price','line_price', 'balance'], 'number'],
             [['qty'], 'compare', 'compareValue' => 0, 'operator' => '>', 'message' => 'จำนวนต้องมากกว่า 0'],
             [['remark'], 'string', 'max' => 255],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
@@ -58,6 +59,7 @@ class JournalTransLine extends \yii\db\ActiveRecord
             'product_id' => 'สินค้า',
             'warehouse_id' => 'คลังสินค้า',
             'qty' => 'จำนวน',
+            'balance' => 'คงเหลือ',
             'remark' => 'หมายเหตุ',
             'status' => 'สถานะ',
             'sale_price' => 'ราคาขาย',
