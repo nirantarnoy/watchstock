@@ -151,7 +151,36 @@ $this->params['breadcrumbs'][] = $this->title;
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product_id) {
-                            $qty = \backend\models\Stocksum::find()->where(['product_id' => $line->product_id])->sum('qty');
+                            $qty = 0;
+                            // Find the latest StockTrans for this journal and product
+                            $stockTrans = \common\models\StockTrans::find()
+                                ->where(['journal_trans_id' => $model->id, 'product_id' => $line->product_id])
+                                ->orderBy(['id' => SORT_DESC])
+                                ->one();
+
+                            if ($stockTrans) {
+                                // Calculate balance up to this StockTrans
+                                $qty = \common\models\StockTrans::find()
+                                    ->where(['product_id' => $line->product_id])
+                                    ->andWhere(['<=', 'id', $stockTrans->id])
+                                    ->sum('qty');
+                            } else {
+                                // If no stock transaction (e.g. draft), try to find balance as of transaction date
+                                // This is an approximation
+                                $lastStockTrans = \common\models\StockTrans::find()
+                                    ->where(['product_id' => $line->product_id])
+                                    ->andWhere(['<=', 'trans_date', $model->trans_date])
+                                    ->orderBy(['id' => SORT_DESC])
+                                    ->one();
+                                
+                                if ($lastStockTrans) {
+                                    $qty = \common\models\StockTrans::find()
+                                        ->where(['product_id' => $line->product_id])
+                                        ->andWhere(['<=', 'id', $lastStockTrans->id])
+                                        ->sum('qty');
+                                }
+                            }
+
                             $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: flex-end;">' . number_format($qty, 0) . '</div>';
                         }
                     }
