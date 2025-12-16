@@ -62,6 +62,7 @@ class ActionLogBehavior extends ActionFilter
                     }
                 }
                 if (!empty($sqlQueries)) {
+                    $sqlQueries = array_unique($sqlQueries);
                     $model->sql_query = implode("\n\n", $sqlQueries);
                 }
 
