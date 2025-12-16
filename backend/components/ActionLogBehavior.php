@@ -41,7 +41,24 @@ class ActionLogBehavior extends ActionFilter
                 $sqlQueries = [];
                 foreach ($messages as $message) {
                     if (isset($message[2]) && ($message[2] === 'yii\db\Command::query' || $message[2] === 'yii\db\Command::execute')) {
-                        $sqlQueries[] = $message[0];
+                        $sql = $message[0];
+                        $trimmedSql = trim($sql);
+                        // Filter INSERT, UPDATE, DELETE, SELECT
+                        if (preg_match('/^(INSERT|UPDATE|DELETE|SELECT)\s/i', $trimmedSql)) {
+                            // Exclude system tables
+                            $isSystem = false;
+                            $systemTables = ['migration', 'information_schema', 'performance_schema', 'mysql', 'sys'];
+                            foreach ($systemTables as $table) {
+                                if (stripos($trimmedSql, $table) !== false) {
+                                    $isSystem = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!$isSystem) {
+                                $sqlQueries[] = $sql;
+                            }
+                        }
                     }
                 }
                 if (!empty($sqlQueries)) {
