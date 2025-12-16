@@ -219,15 +219,15 @@ class ProductController extends Controller
             $line_qty = \Yii::$app->request->post('line_qty');
             $line_old_qty = \Yii::$app->request->post('line_old_qty');
 
-           // echo $model->edit_stock_qty;return;
-            if($model->edit_stock_qty == 1) {
+            // echo $model->edit_stock_qty;return;
+            // if($model->edit_stock_qty == 1) {
                 foreach ($line_warehouse as $i => $wid) {
                     if ($wid == -1 || empty($wid)) {
                         Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
                         return $this->refresh();
                     }
                 }
-            }
+            // }
 
             //  print_r($line_customer_rec_id);return;
 
@@ -246,7 +246,7 @@ class ProductController extends Controller
 
                 }
 
-                if($line_warehouse != null && $model->edit_stock_qty ==1){
+                if($line_warehouse != null){
                     $model_journal_trans = new \common\models\JournalTrans();
                     $model_journal_trans->trans_date = date('Y-m-d H:i:s');
                     $model_journal_trans->journal_no = '';
@@ -262,7 +262,7 @@ class ProductController extends Controller
 //                        }
                         foreach($line_warehouse as $i => $wh_id){
 
-                            if($wh_id == null || empty($line_qty[$i]) || $wh_id <= 0 || $wh_id == ''){
+                            if($wh_id == null || $line_qty[$i] === '' || $line_qty[$i] === null || $wh_id <= 0 || $wh_id == ''){
                                 continue;
                             }
 

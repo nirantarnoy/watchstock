@@ -153,8 +153,6 @@ class JournaltransController extends Controller
                 if ($flag) {
                     $total_qty = 0;
                     foreach ($modelLines as $modelLine) {
-//                        if($modelLine->warehouse_id == -1 || empty($modelLine->warehouse_id))
-//                            continue;
                         $total_qty += (int)$modelLine->qty;
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
@@ -171,11 +169,14 @@ class JournaltransController extends Controller
                             if($type == 10){
                                 $this->updateProductPrice($modelLine->product_id,$modelLine->sale_price); // ปรับยอดแล้วปรับราคาขายด้วย
                             }
+
+                            // Calculate and save balance to journal_trans_line
+                            $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum('qty');
+                            $modelLine->balance = $balance;
+                            $modelLine->save(false);
                         }
                     }
                     \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
-
-                    // $transaction->commit();
 
                     \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
                     return $this->redirect(['view', 'id' => $model->id]);
@@ -188,17 +189,8 @@ class JournaltransController extends Controller
                     );
                     return $this->refresh();
                 }
-
-//                    if ($flag) {
-//                        print_r($model);return;
-//
-//                    }
-//                } catch (Exception $e) {
-//                   // $transaction->rollBack();
-//                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
-//                }
             } else {
-                Yii::$app->session->setFlash(
+                 Yii::$app->session->setFlash(
                     'error',
                     'เกิดข้อผิดพลาด: ' . implode('; ', array_map(function ($e) {
                         return implode(', ', $e);
@@ -227,16 +219,15 @@ class JournaltransController extends Controller
         $model = $this->findModel($id);
         $modelLines = $model->journalTransLines;
 
-        if ($model->load(Yii::$app->request->post())) {
-
+        if ($model->load(\Yii::$app->request->post())) {
             $oldIDs = ArrayHelper::map($modelLines, 'id', 'id');
             $modelLines = $this->createMultiple(JournalTransLine::class, $modelLines);
             JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
             $deletedIDs = array_diff($oldIDs, array_filter(ArrayHelper::map($modelLines, 'id', 'id')));
 
             // Ajax validation
-            if (Yii::$app->request->isAjax) {
-                Yii::$app->response->format = Response::FORMAT_JSON;
+            if (\Yii::$app->request->isAjax) {
+                \Yii::$app->response->format = Response::FORMAT_JSON;
                 return ArrayHelper::merge(
                     ActiveForm::validateMultiple($modelLines),
                     ActiveForm::validate($model)
@@ -245,41 +236,48 @@ class JournaltransController extends Controller
 
             // Validate all models
             $valid = $model->validate();
-            //$valid = JournalTransLine::validateMultiple($modelLines) && $valid;
+            $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
 
             if ($valid) {
-                $transaction = \Yii::$app->db->beginTransaction();
-                try {
-                    if ($flag = $model->save(false)) {
-                        if (!empty($deletedIDs)) {
-                            JournalTransLine::deleteAll(['id' => $deletedIDs]);
+                if ($flag = $model->save(false)) {
+                    if (!empty($deletedIDs)) {
+                        foreach ($deletedIDs as $del_id) {
+                            $this->updateCancelTrans($del_id);
+                            JournalTransLine::findOne($del_id)->delete();
                         }
-                        $total_qty = 0;
-                        foreach ($modelLines as $modelLine) {
-                            $total_qty += $modelLine->qty;
-                            $modelLine->journal_trans_id = $model->id;
-                            if (!($flag = $modelLine->save(false))) {
-                                break;
-                            }
+                    }
+                    foreach ($modelLines as $modelLine) {
+                        if($model->trans_type_id != 9){
+                             $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
                         }
-                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
+                        $modelLine->journal_trans_id = $model->id;
+                        if($model->trans_type_id == 5 || $model->trans_type_id == 7){
+                            $modelLine->status = 0; // ยังไม่คืน
+                        }
+                        if (!($flag = $modelLine->save(false))) {
+                            break;
+                        }
+                        
+                        // Calculate and save balance
+                        $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum('qty');
+                        $modelLine->balance = $balance;
+                        $modelLine->save(false);
                     }
-
-                    if ($flag) {
-                        $transaction->commit();
-                        Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
-                        return $this->redirect(['view', 'id' => $model->id]);
+                }
+                if ($flag) {
+                    $total_qty = 0;
+                    foreach ($modelLines as $modelLine) {
+                        $total_qty += (int)$modelLine->qty;
                     }
-                } catch (Exception $e) {
-                    $transaction->rollBack();
-                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+                    \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
+                    return $this->redirect(['view', 'id' => $model->id]);
                 }
             }
         }
 
         return $this->render('update', [
             'model' => $model,
-            'modelLines' => (empty($modelLines)) ? [new JournalTransLine()] : $modelLines
+            'modelLines' => (empty($modelLines)) ? [new JournalTransLine()] : $modelLines,
         ]);
     }
 
@@ -293,84 +291,32 @@ class JournaltransController extends Controller
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
-
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            // Delete all related lines first
-            $model_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $id])->all();
-            if ($model_line) {
-                foreach ($model_line as $value) {
-                    $this->updateCancelTrans($value->product_id, $value->qty, $value->warehouse_id,$model->stock_type_id);
-                }
+        $lines = $model->journalTransLines;
+        if($lines){
+            foreach($lines as $line){
+                $this->updateCancelTrans($line->id);
             }
-            JournalTransLine::deleteAll(['journal_trans_id' => $id]);
-
-            // Delete master
-            $model->delete();
-
-            $transaction->commit();
-            Yii::$app->session->setFlash('success', 'ลบข้อมูลสำเร็จ');
-        } catch (Exception $e) {
-            $transaction->rollBack();
-            Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
         }
+        $model->delete();
 
         return $this->redirect(['index']);
     }
-
-    private function updateCancelTrans($product_id, $qty, $warehouse_id,$original_stock_type_id)
-    {
-        if ($product_id && $qty) {
-            $model = new JournalTrans();
-            $model->journal_no = $model::generateJournalNoNew(4);
-            $model->trans_date = date('Y-m-d H:i:s');
-            $model->stock_type_id = $original_stock_type_id==1?2:1; // 1 in , 2 out
-            //$model->activity_type = 11;
-            $model->created_by = \Yii::$app->user->id;
-            $model->created_at = time();
-            if ($model->save(false)) {
-                $model_line = new JournalTransLine();
-                $model_line->journal_trans_id = $model->id;
-                $model_line->product_id = $product_id;
-                $model_line->qty = $qty;
-                $model_line->warehouse_id = $warehouse_id;
-                if ($model_line->save(false)) {
-
-                    $model_stock_trans = new \common\models\StockTrans();
-                    $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                    $model_stock_trans->trans_type_id = 11; // delete trans
-                    $model_stock_trans->product_id = $product_id;
-                    $model_stock_trans->journal_trans_id = $model->id;
-                    $model_stock_trans->qty = $qty;
-                    $model_stock_trans->remark = '';
-                    $model_stock_trans->stock_type_id = $original_stock_type_id==1?2:1;
-                    $model_stock_trans->warehouse_id = $warehouse_id;
-                    $model_stock_trans->created_by = \Yii::$app->user->id;
-                    if($model_stock_trans->save(false)){
-                        $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->sum('qty');
-                        if ($model_stock) {
-//                            $model_stock->qty += (int)$qty;
-//                            $model_stock->updated_at = time();
-//                            if ($model_stock->save(false)) {
-//                                $this->updateProductStock($product_id);
-//                            }
-                            if ($original_stock_type_id == 2) { // stock out
-                                if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
-                                    $model_stock->qty = (float)$model_stock->qty + (float)$qty;
-                                    $model_stock->reserv_qty = (float)$model_stock->reserv_qty - (float)$qty;
-                                } else {
-                                    $model_stock->qty = (float)$model_stock->qty + (float)$qty;
-                                }
-
-                            } else if ($original_stock_type_id == 1) { // stock in
-                                $model_stock->qty = (float)$model_stock->qty - (float)$qty;
-                            }
-                            if ($model_stock->save(false)) {
-                                $this->updateProductStock($product_id);
-                            }
-                        }
-                    }
+    
+    public function updateCancelTrans($id){
+        $model = JournalTransLine::findOne($id);
+        if($model){
+            $journal = JournalTrans::findOne($model->journal_trans_id);
+            if($journal){
+                $stock_type = 0;
+                if($journal->stock_type_id == 1){
+                    $stock_type = 2;
+                }else if($journal->stock_type_id == 2){
+                    $stock_type = 1;
                 }
+                $this->calStock($model->product_id, $stock_type, $model->warehouse_id, $model->qty, $journal->trans_type_id);
+                
+                // Remove StockTrans
+                \common\models\StockTrans::deleteAll(['journal_trans_id' => $journal->id, 'product_id' => $model->product_id, 'warehouse_id' => $model->warehouse_id]);
             }
         }
     }
@@ -390,111 +336,6 @@ class JournaltransController extends Controller
 
         throw new NotFoundHttpException('The requested page does not exist.');
     }
-
-//    public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type)
-//    {
-//        if ($product_id && $stock_type_id && $qty) {
-//            if ($stock_type_id == 2) { // stock out
-//                $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->andWhere(['>=', 'qty', (int)$qty])->one();
-//                if ($model) {
-//                    $model->qty -= (int)$qty;
-//                    if ($activity_type == 5 || $activity_type == 7) { // ยืม
-//                        $model->reserv_qty += (int)$qty;
-//                    }
-//                    if ($model->save(false)) {
-//                        $this->updateProductStock($product_id);
-//                    }
-//                }
-//            }
-//            if ($stock_type_id == 1) { // stock in
-//
-//                if ($activity_type == 6) { // คืนยืม
-//                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', (int)$qty])->one();
-//                    if ($model) {
-//                        if ($model->warehouse_id == $warehouse_id) { // same warehouse
-//                            $model->qty += (int)$qty;
-//                            $model->reserv_qty -= (int)$qty;
-//                            if ($model->save(false)) {
-//                                $this->updateProductStock($product_id);
-//                            }
-//                        } else { // diff warehouse
-//                            $model->reserv_qty -= (int)$qty; // remove reserve qty
-//                            if ($model->save(false)) {
-//                                $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // find new warehouse
-//                                if ($modelx) {
-//                                    $modelx->qty += (int)$qty;
-//                                    if ($modelx->save(false)) {
-//                                        $this->updateProductStock($product_id);
-//                                    }
-//                                } else {
-//                                    $modelx = new \common\models\StockSum();
-//                                    $modelx->product_id = $product_id;
-//                                    $modelx->warehouse_id = $warehouse_id;
-//                                    $modelx->qty = (int)$qty;
-//                                    $modelx->reserv_qty = 0;
-//                                    $modelx->updated_at = date('Y-m-d H:i:s');
-//                                    if ($modelx->save(false)) {
-//                                        $this->updateProductStock($product_id);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                } else if ($activity_type == 10) { // รับสินค้าอัพเดทคลัง
-//                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
-//                    if ($model) {
-//                        $model->qty += $qty;
-//                        if ($model->save(false)) {
-//                            $this->updateProductStock($product_id);
-//                        }
-//                    } else {
-//                        $model = new \common\models\StockSum();
-//                        $model->product_id = $product_id;
-//                        $model->warehouse_id = $warehouse_id;
-//                        $model->qty = $qty;
-//                        $model->reserv_qty = 0;
-//                        $model->updated_at = date('Y-m-d H:i:s');
-//                        if ($model->save(false)) {
-//                            $this->updateProductStock($product_id);
-//                        }
-//                    }
-//                } else {
-//                    $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
-//                    if ($model) {
-//                        $model->qty += $qty;
-//                        if ($model->reserv_qty >= ($qty)) { // remove reserve qty
-//                            $model->reserv_qty = ($model->reserv_qty - $qty);
-//                        }
-//                        if ($model->save(false)) {
-//                            $this->updateProductStock($product_id);
-//                        }
-//                    } else {
-//                        $model = new \common\models\StockSum();
-//                        $model->product_id = $product_id;
-//                        $model->warehouse_id = $warehouse_id;
-//                        $model->qty = $qty;
-//                        $model->reserv_qty = 0;
-//                        $model->updated_at = date('Y-m-d H:i:s');
-//                        if ($model->save(false)) {
-//                            $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
-//                            if ($model_update_reserve) {
-//                                foreach ($model_update_reserve as $model_reserve) {
-//                                    if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
-//                                        $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
-//                                        $model_reserve->save(false);
-//                                        break;
-//                                    }
-//                                }
-//                            }
-//                            $this->updateProductStock($product_id);
-//                        }
-//                    }
-//                }
-//
-//
-//            }
-//        }
-//    }
 
     public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type)
     {
