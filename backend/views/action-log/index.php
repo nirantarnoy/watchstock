@@ -13,7 +13,6 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="action-log-index">
 
-    <h1><?= Html::encode($this->title) ?></h1>
 
     <?php Pjax::begin(); ?>
 
@@ -27,7 +26,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'user_id',
                 'value' => function($model) {
-                    return $model->user_id; // You might want to link to the user model here
+                    //return $model->user_id; // You might want to link to the user model here
+                    return \backend\models\User::findName($model->user_id);
                 }
             ],
             'controller',

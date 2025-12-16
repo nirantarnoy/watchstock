@@ -13,7 +13,6 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="action-log-view">
 
-    <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
         <?= Html::a('Delete', ['delete', 'id' => $model->id], [
@@ -29,7 +28,13 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'attributes' => [
             'id',
-            'user_id',
+             [
+                'attribute' => 'user_id',
+                'value' => function($model) {
+                    //return $model->user_id; // You might want to link to the user model here
+                    return \backend\models\User::findName($model->user_id);
+                }
+            ],
             'controller',
             'action',
             'query_string:ntext',
