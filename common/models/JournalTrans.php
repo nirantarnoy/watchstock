@@ -279,20 +279,13 @@ class JournalTrans extends \yii\db\ActiveRecord
             ->orderBy(['id' => SORT_DESC])
             ->one();
 
+        $prefix .= date('Ym');
 
-        if ($lastRecord != null) {
-            $prefix = $prefix . date('Ym');
-            $cnum = substr((string)$lastRecord->journal_no, 9, strlen($lastRecord->journal_no));
-            $len = strlen($cnum);
-            $clen = strlen($cnum + 1);
-            $loop = $len - $clen;
-            for ($i = 1; $i <= $loop; $i++) {
-                $prefix .= "0";
-            }
-            $prefix .= $cnum + 1;
-            return $prefix;
+        if ($lastRecord) {
+            $cnum = substr((string)$lastRecord->journal_no, 9);
+            $newNum = (int)$cnum + 1;
+            return $prefix . str_pad((string)$newNum, 4, '0', STR_PAD_LEFT);
         } else {
-            $prefix = $prefix.date('Ym');
             return $prefix . '0001';
         }
     }
