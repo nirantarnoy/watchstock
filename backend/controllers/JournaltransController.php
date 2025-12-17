@@ -171,7 +171,7 @@ class JournaltransController extends Controller
                             }
 
                             // Calculate and save balance to journal_trans_line
-                            $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum('qty');
+                            $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum(new Expression('qty + reserv_qty'));
                             $modelLine->balance = $balance;
                             $modelLine->save(false);
                         }
@@ -259,7 +259,7 @@ class JournaltransController extends Controller
                         }
                         
                         // Calculate and save balance
-                        $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum('qty');
+                        $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum(new Expression('qty + reserv_qty'));
                         $modelLine->balance = $balance;
                         $modelLine->save(false);
                     }
