@@ -76,17 +76,18 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'class' => 'yii\grid\SerialColumn',
                 'headerOptions' => ['style' => 'text-align: center;width: 5%'],
-                'contentOptions' => ['style' => 'text-align: center'],
+                'contentOptions' => ['style' => 'text-align: center; vertical-align: middle;'],
             ],
 
             [
                 'attribute' => 'journal_no',
-                // 'headerOptions' => ['style' => 'width:150px'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center; vertical-align: middle;'],
             ],
             [
                 'attribute' => 'trans_date',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 // 'format' => ['datetime', 'php:d/m/Y H:i'],
                 'value' => function ($model) {
                     return date('d/m/Y H:i:s', strtotime($model->trans_date));
@@ -96,7 +97,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'trans_type_id',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'format' => 'html',
                 'value' => function ($model) {
                     $trans_type_name = $model->getTransactionTypeName();
@@ -106,11 +107,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 // 'filter' => JournalTrans::getTransactionTypeList(),
                 // 'headerOptions' => ['style' => 'width:120px'],
             ],
-            'customer_name',
+            [
+                'attribute' => 'customer_name',
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center; vertical-align: middle;'],
+            ],
             [
                 'attribute' => 'party_id',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'value' => function ($model) {
                     return \backend\models\Watchmaker::findName($model->party_id);
                 }
@@ -121,38 +126,46 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => 'raw',
                 'label' => 'สินค้า',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:left'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'value' => function ($model) {
-                    $products = [];
+                    $html = '';
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
                             $line_photo = \backend\models\Product::getPhoto($line->product_id);
-                            $products[] = '<img src="' . \Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo . '" style="width: 80px; height: 80px;" > ' . $line->product->name . ' (' . $line->product->description . ')';
+                            $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">';
+                            $html .= '<img src="' . \Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo . '" style="width: 80px; height: 80px; margin-right: 10px;" > ';
+                            $html .= '<span>' . $line->product->name . ' (' . $line->product->description . ')</span>';
+                            $html .= '</div>';
                         }
                     }
-                    return implode('<br>', $products);
+                    return $html;
                 }
             ],
             [
                 'attribute' => 'qty',
-                'format' => ['decimal', 0],
-                'headerOptions' => ['style' => 'text-align:right'],
-                'contentOptions' => ['style' => 'text-align:right'],
+                'label' => 'จำนวน',
+                'headerOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
+                'format' => 'raw',
                 'value' => function ($model) {
-                    return \backend\models\JournalTrans::getLineQty($model->id);
+                    $html = '';
+                    foreach ($model->journalTransLines as $line) {
+                        $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($line->qty, 0) . '</div>';
+                    }
+                    return $html;
                 },
             ],
             [
                 'label' => 'คงเหลือ',
-                'headerOptions' => ['style' => 'text-align:right'],
-                'contentOptions' => ['style' => 'text-align:right'],
+                'headerOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'format' => 'raw',
                 'value' => function ($model) {
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product_id) {
                             $qty = $line->balance;
-                            $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: flex-end;">' . number_format($qty, 0) . '</div>';
+                            $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($qty, 0) . '</div>';
                         }
                     }
                     return $html;
@@ -170,7 +183,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'status',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'format' => 'raw',
                 'value' => function ($model) {
                     $status_name = \backend\helpers\TransStatusType::getTypeById($model->status);
@@ -184,6 +197,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'created_by',
                 'label' => 'User',
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center; vertical-align: middle;'],
                 'value' => function ($data) {
                     return \backend\models\User::findName($data->created_by);
                 }
@@ -194,7 +209,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'header' => 'ตัวเลือก',
                 'headerOptions' => ['style' => 'text-align:center;width:10%', 'class' => 'activity-view-link',],
                 'class' => 'yii\grid\ActionColumn',
-                'contentOptions' => ['style' => 'text-align: center'],
+                'contentOptions' => ['style' => 'text-align: center; vertical-align: middle;'],
                 'template' => '{view} {update}{delete}',
                 'buttons' => [
                     'view' => function ($url, $data, $index) {
