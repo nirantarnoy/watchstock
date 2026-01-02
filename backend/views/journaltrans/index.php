@@ -126,13 +126,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => 'raw',
                 'label' => 'สินค้า',
                 'headerOptions' => ['style' => 'text-align:center'],
-                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
+                'contentOptions' => ['style' => 'text-align:left; vertical-align: middle;'],
                 'value' => function ($model) {
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
                             $line_photo = \backend\models\Product::getPhoto($line->product_id);
-                            $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">';
+                            $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">';
                             $html .= '<img src="' . \Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo . '" style="width: 80px; height: 80px; margin-right: 10px;" > ';
                             $html .= '<span>' . $line->product->name . ' (' . $line->product->description . ')</span>';
                             $html .= '</div>';
