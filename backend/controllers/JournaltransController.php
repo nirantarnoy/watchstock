@@ -171,7 +171,7 @@ class JournaltransController extends Controller
                             }
 
                             // Calculate and save balance to journal_trans_line
-                            $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum(new Expression('qty + reserv_qty'));
+                            $balance = $this->getStockBalance($modelLine->product_id);
                             $modelLine->balance = $balance;
                             $modelLine->save(false);
                         }
@@ -259,7 +259,7 @@ class JournaltransController extends Controller
                         }
                         
                         // Calculate and save balance
-                        $balance = \common\models\StockSum::find()->where(['product_id' => $modelLine->product_id])->sum(new Expression('qty + reserv_qty'));
+                        $balance = $this->getStockBalance($modelLine->product_id);
                         $modelLine->balance = $balance;
                         $modelLine->save(false);
                     }
@@ -339,114 +339,81 @@ class JournaltransController extends Controller
 
     public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type)
     {
-        $qty = (int)$qty;
+        $qty = (float)$qty;
         if (!$product_id || !$stock_type_id || $qty <= 0) {
             return false;
         }
 
-        // === Stock Out ===
+        // === Stock Out (2) ===
         if ($stock_type_id == 2) {
             $model = \common\models\StockSum::find()
                 ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
-                ->andWhere(['>=', 'qty', $qty])
                 ->one();
 
-            if ($model) {
+            if ($model && $model->qty >= $qty) {
                 $model->qty -= $qty;
-                if (in_array($activity_type, [5, 7])) { // ยืม
+                if (in_array($activity_type, [5, 7])) { // ยืม (5) หรือ ส่งช่าง (7)
                     $model->reserv_qty += $qty;
                 }
                 $model->updated_at = date('Y-m-d H:i:s');
                 if ($model->save(false)) {
                     $this->updateProductStock($product_id);
                 }
+                return true;
             }
-            return true;
+            return false;
         }
 
-        // === Stock In ===
+        // === Stock In (1) ===
         if ($stock_type_id == 1) {
-            if ($activity_type == 6) {
-                // คืนยืม
-                $model = \common\models\StockSum::find()
-                    ->where(['product_id' => $product_id])
-                    ->andWhere(['>=', 'reserv_qty', $qty])
-                    ->one();
+            // 1. เพิ่ม qty ในคลังที่ระบุ
+            $model = \common\models\StockSum::find()
+                ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                ->one();
 
-                if ($model) {
-                    if ($model->warehouse_id == $warehouse_id) {
-                        // คืนเข้าคลังเดิม
-                        $model->qty += $qty;
-                        $model->reserv_qty = max(0, $model->reserv_qty - $qty);
-                        $model->updated_at = date('Y-m-d H:i:s');
-                        if ($model->save(false)) {
-                            $this->updateProductStock($product_id);
-                        }
-                    } else {
-                        // คืนเข้าคลังใหม่
-                        $model->reserv_qty = max(0, $model->reserv_qty - $qty);
-                        $model->updated_at = date('Y-m-d H:i:s');
-                        if ($model->save(false)) {
-                            $modelx = \common\models\StockSum::find()
-                                ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
-                                ->one();
-                            if ($modelx) {
-                                $modelx->qty += $qty;
-                            } else {
-                                $modelx = new \common\models\StockSum();
-                                $modelx->product_id = $product_id;
-                                $modelx->warehouse_id = $warehouse_id;
-                                $modelx->qty = $qty;
-                                $modelx->reserv_qty = 0;
-                            }
-                            $modelx->updated_at = date('Y-m-d H:i:s');
-                            if ($modelx->save(false)) {
-                                $this->updateProductStock($product_id);
-                            }
+            if (!$model) {
+                $model = new \common\models\StockSum();
+                $model->product_id = $product_id;
+                $model->warehouse_id = $warehouse_id;
+                $model->qty = 0;
+                $model->reserv_qty = 0;
+            }
+            $model->qty += $qty;
+            $model->updated_at = date('Y-m-d H:i:s');
+            
+            if ($model->save(false)) {
+                // 2. จัดการ reserv_qty สำหรับกิจกรรมที่เกี่ยวข้องกับการคืนหรือยกเลิก (5, 6, 7, 8)
+                if (in_array($activity_type, [5, 6, 7, 8])) {
+                    $remaining_to_reduce = $qty;
+                    
+                    // ลดจากคลังปัจจุบันก่อน (ถ้ามี)
+                    if ($model->reserv_qty > 0) {
+                        $take = min($remaining_to_reduce, $model->reserv_qty);
+                        $model->reserv_qty -= $take;
+                        $remaining_to_reduce -= $take;
+                        $model->save(false);
+                    }
+                    
+                    // ถ้ายังเหลือยอดที่ต้องลด ให้หาจากคลังอื่นของสินค้านี้
+                    if ($remaining_to_reduce > 0) {
+                        $other_models = \common\models\StockSum::find()
+                            ->where(['product_id' => $product_id])
+                            ->andWhere(['>', 'reserv_qty', 0])
+                            ->all();
+                        foreach ($other_models as $om) {
+                            if ($remaining_to_reduce <= 0) break;
+                            $take = min($remaining_to_reduce, $om->reserv_qty);
+                            $om->reserv_qty -= $take;
+                            $remaining_to_reduce -= $take;
+                            $om->updated_at = date('Y-m-d H:i:s');
+                            $om->save(false);
                         }
                     }
                 }
-            } elseif ($activity_type == 10) {
-                // รับสินค้าอัพเดทคลัง
-                $model = \common\models\StockSum::find()
-                    ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
-                    ->one();
-
-                if ($model) {
-                    $model->qty += $qty;
-                } else {
-                    $model = new \common\models\StockSum();
-                    $model->product_id = $product_id;
-                    $model->warehouse_id = $warehouse_id;
-                    $model->qty = $qty;
-                    $model->reserv_qty = 0;
-                }
-                $model->updated_at = date('Y-m-d H:i:s');
-                if ($model->save(false)) {
-                    $this->updateProductStock($product_id);
-                }
-            } else {
-                // รับเข้าทั่วไป
-                $model = \common\models\StockSum::find()
-                    ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
-                    ->one();
-
-                if ($model) {
-                    $model->qty += $qty;
-                    $model->reserv_qty = max(0, $model->reserv_qty - $qty);
-                } else {
-                    $model = new \common\models\StockSum();
-                    $model->product_id = $product_id;
-                    $model->warehouse_id = $warehouse_id;
-                    $model->qty = $qty;
-                    $model->reserv_qty = 0;
-                }
-                $model->updated_at = date('Y-m-d H:i:s');
-                if ($model->save(false)) {
-                    $this->updateProductStock($product_id);
-                }
+                
+                $this->updateProductStock($product_id);
+                return true;
             }
-            return true;
         }
 
         return false;
@@ -604,133 +571,6 @@ class JournaltransController extends Controller
         return $models;
     }
 
-//    public function actionAddreturnproduct()
-//    {
-//        $product_id = \Yii::$app->request->post('product_id');
-//        $journal_trans_id = \Yii::$app->request->post('journal_trans_id');
-//        $qty = \Yii::$app->request->post('return_qty');
-//        $remark = \Yii::$app->request->post('return_remark');
-//        $return_to_type = \Yii::$app->request->post('return_to_type');
-//        $trans_type_id = \Yii::$app->request->post('trans_type_id');
-//        $return_to_warehouse = \Yii::$app->request->post('return_to_warehouse');
-//        $original_warehouse = \Yii::$app->request->post('warehouse_id');
-//        $is_return_new = \Yii::$app->request->post('is_return_new');
-//        $return_to_product = \Yii::$app->request->post('return_to_product');
-////        $journal_trans_line_id = \Yii::$app->request->post('journal_trans_line_id');
-//
-//        // print_r($return_to_product);return;
-//
-//        if ($journal_trans_id && $qty != null && $trans_type_id != null) {
-//            $model = new \backend\models\JournalTrans();
-//            $model->trans_date = date('Y-m-d H:i:s');
-//            $model->journal_no = $model::generateJournalNoNew($trans_type_id);
-//            $model->remark = '';
-//            $model->trans_type_id = $trans_type_id; // 8 = คืนสินค้าช่าง 6 = คืนยืม
-//            $model->status = 3;
-//            $model->stock_type_id = 1; // 1 เข้า 2 ออก
-//            $model->trans_ref_id = $journal_trans_id;
-//            if ($model->save(false)) {
-//                if ($product_id != null) {
-//                    for ($i = 0; $i < count($product_id); $i++) {
-//                        if ($qty[$i] == null || $qty[$i] == '' || $qty[$i] == '0' || $qty[$i] == 0 || $return_to_warehouse[$i] == null || $return_to_warehouse[$i] == '') continue;
-//                        $model_line = new \common\models\JournalTransLine();
-//                        $model_line->journal_trans_id = $model->id;
-//                        $model_line->product_id = $product_id[$i];
-//                        $model_line->qty = $qty[$i];
-//                        $model_line->remark = $remark[$i];
-//                        $model_line->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1; // default
-//                        $model_line->return_to_type = $return_to_type != null ? $return_to_type[$i] : null;
-//                        $model_line->journal_trans_ref_id = $journal_trans_id;
-//                        if ($model_line->save(false)) {
-//                            $model_stock_trans = new \common\models\StockTrans();
-//                            $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-//                            $model_stock_trans->trans_type_id = $trans_type_id;
-//                            $model_stock_trans->product_id = $product_id[$i];
-//                            $model_stock_trans->journal_trans_id = $model->id;
-//                            $model_stock_trans->qty = $qty[$i];
-//                            $model_stock_trans->remark = $remark[$i];
-//                            $model_stock_trans->stock_type_id = 1;
-//                            $model_stock_trans->warehouse_id = $return_to_warehouse != null ? $return_to_warehouse[$i] : 1;
-//                            if ($model_stock_trans->save(false)) {
-//                                if ($trans_type_id == 6) { // คือยืม
-//                                    $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id); // stock in from return borrow
-//                                    $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-//                                }
-//
-//                                if ($trans_type_id == 8) { // คืนส่งช่าง
-//
-//                                    if ($return_to_product[$i] == null && $remark[$i] != '') { // create new product from watch maker
-//                                        $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
-//                                        $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-//                                    } else { // return but not create new product
-//                                        if ($return_to_product[$i] != null) { // return to product by specific
-//                                            $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
-//                                            $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
-//                                        } else {
-//                                            $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
-//                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-//                                        }
-//                                    }
-//
-//
-////                                    if ($is_return_new != null) {
-////                                        //   if(($remark[$i] !== null || $remark[$i] !== '') && $trans_type_id == 8){ // create new product from watch maker
-////                                        if ($is_return_new[$i] == 1) { // create new product from watch maker
-////                                            $this->crateNewProductFromWatchMaker($product_id[$i], $remark[$i], $return_to_warehouse[$i], $qty[$i], $original_warehouse[$i]);
-////                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-////                                        } else if ($is_return_new[$i] == 0) { // return but not create new product
-////
-////                                            if ($return_to_product[$i] != '0') { // return to product by specific
-////                                                $this->calStockReturnFixProduct($return_to_product[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id, $product_id, $original_warehouse);
-////                                                $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $return_to_product[$i], $product_id[$i]); // update journal trans line complete
-////                                            } else {
-////                                                $this->calStock($product_id[$i], 1, $return_to_warehouse[$i], $qty[$i], $trans_type_id);
-////                                                $this->calForupdateTransLine($journal_trans_id, $model_line, $product_id[$i]);
-////                                            }
-////                                        }
-////                                    }
-//
-//                                }
-//                            }
-//
-//                        }
-//
-//
-//                    }
-//                }
-//                $this->calForcomplete($journal_trans_id, $model->id);
-//            }
-//
-//        }
-//        return $this->redirect(['journaltrans/view', 'id' => $journal_trans_id]);
-//    }
-//
-//    function calForupdateTransLine($journal_trans_id, $trans_line_new_id, $product_id)
-//    {
-//        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])->one();
-//        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
-//        if ($return_qty >= $borrow_qty->qty) {
-//            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $product_id])->one();
-//            if ($trans_line) {
-//                $trans_line->status = 1; // line trans complete
-//                $trans_line->save(false);
-//            }
-//        }
-//    }
-//
-//    function calForupdateTransLineFixProduct($journal_trans_id, $trans_line_new_id, $product_id, $original_product_id)
-//    {
-//        $borrow_qty = \common\models\JournalTransLine::find()->select('qty')->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])->one();
-//        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $original_product_id])->sum('qty');
-//        if ($return_qty >= $borrow_qty->qty) {
-//            $trans_line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $journal_trans_id, 'product_id' => $original_product_id])->one();
-//            if ($trans_line) {
-//                $trans_line->status = 1; // line trans complete
-//                $trans_line->save(false);
-//            }
-//        }
-//    }
-
     public function actionAddreturnproduct()
     {
         $request = \Yii::$app->request;
@@ -805,7 +645,7 @@ class JournaltransController extends Controller
                                     if ($trans_type_id == 6) {
                                         // คืนจากยืม
                                         $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
-                                        $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                        $this->calForupdateTransLine($journal_trans_id, $pid);
                                     }
 
                                     if ($trans_type_id == 8) {
@@ -813,17 +653,22 @@ class JournaltransController extends Controller
                                         if (empty($returnToProductVal) && !empty($remarkVal)) {
                                             // คืนแล้วสร้าง product ใหม่
                                             $this->crateNewProductFromWatchMaker($pid, $remarkVal, $whVal, $qtyVal, $originalWhVal);
-                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                            $this->calForupdateTransLine($journal_trans_id, $pid);
                                         } elseif (!empty($returnToProductVal)) {
                                             // คืนเข้าของที่ระบุ
                                             $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal);
-                                            $this->calForupdateTransLineFixProduct($journal_trans_id, $model_line, $returnToProductVal, $pid);
+                                            $this->calForupdateTransLineFixProduct($journal_trans_id, $returnToProductVal, $pid);
                                         } else {
                                             // คืนตาม product เดิม
                                             $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
-                                            $this->calForupdateTransLine($journal_trans_id, $model_line, $pid);
+                                            $this->calForupdateTransLine($journal_trans_id, $pid);
                                         }
                                     }
+                                    
+                                    // Update balance for this line
+                                    $balance = $this->getStockBalance($pid);
+                                    $model_line->balance = $balance;
+                                    $model_line->save(false);
                                 }
                             }
                         }
@@ -918,19 +763,6 @@ class JournaltransController extends Controller
         }
     }
 
-//    function actionGetwarehouseproduct(){
-//        $html = '';
-//        $id = \Yii::$app->request->post('id');
-//        if($id){
-//            $model_stock_sum = \common\models\StockSum::find()->where(['warehouse_id'=>$id])->all();
-//            if($model_stock_sum){
-//                foreach($model_stock_sum as $model){
-//                    $html .= '<option value="'.$model->product_id.'">'.\backend\models\Product::findName($model->product_id).'</option>';
-//                }
-//            }
-//        }
-//        echo $html;
-//    }
     function actionGetwarehouseproduct()
     {
         $html = '';
@@ -1017,39 +849,6 @@ class JournaltransController extends Controller
                                 }
                             }
                         }
-
-//                        $model_stock = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>=', 'reserv_qty', $qty])->one();
-//                        if($model_stock) {
-//                            if ($model_stock->warehouse_id == $warehouse_id) { // same warehouse
-//                                $model_stock->qty += $qty;
-//                                $model_stock->reserv_qty -= $qty;
-//                                if ($model_stock->save(false)) {
-//                                    $this->updateProductStock($product_id);
-//                                }
-//                            } else { // diff warehouse
-//                                $model_stock->reserv_qty -= $qty; // remove reserve qty
-//                                if ($model_stock->save(false)) {
-//                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // find new warehouse
-//                                    if ($modelx) {
-//                                        $modelx->qty += $qty;
-//                                        if ($modelx->save(false)) {
-//                                            $this->updateProductStock($product_id);
-//                                        }
-//                                    } else {
-//                                        $modelx = new \common\models\StockSum();
-//                                        $modelx->product_id = $product_id;
-//                                        $modelx->warehouse_id = $warehouse_id;
-//                                        $modelx->qty = $qty;
-//                                        $modelx->reserv_qty = 0;
-//                                        $modelx->updated_at = date('Y-m-d H:i:s');
-//                                        if ($modelx->save(false)) {
-//                                            $this->updateProductStock($product_id);
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-
                     }
 
                     $this->updateProductStock($model_new->id); // update new product stock
@@ -1231,6 +1030,11 @@ class JournaltransController extends Controller
                             $model_trans_line->line_price = $model_line->line_price;
                             $model_trans_line->remark = 'ยกเลิกจากการขาย';
                             if($model_trans_line->save(false)){
+                                // Update balance for this line
+                                $balance = $this->getStockBalance($model_line->product_id);
+                                $model_trans_line->balance = $balance;
+                                $model_trans_line->save(false);
+
                                 // --------------------------------
                                 //  บันทึก StockTrans เฉพาะ cancel_qty
                                 // --------------------------------
@@ -1285,6 +1089,11 @@ class JournaltransController extends Controller
                             $model_trans_line->line_price = $model_line->line_price;
                             $model_trans_line->remark = 'ยกเลิกจากการขาย';
                             if ($model_trans_line->save(false)) {
+                                // Update balance for this line
+                                $balance = $this->getStockBalance($model_line->product_id);
+                                $model_trans_line->balance = $balance;
+                                $model_trans_line->save(false);
+
                                 $model_stock_trans = new \common\models\StockTrans();
                                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                                 $model_stock_trans->journal_trans_id = $model_trans->id;
@@ -1334,85 +1143,6 @@ class JournaltransController extends Controller
         return $this->redirect(['view', 'id' => $journal_id]);
     }
 
-
-//    public function actionCancelbyline()
-//    {
-//        $res = 0;
-//         $id = \Yii::$app->request->post('cancel_id');
-//         $cancel_qty = \Yii::$app->request->post('cancel_qty');
-//        //  echo $id;return;
-//        $journal_id = 0;
-//        if ($id) {
-//            $model_line = JournalTransLine::find()->where(['id' => $id])->one();
-//            if ($model_line) {
-//                // ❗ ตรวจสอบว่าจำนวนที่ยกเลิกไม่เกินจำนวนที่ขาย
-//                if ($cancel_qty > $model_line->qty) {
-//                    Yii::$app->session->setFlash('msg-error', 'จำนวนยกเลิกมากกว่ายอดขาย');
-//                    return $this->redirect(Yii::$app->request->referrer);
-//                }
-//
-//                $model = \backend\models\JournalTrans::find()->where(['id'=>$model_line->journal_trans_id])->one();
-//                $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_line->product_id, 'warehouse_id' => $model_line->warehouse_id])->one();
-//                $journal_id = $model->id;
-//                if ($model_sum) {
-//                    if ($model->stock_type_id == 2) { // stock out
-//                        if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
-//                            $model_sum->qty = (float)$model_sum->qty + (float)$model_line->qty;
-//                            $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$model_line->qty;
-//                        } else {
-//                            $model_sum->qty = (float)$model_sum->qty + (float)$model_line->qty;
-//                        }
-//
-//                    } else if ($model->stock_type_id == 1) { // stock in
-//                        $model_sum->qty = (float)$model_sum->qty - (float)$model_line->qty;
-//                    }
-//
-//                    if ($model_sum->save(false)) {
-//                        $res += 1;
-//                        $model_stock_trans = new \common\models\StockTrans();
-//                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-//                        $model_stock_trans->journal_trans_id = $model->id;
-//                        $model_stock_trans->trans_type_id = $model->trans_type_id;
-//                        $model_stock_trans->product_id = $model_line->product_id;
-//                        $model_stock_trans->qty = (int)$model_line->qty;
-//                        $model_stock_trans->warehouse_id = $model_line->warehouse_id;
-//                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
-//                        $model_stock_trans->remark = $model_line->remark;
-//                        $model_stock_trans->created_by = \Yii::$app->user->id;
-//                        $model_stock_trans->save(false);
-//                    }
-//                }else{
-//                    // sometime is drop ship not have warehouse in stock sum
-//                    if($model->trans_type_id == 9){
-//
-//                        $model_stock_trans = new \common\models\StockTrans();
-//                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-//                        $model_stock_trans->journal_trans_id = $model->id;
-//                        $model_stock_trans->trans_type_id = $model->trans_type_id;
-//                        $model_stock_trans->product_id = $model_line->product_id;
-//                        $model_stock_trans->qty = (int)$model_line->qty;
-//                        $model_stock_trans->warehouse_id = 0;//$model_line->warehouse_id;
-//                        $model_stock_trans->stock_type_id = $model->stock_type_id == 1?2:1;
-//                        $model_stock_trans->remark = $model_line->remark;
-//                        $model_stock_trans->created_by = \Yii::$app->user->id;
-//                        if($model_stock_trans->save(false)){
-//                            $res += 1;
-//                        }
-//                    }
-//                }
-//                $this->updateProductStock($model_line->product_id);
-//               if($res > 0){
-//                   \common\models\JournalTransLine::deleteAll(['id'=>$model_line->id]);
-//               }
-//            }
-//
-//        }
-//        if ($res > 0) {
-//            \Yii::$app->session->setFlash('msg-success', 'บันทึกรายการสำเร็จ');
-//        }
-//        return $this->redirect(['view', 'id' => $journal_id]);
-//    }
-
     public function actionCalallstock()
     {
         $model_product = \backend\models\Product::find()->where(['status' => 1])->all();
@@ -1430,8 +1160,22 @@ class JournaltransController extends Controller
                     \backend\models\Product::updateAll(['stock_qty' => $all_stock], ['id' => $value->id]);
                 }
             }
-
         }
+    }
+
+    private function getStockBalance($product_id)
+    {
+        $sum = \common\models\StockSum::find()
+            ->where(['product_id' => $product_id])
+            ->andWhere(['not', ['warehouse_id' => null]])
+            ->andWhere(['<>', 'warehouse_id', ''])
+            ->sum('qty');
+        $res = \common\models\StockSum::find()
+            ->where(['product_id' => $product_id])
+            ->andWhere(['not', ['warehouse_id' => null]])
+            ->andWhere(['<>', 'warehouse_id', ''])
+            ->sum('reserv_qty');
+        return (float)$sum + (float)$res;
     }
 
 }
