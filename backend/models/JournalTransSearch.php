@@ -43,6 +43,7 @@ class JournalTransSearch extends JournalTrans
     public function search($params)
     {
         $query = JournalTrans::find()->joinWith('journalTransLine.product');
+        $query->groupBy('journal_trans.id');
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
