@@ -344,6 +344,10 @@ if($create_type == 10){
                                         <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
                                         <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price']) ?>
                                     </div>
+                                    <div class="col-sm-2" style="<?= $create_type == 3 ? '' : 'display: none;' ?>">
+                                        <label for="">ต้นทุนเฉลี่ย</label>
+                                        <input type="text" class="form-control line-cost-avg-price" name="line_cost_avg_price" readonly value="">
+                                    </div>
                                   <div class="col-sm-2" style="<?= $create_type == 10 ? '' : 'display: none;' ?>">
                                         <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
                                         <?= $form->field($modelLine, "[{$i}]cost_price")->textInput(['maxlength' => true, 'class' => 'form-control line-cost-price']) ?>
@@ -682,6 +686,7 @@ function getProductonhand(e){
                     if(data!=null){
                        row.find(".line-product-onhand").val(data[0]['stock_qty']);
                        row.find(".line-sale-price").val(data[0]['sale_price']);
+                       row.find(".line-cost-avg-price").val(data[0]['cost_avg_price']);
                     }
                 },
                 error: function() {

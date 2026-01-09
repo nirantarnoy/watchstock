@@ -795,9 +795,10 @@ class JournaltransController extends Controller
             $model_stock_sum = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
             if ($model_stock_sum) {
                 $product_sale_price = \backend\models\Product::findSalePrice($product_id);
-                array_push($onhand, ['stock_qty' => $model_stock_sum->qty, 'sale_price' => $product_sale_price]); // stock ตัดได้แค่ยอดที่มีคงเหลือ ไม่รวมยอดจอง
+                $product_cost_avg_price = \backend\models\Product::findCostAvgPrice($product_id);
+                array_push($onhand, ['stock_qty' => $model_stock_sum->qty, 'sale_price' => $product_sale_price, 'cost_avg_price' => $product_cost_avg_price]); // stock ตัดได้แค่ยอดที่มีคงเหลือ ไม่รวมยอดจอง
             } else {
-                array_push($onhand, ['stock_qty' => 0, 'sale_price' => 0]);
+                array_push($onhand, ['stock_qty' => 0, 'sale_price' => 0, 'cost_avg_price' => 0]);
             }
         }
         return json_encode($onhand);
