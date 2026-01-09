@@ -1185,13 +1185,16 @@ class JournaltransController extends Controller
     }
 
     public function actionInitAvgCost(){
+        $cnt = 0;
         $model = \backend\models\Product::find()->where(['status' => 1])->all();
         if($model){
             foreach($model as $value){
                 $value->cost_avg = $value->cost_price;
                 $value->save(false);
+                $cnt++;
             }
         }
+       echo "Update {$cnt} records";
     }
 
 }
