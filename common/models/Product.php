@@ -43,7 +43,7 @@ class Product extends \yii\db\ActiveRecord
         return [
             [['name'], 'required'],
             [['status', 'product_group_id', 'unit_id', 'created_at', 'created_by', 'updated_at', 'updated_by','type_id','product_type_id','brand_id'], 'integer'],
-            [['cost_price', 'sale_price', 'stock_qty'], 'number'],
+            [['cost_price', 'sale_price', 'stock_qty','cost_avg'], 'number'],
             [['code', 'name', 'description', 'remark', 'photo'], 'string', 'max' => 255],
             [['edit_stock_qty','transfer_warehouse_stock'],'safe'],
 
@@ -82,6 +82,7 @@ class Product extends \yii\db\ActiveRecord
             'brand_id' => 'ยี่ห้อ',
             'edit_stock_qty' => 'แก้ไขจำนวนสินค้า',
             'transfer_warehouse_stock'=>'ย้ายคลังสินค้า',
+            'cost_avg'=>'ต้นทุนเฉลี่ย'
         ];
     }
 }

@@ -127,6 +127,10 @@ class Product extends \common\models\Product
         $model = Product::find()->where(['id'=>$id])->one();
         return $model != null ?$model->cost_price:0;
     }
+    public static function findCostAvgPrice($id){
+        $model = Product::find()->where(['id'=>$id])->one();
+        return $model != null ?$model->cost_avg:0;
+    }
 
     public static function getTotalQty($id){
         $model = \backend\models\Stocksum::find()->where(['product_id'=>$id])->sum('qty');

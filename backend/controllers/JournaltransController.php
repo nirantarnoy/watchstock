@@ -138,7 +138,7 @@ class JournaltransController extends Controller
                     // echo "ok";return;
                     foreach ($modelLines as $modelLine) {
                         if($type != 9){
-                            $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
+                            $modelLine->line_price = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
                         }
                         $modelLine->journal_trans_id = $model->id;
                         if($type == 5 || $type == 7){
@@ -421,9 +421,15 @@ class JournaltransController extends Controller
 
     public function updateProductPrice($product_id,$new_price){
         if($product_id && $new_price >0){
+            $cost_avg = 0;
+             
+            $sql = "SELECT AVG(jl.cost_price) as cost_avg FROM journal_trans_line jl INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id WHERE jl.product_id = $product_id AND jt.trans_type_id = 10";
+            $cost_avg = Yii::$app->db->createCommand($sql)->queryScalar();
+
             $model = \backend\models\Product::find()->where(['id'=>$product_id])->one();
             if($model){
                 $model->sale_price = $new_price;
+                $model->cost_avg = $cost_avg;
                 $model->save(false);
             }
         }
@@ -1176,6 +1182,16 @@ class JournaltransController extends Controller
             ->andWhere(['<>', 'warehouse_id', ''])
             ->sum('reserv_qty');
         return (float)$sum + (float)$res;
+    }
+
+    public function actionInitAvgCost(){
+        $model = \backend\models\Product::find()->where(['status' => 1])->all();
+        if($model){
+            foreach($model as $value){
+                $value->cost_avg = $value->cost_price;
+                $value->save(false);
+            }
+        }
     }
 
 }

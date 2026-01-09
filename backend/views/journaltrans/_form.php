@@ -277,6 +277,7 @@ if($create_type == 10){
                         'warehouse_id',
                         'stock_qty',
                         'sale_price',
+                        'cost_price',
                         'qty',
                         'remark',
                     ],
@@ -342,6 +343,10 @@ if($create_type == 10){
                                     <div class="col-sm-2">
                                         <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
                                         <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price']) ?>
+                                    </div>
+                                  <div class="col-sm-2" style="<?= $create_type == 10 ? '' : 'display: none;' ?>">
+                                        <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
+                                        <?= $form->field($modelLine, "[{$i}]cost_price")->textInput(['maxlength' => true, 'class' => 'form-control line-cost-price']) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty', 'onchange' => 'checkOverQty($(this))']) ?>
@@ -431,21 +436,21 @@ $(document).ready(function() {
 //             // Skip if already initialized
 //             if (\$element.hasClass('select2-hidden-accessible')) {
 //                 return;
-//             }
-//            
-//             // Get placeholder text
-//             var placeholder = \$element.find('option:first').text() || '-- เลือก --';
-//            
-//             // Initialize Select2
-//             \$element.select2({
-//                 theme: 'default',
-//                 width: '100%',
-//                 placeholder: placeholder,
-//                 allowClear: true,
-//                 minimumResultsForSearch: 5
-//             });
-//         });
-// }
++//             }
++//            
++//             // Get placeholder text
++//             var placeholder = \$element.find('option:first').text() || '-- เลือก --';
++//            
++//             // Initialize Select2
++//             \$element.select2({
++//                 theme: 'default',
++//                 width: '100%',
++//                 placeholder: placeholder,
++//                 allowClear: true,
++//                 minimumResultsForSearch: 5
++//             });
++//         });
++// }
     
    
 
