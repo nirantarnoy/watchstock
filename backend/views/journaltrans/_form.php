@@ -129,7 +129,8 @@ window.initSelect2Loading = function(id, placeholder) {
             theme: 'krajee',
             placeholder: placeholder || '-- เลือก --',
             allowClear: true,
-            width: '100%'
+            width: '100%',
+            minimumResultsForSearch: 0
         });
     }
 };
@@ -142,7 +143,8 @@ window.initSelect2DropStyle = function(id, placeholder) {
             theme: 'krajee',
             placeholder: placeholder || '-- เลือก --',
             allowClear: true,
-            width: '100%'
+            width: '100%',
+            minimumResultsForSearch: 0
         });
     }
 };
@@ -425,38 +427,10 @@ $(document).ready(function() {
         theme: 'default',
         placeholder: '-- เลือกสินค้า --',
         allowClear: true,
-        width: '100%'
+        width: '100%',
+        minimumResultsForSearch: 0
     });
-     
-      // Initialize all existing select2
-    // setupSelect2('.product-select');
-    // setupSelect2('.select2-single');
 });
-
-// function setupSelect2(selector) {
-//         $(selector).each(function() {
-//             var \$element = $(this);
-//            
-//             // Skip if already initialized
-//             if (\$element.hasClass('select2-hidden-accessible')) {
-//                 return;
-+//             }
-+//            
-+//             // Get placeholder text
-+//             var placeholder = \$element.find('option:first').text() || '-- เลือก --';
-+//            
-+//             // Initialize Select2
-+//             \$element.select2({
-+//                 theme: 'default',
-+//                 width: '100%',
-+//                 placeholder: placeholder,
-+//                 allowClear: true,
-+//                 minimumResultsForSearch: 5
-+//             });
-+//         });
-+// }
-    
-   
 
 function initializeDynamicForm() {
     // Create main add button
@@ -512,24 +486,13 @@ function onAfterInsert(e, item) {
     // Re-initialize Select2 for new items
     $(item).find('.select2-container').remove(); // Remove old select2 containers
     $(item).find('select.product-select').each(function() {
-        var elementId = $(this).attr('id');
-        if (elementId && window.initSelect2Loading) {
-            window.initSelect2Loading(elementId, '-- เลือกสินค้า --');
-            $(this).select2({
-               // theme: 'default',
-                placeholder: '-- เลือกสินค้า --',
-                allowClear: true,
-                width: '100%'
-            });
-        } else {
-            // Fallback initialization
-            $(this).select2({
-               // theme: 'default',
-                placeholder: '-- เลือกสินค้า --',
-                allowClear: true,
-                width: '100%'
-            });
-        }
+        $(this).select2({
+            theme: 'default',
+            placeholder: '-- เลือกสินค้า --',
+            allowClear: true,
+            width: '100%',
+            minimumResultsForSearch: 0
+        });
     });
 }
 
@@ -549,8 +512,6 @@ function updateRowNumbers() {
         $(this).find('.panel-title-address').text('รายการที่: ' + (index + 1));
     });
 }
-    
-
 JS;
 
 // Register main JavaScript
@@ -561,7 +522,6 @@ $url_to_get_product_onhand = Url::to(['journaltrans/getproductonhand'], true);
 $select2FixJs = <<<JS
 // Wait for all assets to load
 $(window).on('load', function() {
-   // alert();
     // Function to properly initialize Select2
     function setupSelect2(selector) {
         $(selector).each(function() {
@@ -581,47 +541,10 @@ $(window).on('load', function() {
                 width: '100%',
                 placeholder: placeholder,
                 allowClear: true,
-                minimumResultsForSearch: 5
+                minimumResultsForSearch: 0
             });
         });
     }
-    
-    // Initialize all existing select2
-    //setupSelect2('.product-select');
-    //setupSelect2('.select2-single');
-    
-    // // Fix for dynamic form
-    // var dynamicFormReady = false;
-    //
-    // $('.dynamicform_wrapper').on('afterInsert', function(e, item) {
-    //     if (!dynamicFormReady) {
-    //         dynamicFormReady = true;
-    //        
-    //         setTimeout(function() {
-    //             // Find new select elements
-    //             var \$newSelects = $(item).find('select[name*="product_id"]');
-    //            
-    //             // Remove any existing Select2
-    //             \$newSelects.each(function() {
-    //                 if ($(this).hasClass('select2-hidden-accessible')) {
-    //                     $(this).select2('destroy');
-    //                 }
-    //             });
-    //            
-    //             // Remove old containers
-    //             $(item).find('.select2-container').remove();
-    //            
-    //             // Initialize Select2
-    //             setupSelect2(\$newSelects);
-    //            
-    //             dynamicFormReady = false;
-    //         }, 200);
-    //     }
-    //    
-    //     // Update other fields
-    //     updateItemNumbers();
-    //     updateWarehouseValue(item);
-    // });
     
     // Function to update item numbers
     function updateItemNumbers() {
@@ -640,10 +563,6 @@ $(window).on('load', function() {
             $(item).find('.warehouse-display').val(warehouseName);
         }
     }
-    
-    
-    
-    
 });
 
 function getWarehouseproduct(e){
