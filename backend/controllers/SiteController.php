@@ -11,6 +11,7 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\db\Query;
+use yii\helpers\ArrayHelper;
 
 /**
  * Site controller
@@ -85,14 +86,98 @@ class SiteController extends Controller
         // 3. สินค้าขายดี 10 อันดับ
         $topProducts = $this->getTopProducts($fromTimestamp, $toTimestamp);
 
+        // 4. ยอดขายแยกตามกลุ่มสินค้า
+        $salesByGroup = $this->getSalesByGroup($fromTimestamp, $toTimestamp);
+
+        // 5. ข้อมูลแนวโน้มยอดขาย (Daily Sales Trend)
+        $salesTrend = $this->getSalesTrendData($fromTimestamp, $toTimestamp);
+
         return $this->render('index', [
             'fromDate' => $fromDate,
             'toDate' => $toDate,
             'salesByProduct' => $salesByProduct,
             'priceComparisonData' => $priceComparisonData,
             'topProducts' => $topProducts,
+            'salesByGroup' => $salesByGroup,
+            'salesTrend' => $salesTrend,
         ]);
     }
+
+    /**
+     * ดึงข้อมูลแนวโน้มยอดขายรายวัน
+     */
+    private function getSalesTrendData($fromTimestamp, $toTimestamp)
+    {
+        $query = (new Query())
+            ->select([
+                "DATE(FROM_UNIXTIME(jt.created_at)) as sale_date",
+                "SUM(jtl.qty * jtl.sale_price) as daily_sales"
+            ])
+            ->from(['jtl' => 'journal_trans_line'])
+            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
+            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
+            ->andFilterWhere(['!=', 'jtl.status', 300])
+            ->groupBy(['sale_date'])
+            ->orderBy(['sale_date' => SORT_ASC]);
+
+        $data = $query->all();
+
+        $categories = [];
+        $sales = [];
+
+        // เติมวันที่ที่ไม่มีข้อมูล (ถ้าต้องการ)
+        $current = $fromTimestamp;
+        $dataMap = ArrayHelper::map($data, 'sale_date', 'daily_sales');
+
+        while ($current <= $toTimestamp) {
+            $dateStr = date('Y-m-d', $current);
+            $categories[] = $dateStr;
+            $sales[] = isset($dataMap[$dateStr]) ? floatval($dataMap[$dateStr]) : 0;
+            $current = strtotime('+1 day', $current);
+        }
+
+        return [
+            'categories' => $categories,
+            'sales' => $sales
+        ];
+    }
+
+    /**
+     * ดึงข้อมูลยอดขายแยกตามกลุ่มสินค้า
+     */
+    private function getSalesByGroup($fromTimestamp, $toTimestamp)
+    {
+        $query = (new Query())
+            ->select([
+                'pg.name',
+                'SUM(jtl.qty * jtl.sale_price) as total_sales'
+            ])
+            ->from(['jtl' => 'journal_trans_line'])
+            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
+            ->innerJoin(['pg' => 'product_group'], 'p.product_group_id = pg.id')
+            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
+            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
+            ->andFilterWhere(['!=', 'jtl.status', 300])
+            ->groupBy(['pg.name'])
+            ->orderBy(['total_sales' => SORT_DESC]);
+
+        $data = $query->all();
+
+        $categories = [];
+        $sales = [];
+        foreach ($data as $item) {
+            $categories[] = $item['name'];
+            $sales[] = floatval($item['total_sales']);
+        }
+
+        return [
+            'categories' => $categories,
+            'sales' => $sales
+        ];
+    }
+
 
     /**
      * Login action.
@@ -562,6 +647,7 @@ class SiteController extends Controller
         $categories = [];
         $quantities = [];
         $sales = [];
+        $profits = [];
 
         foreach ($data as $item) {
             $categories[] = $item['name'];

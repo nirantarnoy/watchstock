@@ -3,95 +3,164 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
+/* @var $this yii\web\View */
+/* @var $fromDate string */
+/* @var $toDate string */
+/* @var $salesByProduct array */
+/* @var $priceComparisonData array */
+/* @var $topProducts array */
+/* @var $salesByGroup array */
+/* @var $salesTrend array */
+
+$this->title = 'รายงานสรุปยอดขาย';
+$this->params['breadcrumbs'][] = $this->title;
+
+// Register Highcharts
+$this->registerJsFile('https://code.highcharts.com/highcharts.js', ['depends' => [\yii\web\JqueryAsset::className()]]);
+$this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depends' => [\yii\web\JqueryAsset::className()]]);
+
 $totalSales = array_sum(array_column($salesByProduct, 'total_sales'));
 $totalProfit = array_sum(array_column($salesByProduct, 'profit'));
 $totalQty = array_sum(array_column($salesByProduct, 'total_qty'));
 $profitMargin = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
 ?>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h5 class="panel-title">เลือกช่วงเวลา</h5>
-            </div>
-            <div class="panel-body">
-                <?php $form = ActiveForm::begin(['method' => 'get', 'action' => ['index']]); ?>
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>วันที่เริ่มต้น:</label>
-                            <?= Html::input('date', 'from_date', $fromDate, ['class' => 'form-control']) ?>
+<div class="report-index">
+    <!-- Date Range Filter -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h5 class="panel-title">เลือกช่วงเวลา</h5>
+                </div>
+                <div class="panel-body">
+                    <?php $form = ActiveForm::begin(['method' => 'get', 'action' => ['index']]); ?>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>วันที่เริ่มต้น:</label>
+                                <?= Html::input('date', 'from_date', $fromDate, ['class' => 'form-control']) ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>วันที่สิ้นสุด:</label>
-                            <?= Html::input('date', 'to_date', $toDate, ['class' => 'form-control']) ?>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>วันที่สิ้นสุด:</label>
+                                <?= Html::input('date', 'to_date', $toDate, ['class' => 'form-control']) ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <div>
-                                <?= Html::submitButton('ค้นหา', ['class' => 'btn btn-primary']) ?>
-                                <?= Html::a('Export Excel', ['export', 'from_date' => $fromDate, 'to_date' => $toDate], ['class' => 'btn btn-success']) ?>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <?= Html::submitButton('ค้นหา', ['class' => 'btn btn-primary']) ?>
+                                    <?= Html::a('Export Excel', ['export', 'from_date' => $fromDate, 'to_date' => $toDate], ['class' => 'btn btn-success']) ?>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <?php ActiveForm::end(); ?>
                 </div>
-                <?php ActiveForm::end(); ?>
             </div>
         </div>
     </div>
-</div>
-<br/>
+    <br/>
 
-<!-- Summary Cards -->
-<div class="row">
-    <div class="col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-aqua"><i class="fa fa-shopping-cart"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">ยอดขายรวม</span>
-                <span class="info-box-number">฿<?= number_format($totalSales, 2) ?></span>
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-aqua"><i class="fa fa-shopping-cart"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">ยอดขายรวม</span>
+                    <span class="info-box-number">฿<?= number_format($totalSales, 2) ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-green"><i class="fa fa-arrow-up"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">กำไรรวม</span>
+                    <span class="info-box-number">฿<?= number_format($totalProfit, 2) ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-yellow"><i class="fa fa-cubes"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">จำนวนสินค้าที่ขาย</span>
+                    <span class="info-box-number"><?= number_format($totalQty) ?> ชิ้น</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-red"><i class="fa fa-percent"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">อัตรากำไร</span>
+                    <span class="info-box-number"><?= number_format($profitMargin, 2) ?>%</span>
+                </div>
             </div>
         </div>
     </div>
+    <br/>
 
-    <div class="col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-green"><i class="fa fa-arrow-up"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">กำไรรวม</span>
-                <span class="info-box-number">฿<?= number_format($totalProfit, 2) ?></span>
+    <!-- Charts Row 1 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามยี่ห้อ</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="price-comparison-chart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h5 class="panel-title">แนวโน้มยอดขายรายวัน</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="sales-trend-chart" style="height: 400px;"></div>
+                </div>
             </div>
         </div>
     </div>
+    <br/>
 
-    <div class="col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-yellow"><i class="fa fa-cubes"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">จำนวนสินค้าที่ขาย</span>
-                <span class="info-box-number"><?= number_format($totalQty) ?> ชิ้น</span>
+    <!-- Charts Row 2 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h5 class="panel-title">ยอดขายแยกตามกลุ่มสินค้า</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="sales-by-group-chart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h5 class="panel-title">เปรียบเทียบกำไรขาดทุน สินค้าขายดี</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="top-products-profit-chart" style="height: 400px;"></div>
+                </div>
             </div>
         </div>
     </div>
+    <br/>
 
-    <div class="col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-red"><i class="fa fa-percent"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text">อัตรากำไร</span>
-                <span class="info-box-number"><?= number_format($profitMargin, 2) ?>%</span>
-            </div>
-        </div>
-    </div>
-</div>
-<br/>
-
-<div class="row">
+    <!-- Sales by Product Table -->
+    <div class="row">
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -152,6 +221,7 @@ $profitMargin = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
             </div>
         </div>
     </div>
+</div>
 
 <style>
     .info-box {
@@ -215,4 +285,181 @@ $profitMargin = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
         background-color: #dd4b39 !important;
         color: #fff;
     }
+    
+    .panel {
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .panel-heading {
+        background-color: #f8f9fa !important;
+        font-weight: bold;
+    }
 </style>
+
+<?php
+$categoriesJson = json_encode($priceComparisonData['categories']);
+$salePricesJson = json_encode($priceComparisonData['salePrices']);
+$profitsJson = json_encode($priceComparisonData['profits']);
+
+$topCategoriesJson = json_encode($topProducts['categories']);
+$topSalesJson = json_encode($topProducts['sales']);
+$topProfitsJson = json_encode($topProducts['profits']);
+
+$groupCategoriesJson = json_encode($salesByGroup['categories']);
+$groupSalesJson = json_encode($salesByGroup['sales']);
+
+$trendCategoriesJson = json_encode($salesTrend['categories']);
+$trendSalesJson = json_encode($salesTrend['sales']);
+
+$js = <<<JS
+Highcharts.setOptions({
+    lang: {
+        thousandsSep: ','
+    }
+});
+
+Highcharts.chart('price-comparison-chart', {
+    chart: { type: 'column' },
+    title: { text: 'ยอดขายและกำไรตามยี่ห้อ' },
+    xAxis: { categories: $categoriesJson },
+    yAxis: { 
+        title: { text: 'จำนวนเงิน (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+            }
+        }
+    },
+    tooltip: {
+        shared: true,
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)<br/>'
+    },
+    plotOptions: { 
+        column: { 
+            stacking: 'normal',
+            dataLabels: {
+                enabled: true,
+                format: '฿{point.y:,.0f}'
+            }
+        } 
+    },
+    series: [{
+        name: 'กำไร',
+        data: $profitsJson,
+        color: '#28a745'
+    }, {
+        name: 'ต้นทุน',
+        data: $salePricesJson.map((val, i) => val - $profitsJson[i]),
+        color: '#007bff'
+    }]
+});
+
+Highcharts.chart('sales-trend-chart', {
+    chart: { type: 'areaspline' },
+    title: { text: 'แนวโน้มยอดขายรายวัน' },
+    xAxis: { 
+        categories: $trendCategoriesJson,
+        labels: {
+            formatter: function() {
+                return this.value.split('-').slice(1).join('/'); // Show MM/DD
+            }
+        }
+    },
+    yAxis: { 
+        title: { text: 'ยอดขาย (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+            }
+        }
+    },
+    tooltip: {
+        shared: true,
+        valuePrefix: '฿',
+        valueDecimals: 2
+    },
+    plotOptions: {
+        areaspline: {
+            fillOpacity: 0.1,
+            color: '#17a2b8',
+            marker: {
+                enabled: false,
+                states: {
+                    hover: {
+                        enabled: true
+                    }
+                }
+            }
+        }
+    },
+    series: [{
+        name: 'ยอดขาย',
+        data: $trendSalesJson
+    }]
+});
+
+Highcharts.chart('sales-by-group-chart', {
+    chart: { type: 'pie' },
+    title: { text: 'ยอดขายแยกตามกลุ่มสินค้า' },
+    tooltip: {
+        pointFormat: '{series.name}: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)'
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+    series: [{
+        name: 'ยอดขาย',
+        colorByPoint: true,
+        data: $groupCategoriesJson.map((name, i) => ({
+            name: name,
+            y: $groupSalesJson[i]
+        }))
+    }]
+});
+
+Highcharts.chart('top-products-profit-chart', {
+    chart: { type: 'column' },
+    title: { text: 'เปรียบเทียบกำไรขาดทุน สินค้าขายดี' },
+    xAxis: { categories: $topCategoriesJson },
+    yAxis: { 
+        title: { text: 'จำนวนเงิน (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+            }
+        }
+    },
+    tooltip: {
+        shared: true,
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)<br/>'
+    },
+    plotOptions: { 
+        column: { 
+            stacking: 'normal',
+            dataLabels: {
+                enabled: true,
+                format: '฿{point.y:,.0f}'
+            }
+        } 
+    },
+    series: [{
+        name: 'กำไร',
+        data: $topProfitsJson,
+        color: '#28a745'
+    }, {
+        name: 'ต้นทุน',
+        data: $topSalesJson.map((val, i) => val - $topProfitsJson[i]),
+        color: '#007bff'
+    }]
+});
+JS;
+$this->registerJs($js);
+?>

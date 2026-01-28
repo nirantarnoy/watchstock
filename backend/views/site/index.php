@@ -10,6 +10,8 @@ use yii\widgets\ActiveForm;
 /* @var $salesByProduct array */
 /* @var $priceComparisonData array */
 /* @var $topProducts array */
+/* @var $salesByGroup array */
+/* @var $salesTrend array */
 
 $this->title = 'ภาพรวมระบบ';
 $this->params['breadcrumbs'][] = $this->title;
@@ -126,23 +128,33 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
                 </div>
             </div>
 
-            <!-- Top 10 Products Chart -->
+            <!-- Sales Trend Chart -->
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h5 class="panel-title">สินค้าขายดี 10 อันดับ (ยอดขาย)</h5>
+                        <h5 class="panel-title">แนวโน้มยอดขายรายวัน</h5>
                     </div>
                     <div class="panel-body">
-                        <div id="top-products-chart" style="height: 400px;"></div>
+                        <div id="sales-trend-chart" style="height: 400px;"></div>
                     </div>
                 </div>
             </div>
         </div>
         <br/>
         
-        <!-- Charts Row 2 - New Chart -->
+        <!-- Charts Row 2 -->
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">ยอดขายแยกตามกลุ่มสินค้า</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div id="sales-by-group-chart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h5 class="panel-title">เปรียบเทียบกำไรขาดทุน สินค้าขายดี</h5>
@@ -219,133 +231,7 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
             </div>
         </div>
     </div>
-<?php
-endif; 
-
-$priceCategories = json_encode($priceComparisonData['categories']);
-$priceSales = json_encode($priceComparisonData['salePrices']);
-$priceProfits = json_encode($priceComparisonData['profits']);
-
-$topCategories = json_encode($topProducts['categories']);
-$topSales = json_encode($topProducts['sales']);
-$topProfits = json_encode($topProducts['profits']);
-
-$js = <<<JS
-$(function() {
-    // Price Comparison Chart
-    Highcharts.chart('price-comparison-chart', {
-        chart: { type: 'column' },
-        title: { text: '' },
-        xAxis: { categories: $priceCategories },
-        yAxis: { 
-            title: { text: 'จำนวนเงิน (บาท)' },
-            labels: {
-                formatter: function() {
-                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
-                }
-            }
-        },
-        tooltip: {
-            shared: true,
-            valuePrefix: '฿',
-            valueDecimals: 2
-        },
-        plotOptions: {
-            column: {
-                pointPadding: 0.2,
-                borderWidth: 0,
-                dataLabels: {
-                    enabled: true,
-                    format: '฿{point.y:,.0f}'
-                }
-            }
-        },
-        series: [
-            { name: 'ยอดขาย', data: $priceSales, color: '#3c8dbc' },
-            { name: 'กำไร', data: $priceProfits, color: '#00a65a' }
-        ]
-    });
-
-    // Top 10 Products Chart (Sales)
-    Highcharts.chart('top-products-chart', {
-        chart: { type: 'bar' },
-        title: { text: '' },
-        xAxis: { categories: $topCategories },
-        yAxis: { 
-            title: { text: 'ยอดขาย (บาท)' },
-            labels: {
-                formatter: function() {
-                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
-                }
-            }
-        },
-        tooltip: {
-            valuePrefix: '฿',
-            valueDecimals: 2
-        },
-        plotOptions: {
-            bar: {
-                dataLabels: {
-                    enabled: true,
-                    format: '฿{point.y:,.0f}'
-                }
-            }
-        },
-        series: [{ name: 'ยอดขาย', data: $topSales, color: '#f39c12' }]
-    });
-
-    // Top Products Profit Chart
-    Highcharts.chart('top-products-profit-chart', {
-        chart: { type: 'column' },
-        title: { text: '' },
-        xAxis: { categories: $topCategories },
-        yAxis: { 
-            title: { text: 'จำนวนเงิน (บาท)' },
-            labels: {
-                formatter: function() {
-                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
-                }
-            }
-        },
-        tooltip: {
-            shared: true,
-            valuePrefix: '฿',
-            valueDecimals: 2
-        },
-        plotOptions: {
-            column: {
-                pointPadding: 0.2,
-                borderWidth: 0,
-                dataLabels: {
-                    enabled: true,
-                    format: '฿{point.y:,.0f}'
-                }
-            }
-        },
-        series: [
-            { name: 'ยอดขาย', data: $topSales, color: '#00c0ef' },
-            { name: 'กำไร', data: $topProfits, color: '#dd4b39' }
-        ]
-    });
-
-    // DataTable
-    $('.table').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Thai.json"
-        },
-        "order": [[3, "desc"]] // Order by Sales column descending
-    });
-});
-JS;
-
-$this->registerJs($js);
-?>
+<?php endif; ?>
 
 <style>
     .info-box {
@@ -420,3 +306,170 @@ $this->registerJs($js);
         font-weight: bold;
     }
 </style>
+
+<?php
+$categoriesJson = json_encode($priceComparisonData['categories']);
+$salePricesJson = json_encode($priceComparisonData['salePrices']);
+$profitsJson = json_encode($priceComparisonData['profits']);
+
+$topCategoriesJson = json_encode($topProducts['categories']);
+$topSalesJson = json_encode($topProducts['sales']);
+$topProfitsJson = json_encode($topProducts['profits']);
+
+$groupCategoriesJson = json_encode($salesByGroup['categories']);
+$groupSalesJson = json_encode($salesByGroup['sales']);
+
+$trendCategoriesJson = json_encode($salesTrend['categories']);
+$trendSalesJson = json_encode($salesTrend['sales']);
+
+$js = <<<JS
+Highcharts.setOptions({
+    lang: {
+        thousandsSep: ','
+    }
+});
+
+Highcharts.chart('price-comparison-chart', {
+    chart: { type: 'column' },
+    title: { text: 'ยอดขายและกำไรตามยี่ห้อ' },
+    xAxis: { categories: $categoriesJson },
+    yAxis: { 
+        title: { text: 'จำนวนเงิน (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+            }
+        }
+    },
+    tooltip: {
+        shared: true,
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)<br/>'
+    },
+    plotOptions: { 
+        column: { 
+            stacking: 'normal',
+            dataLabels: {
+                enabled: true,
+                format: '฿{point.y:,.0f}'
+            }
+        } 
+    },
+    series: [{
+        name: 'กำไร',
+        data: $profitsJson,
+        color: '#28a745'
+    }, {
+        name: 'ต้นทุน',
+        data: $salePricesJson.map((val, i) => val - $profitsJson[i]),
+        color: '#007bff'
+    }]
+});
+
+Highcharts.chart('sales-trend-chart', {
+    chart: { type: 'areaspline' },
+    title: { text: 'แนวโน้มยอดขายรายวัน' },
+    xAxis: { 
+        categories: $trendCategoriesJson,
+        labels: {
+            formatter: function() {
+                return this.value.split('-').slice(1).join('/'); // Show MM/DD
+            }
+        }
+    },
+    yAxis: { 
+        title: { text: 'ยอดขาย (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+            }
+        }
+    },
+    tooltip: {
+        shared: true,
+        valuePrefix: '฿',
+        valueDecimals: 2
+    },
+    plotOptions: {
+        areaspline: {
+            fillOpacity: 0.1,
+            color: '#17a2b8',
+            marker: {
+                enabled: false,
+                states: {
+                    hover: {
+                        enabled: true
+                    }
+                }
+            }
+        }
+    },
+    series: [{
+        name: 'ยอดขาย',
+        data: $trendSalesJson
+    }]
+});
+
+Highcharts.chart('sales-by-group-chart', {
+    chart: { type: 'pie' },
+    title: { text: 'ยอดขายแยกตามกลุ่มสินค้า' },
+    tooltip: {
+        pointFormat: '{series.name}: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)'
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+    series: [{
+        name: 'ยอดขาย',
+        colorByPoint: true,
+        data: $groupCategoriesJson.map((name, i) => ({
+            name: name,
+            y: $groupSalesJson[i]
+        }))
+    }]
+});
+
+Highcharts.chart('top-products-profit-chart', {
+    chart: { type: 'column' },
+    title: { text: 'เปรียบเทียบกำไรขาดทุน สินค้าขายดี' },
+    xAxis: { categories: $topCategoriesJson },
+    yAxis: { 
+        title: { text: 'จำนวนเงิน (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+            }
+        }
+    },
+    tooltip: {
+        shared: true,
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)<br/>'
+    },
+    plotOptions: { 
+        column: { 
+            stacking: 'normal',
+            dataLabels: {
+                enabled: true,
+                format: '฿{point.y:,.0f}'
+            }
+        } 
+    },
+    series: [{
+        name: 'กำไร',
+        data: $topProfitsJson,
+        color: '#28a745'
+    }, {
+        name: 'ต้นทุน',
+        data: $topSalesJson.map((val, i) => val - $topProfitsJson[i]),
+        color: '#007bff'
+    }]
+});
+JS;
+$this->registerJs($js);
+?>
