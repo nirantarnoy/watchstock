@@ -166,6 +166,20 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
             </div>
         </div>
         <br/>
+
+        <!-- Charts Row 3 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">10 อันดับสินค้าขายดี (ยอดขาย)</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div id="top-selling-products-chart" style="height: 500px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <br/>
 
         <!-- Sales by Product Table -->
@@ -507,6 +521,49 @@ Highcharts.setOptions({
             name: 'ต้นทุน',
             data: topSales.map((val, i) => val - topProfits[i]),
             color: '#007bff'
+        }]
+    });
+})();
+
+(function() {
+    const topCategories = $topCategoriesJson;
+    const topSales = $topSalesJson;
+
+    Highcharts.chart('top-selling-products-chart', {
+        chart: { type: 'bar' },
+        title: { text: '10 อันดับสินค้าขายดี (ยอดขาย)' },
+        xAxis: { 
+            categories: topCategories,
+            title: { text: null }
+        },
+        yAxis: { 
+            min: 0,
+            title: { text: 'ยอดขาย (บาท)', align: 'high' },
+            labels: { 
+                overflow: 'justify',
+                formatter: function() {
+                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+                }
+            }
+        },
+        tooltip: {
+            valuePrefix: '฿',
+            valueDecimals: 2
+        },
+        plotOptions: {
+            bar: {
+                dataLabels: {
+                    enabled: true,
+                    format: '฿{point.y:,.2f}'
+                }
+            }
+        },
+        legend: { enabled: false },
+        credits: { enabled: false },
+        series: [{
+            name: 'ยอดขาย',
+            data: topSales,
+            color: '#00c0ef'
         }]
     });
 })();
