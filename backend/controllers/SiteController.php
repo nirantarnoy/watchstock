@@ -432,7 +432,7 @@ class SiteController extends Controller
     {
         $query = (new Query())
             ->select([
-                'p.name',
+                'pb.name',
                 'SUM(jtl.qty) as total_qty',
 
                 // รวมยอดขายทั้งหมด
@@ -456,11 +456,12 @@ class SiteController extends Controller
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
+            ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
             ->andFilterWhere(['!=', 'jtl.status', 300])
-            ->groupBy(['p.name'])
+            ->groupBy(['pb.name'])
             ->having('SUM(jtl.qty) > 0')
             ->orderBy(['total_sale' => SORT_DESC])
             ->limit(20);
@@ -538,7 +539,12 @@ class SiteController extends Controller
                 'p.name',
                 'p.code',
                 'SUM(jtl.qty) as total_qty',
-                'SUM(jtl.qty * jtl.sale_price) as total_sales'
+                'SUM(jtl.qty * jtl.sale_price) as total_sales',
+                new \yii\db\Expression("
+                    SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
+                    AS profit
+                ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
@@ -561,12 +567,14 @@ class SiteController extends Controller
             $categories[] = $item['name'];
             $quantities[] = intval($item['total_qty']);
             $sales[] = floatval($item['total_sales']);
+            $profits[] = floatval($item['profit']);
         }
 
         return [
             'categories' => $categories,
             'quantities' => $quantities,
             'sales' => $sales,
+            'profits' => $profits,
             'rawData' => $data
         ];
     }

@@ -112,13 +112,13 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
         <br/>
         <br/>
 
-        <!-- Charts Row -->
+        <!-- Charts Row 1 -->
         <div class="row">
             <!-- Price Comparison Chart -->
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามสินค้า</h5>
+                        <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามยี่ห้อ</h5>
                     </div>
                     <div class="panel-body">
                         <div id="price-comparison-chart" style="height: 400px;"></div>
@@ -130,7 +130,7 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h5 class="panel-title">สินค้าขายดี 10 อันดับ</h5>
+                        <h5 class="panel-title">สินค้าขายดี 10 อันดับ (ยอดขาย)</h5>
                     </div>
                     <div class="panel-body">
                         <div id="top-products-chart" style="height: 400px;"></div>
@@ -139,7 +139,23 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
             </div>
         </div>
         <br/>
+        
+        <!-- Charts Row 2 - New Chart -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">เปรียบเทียบกำไรขาดทุน สินค้าขายดี</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div id="top-products-profit-chart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <br/>
+        <br/>
+
         <!-- Sales by Product Table -->
         <div class="row">
             <div class="col-md-12">
@@ -303,7 +319,7 @@ Highcharts.chart('price-comparison-chart', {
     }]
 });
 
-// Top Products Chart
+// Top Products Chart (Sales)
 Highcharts.chart('top-products-chart', {
     chart: {
         type: 'bar'
@@ -370,7 +386,58 @@ Highcharts.chart('top-products-chart', {
     }]
 });
 
-// DataTable Enhancement (ถ้าต้องการ)
+// Top Products Profit/Loss Chart (New)
+Highcharts.chart('top-products-profit-chart', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: ''
+    },
+    xAxis: {
+        categories: {$topProductsJson}.categories,
+        labels: {
+            rotation: -45,
+            style: {
+                fontSize: '11px'
+            }
+        }
+    },
+    yAxis: {
+        title: {
+            text: 'กำไร (บาท)'
+        }
+    },
+    plotOptions: {
+        column: {
+            dataLabels: {
+                enabled: true,
+                rotation: -45,
+                style: {
+                    fontWeight: 'normal',
+                    textOutline: 'none'
+                },
+                y: -10,
+                formatter: function() {
+                    if (Math.abs(this.y) >= 1000) {
+                        return (this.y / 1000).toFixed(1) + 'K';
+                    }
+                    return this.y;
+                }
+            }
+        }
+    },
+    series: [{
+        name: 'กำไร/ขาดทุน',
+        data: {$topProductsJson}.profits,
+        color: '#f39c12'
+    }],
+    credits: {
+        enabled: false
+    }
+});
+
+// DataTable Enhancement
 $(document).ready(function() {
     if ($.fn.DataTable) {
         $('.table').DataTable({

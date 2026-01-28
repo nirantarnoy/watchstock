@@ -18,57 +18,32 @@ class ReportController extends Controller
     public function behaviors()
     {
         return [
-//            'verbs' => [
-//                'class' => VerbFilter::className(),
-//                'actions' => [
-//                    'delete' => ['POST','GET'],
-//                ],
-//            ],
             'access'=>[
                 'class'=>AccessControl::className(),
                 'denyCallback' => function ($rule, $action) {
                     throw new ForbiddenHttpException('คุณไม่ได้รับอนุญาติให้เข้าใช้งาน!');
                 },
                 'rules'=>[
-//                    [
-//                        'allow'=>true,
-//                        'roles'=>['@'],
-//                        'matchCallback'=>function($rule,$action){
-//                            $currentRoute = \Yii::$app->controller->getRoute();
-//                            if(\Yii::$app->user->can($currentRoute)){
-//                                return true;
-//                            }
-//                        }
-//                    ],
                     [
                         'allow' => true,
                         'actions' => ['index','export'],
-                        'roles' => ['Super user','System Administrator'], // RBAC permission
-                        //'permissionName' => 'CanReadSaleReport',
+                        'roles' => ['Super user','System Administrator'],
                     ],
                 ],
-
             ],
         ];
     }
+
     public function actionIndex()
     {
-
-        // รับค่าวันที่จาก request หรือใช้ค่า default (30 วันย้อนหลัง)
         $fromDate = Yii::$app->request->get('from_date', date('Y-m-d', strtotime('-30 days')));
         $toDate = Yii::$app->request->get('to_date', date('Y-m-d'));
 
-        // แปลงวันที่เป็น timestamp
         $fromTimestamp = strtotime($fromDate);
         $toTimestamp = strtotime($toDate . ' 23:59:59');
 
-        // 1. ยอดขายแยกตามสินค้า
         $salesByProduct = $this->getSalesByProduct($fromTimestamp, $toTimestamp);
-
-        // 2. ข้อมูลสำหรับกราฟเปรียบเทียบราคาขายกับต้นทุน
         $priceComparisonData = $this->getPriceComparisonData($fromTimestamp, $toTimestamp);
-
-        // 3. สินค้าขายดี 10 อันดับ
         $topProducts = $this->getTopProducts($fromTimestamp, $toTimestamp);
 
         return $this->render('index', [
@@ -98,16 +73,13 @@ class ReportController extends Controller
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => 3]) // สมมติว่า status 1 = ขายสำเร็จ
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => 3])
             ->groupBy(['p.id', 'p.code', 'p.name', 'p.cost_price'])
             ->orderBy(['total_sales' => SORT_DESC]);
 
         return $query->all();
     }
 
-    /**
-     * ดึงข้อมูลสำหรับกราฟเปรียบเทียบราคาขายกับต้นทุน
-     */
     private function getPriceComparisonData($fromTimestamp, $toTimestamp)
     {
         $query = (new Query())
@@ -124,11 +96,10 @@ class ReportController extends Controller
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => 3])
             ->groupBy(['p.id', 'p.name', 'p.cost_price'])
             ->having('SUM(jt.qty) > 0')
-            ->orderBy(['total_qty' => SORT_DESC]); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
+            ->orderBy(['total_qty' => SORT_DESC]);
 
         $data = $query->all();
 
-        // จัดรูปแบบข้อมูลสำหรับ Highcharts
         $categories = [];
         $costPrices = [];
         $salePrices = [];
@@ -149,9 +120,6 @@ class ReportController extends Controller
         ];
     }
 
-    /**
-     * ดึงข้อมูลสินค้าขายดี 10 อันดับ
-     */
     private function getTopProducts($fromTimestamp, $toTimestamp)
     {
         $query = (new Query())
@@ -171,7 +139,6 @@ class ReportController extends Controller
 
         $data = $query->all();
 
-        // จัดรูปแบบข้อมูลสำหรับ Highcharts
         $categories = [];
         $quantities = [];
         $sales = [];
@@ -203,20 +170,18 @@ class ReportController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-// ตั้งชื่อหัวตาราง
         $sheet->fromArray([
             ['รหัสสินค้า', 'ชื่อสินค้า', 'จำนวนขาย', 'ยอดขาย', 'ราคาเฉลี่ย', 'ต้นทุน', 'กำไร', '%กำไร']
         ]);
 
-// เพิ่มข้อมูลลงตาราง
         $rowNum = 2;
         foreach ($salesData as $row) {
             $profitPercent = $row['total_sales'] > 0 ?
                 ($row['profit'] / $row['total_sales']) * 100 : 0;
 
             $sheet->fromArray([
+                $row['code'],
                 $row['name'],
-                $row['description'],
                 $row['total_qty'],
                 number_format($row['total_sales'], 2),
                 number_format($row['avg_price'], 2),
@@ -227,7 +192,6 @@ class ReportController extends Controller
             $rowNum++;
         }
 
-// สร้างไฟล์ Excel
         $filename = 'sales_report_' . date('Y-m-d') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment; filename=\"{$filename}\"");
