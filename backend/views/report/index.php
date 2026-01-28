@@ -6,6 +6,8 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $fromDate string */
 /* @var $toDate string */
+/* @var $brandId int */
+/* @var $groupId int */
 /* @var $salesByProduct array */
 /* @var $priceComparisonData array */
 /* @var $topProducts array */
@@ -31,29 +33,47 @@ $profitMargin = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h5 class="panel-title">เลือกช่วงเวลา</h5>
+                    <h5 class="panel-title">เลือกช่วงเวลาและตัวกรอง</h5>
                 </div>
                 <div class="panel-body">
                     <?php $form = ActiveForm::begin(['method' => 'get', 'action' => ['index']]); ?>
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>วันที่เริ่มต้น:</label>
                                 <?= Html::input('date', 'from_date', $fromDate, ['class' => 'form-control']) ?>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>วันที่สิ้นสุด:</label>
                                 <?= Html::input('date', 'to_date', $toDate, ['class' => 'form-control']) ?>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>ยี่ห้อ:</label>
+                                <?= Html::dropDownList('brand_id', $brandId, \yii\helpers\ArrayHelper::map(\backend\models\Productbrand::find()->all(), 'id', 'name'), [
+                                    'class' => 'form-control',
+                                    'prompt' => '-- ทั้งหมด --'
+                                ]) ?>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>กลุ่มสินค้า:</label>
+                                <?= Html::dropDownList('group_id', $groupId, \yii\helpers\ArrayHelper::map(\backend\models\Productgroup::find()->all(), 'id', 'name'), [
+                                    'class' => 'form-control',
+                                    'prompt' => '-- ทั้งหมด --'
+                                ]) ?>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>&nbsp;</label>
                                 <div>
                                     <?= Html::submitButton('ค้นหา', ['class' => 'btn btn-primary']) ?>
-                                    <?= Html::a('Export Excel', ['export', 'from_date' => $fromDate, 'to_date' => $toDate], ['class' => 'btn btn-success']) ?>
+                                    <?= Html::a('Export Excel', ['export', 'from_date' => $fromDate, 'to_date' => $toDate, 'brand_id' => $brandId, 'group_id' => $groupId], ['class' => 'btn btn-success']) ?>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +144,7 @@ $profitMargin = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
         <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h5 class="panel-title">แนวโน้มยอดขายรายวัน</h5>
+                    <h5 class="panel-title">แนวโน้มยอดขายและกำไรรายวัน</h5>
                 </div>
                 <div class="panel-body">
                     <div id="sales-trend-chart" style="height: 400px;"></div>
@@ -139,7 +159,7 @@ $profitMargin = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
         <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h5 class="panel-title">ยอดขายแยกตามกลุ่มสินค้า</h5>
+                    <h5 class="panel-title">ยอดขายและกำไรแยกตามกลุ่มสินค้า</h5>
                 </div>
                 <div class="panel-body">
                     <div id="sales-by-group-chart" style="height: 400px;"></div>
@@ -308,9 +328,11 @@ $topProfitsJson = json_encode($topProducts['profits']);
 
 $groupCategoriesJson = json_encode($salesByGroup['categories']);
 $groupSalesJson = json_encode($salesByGroup['sales']);
+$groupProfitsJson = json_encode($salesByGroup['profits']);
 
 $trendCategoriesJson = json_encode($salesTrend['categories']);
 $trendSalesJson = json_encode($salesTrend['sales']);
+$trendProfitsJson = json_encode($salesTrend['profits']);
 
 $js = <<<JS
 Highcharts.setOptions({
@@ -357,7 +379,7 @@ Highcharts.chart('price-comparison-chart', {
 
 Highcharts.chart('sales-trend-chart', {
     chart: { type: 'areaspline' },
-    title: { text: 'แนวโน้มยอดขายรายวัน' },
+    title: { text: 'แนวโน้มยอดขายและกำไรรายวัน' },
     xAxis: { 
         categories: $trendCategoriesJson,
         labels: {
@@ -367,7 +389,7 @@ Highcharts.chart('sales-trend-chart', {
         }
     },
     yAxis: { 
-        title: { text: 'ยอดขาย (฿)' },
+        title: { text: 'จำนวนเงิน (฿)' },
         labels: {
             formatter: function() {
                 return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
@@ -382,7 +404,6 @@ Highcharts.chart('sales-trend-chart', {
     plotOptions: {
         areaspline: {
             fillOpacity: 0.1,
-            color: '#17a2b8',
             marker: {
                 enabled: false,
                 states: {
@@ -395,33 +416,48 @@ Highcharts.chart('sales-trend-chart', {
     },
     series: [{
         name: 'ยอดขาย',
-        data: $trendSalesJson
+        data: $trendSalesJson,
+        color: '#007bff'
+    }, {
+        name: 'กำไร',
+        data: $trendProfitsJson,
+        color: '#28a745'
     }]
 });
 
 Highcharts.chart('sales-by-group-chart', {
-    chart: { type: 'pie' },
-    title: { text: 'ยอดขายแยกตามกลุ่มสินค้า' },
-    tooltip: {
-        pointFormat: '{series.name}: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)'
-    },
-    plotOptions: {
-        pie: {
-            allowPointSelect: true,
-            cursor: 'pointer',
-            dataLabels: {
-                enabled: true,
-                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+    chart: { type: 'column' },
+    title: { text: 'ยอดขายและกำไรแยกตามกลุ่มสินค้า' },
+    xAxis: { categories: $groupCategoriesJson },
+    yAxis: { 
+        title: { text: 'จำนวนเงิน (฿)' },
+        labels: {
+            formatter: function() {
+                return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
             }
         }
     },
+    tooltip: {
+        shared: true,
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)<br/>'
+    },
+    plotOptions: { 
+        column: { 
+            stacking: 'normal',
+            dataLabels: {
+                enabled: true,
+                format: '฿{point.y:,.0f}'
+            }
+        } 
+    },
     series: [{
-        name: 'ยอดขาย',
-        colorByPoint: true,
-        data: $groupCategoriesJson.map((name, i) => ({
-            name: name,
-            y: $groupSalesJson[i]
-        }))
+        name: 'กำไร',
+        data: $groupProfitsJson,
+        color: '#28a745'
+    }, {
+        name: 'ต้นทุน',
+        data: $groupSalesJson.map((val, i) => val - $groupProfitsJson[i]),
+        color: '#007bff'
     }]
 });
 
