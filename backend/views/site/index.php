@@ -220,238 +220,127 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
         </div>
     </div>
 <?php
-endif; ?>
-<?php
-// JavaScript for Charts
-$priceComparisonJson = json_encode($priceComparisonData);
-$topProductsJson = json_encode($topProducts);
+endif; 
+
+$priceCategories = json_encode($priceComparisonData['categories']);
+$priceSales = json_encode($priceComparisonData['salePrices']);
+$priceProfits = json_encode($priceComparisonData['profits']);
+
+$topCategories = json_encode($topProducts['categories']);
+$topSales = json_encode($topProducts['sales']);
+$topProfits = json_encode($topProducts['profits']);
 
 $js = <<<JS
-// Price Comparison Chart - เรียงตามยอดขายมากสุด
-let chartData = {$priceComparisonJson};
-
-// รวมข้อมูลและเรียงลำดับ
-let combinedData = chartData.categories.map((category, index) => ({
-    category: category,
-    salePrice: chartData.salePrices[index],
-    profit: chartData.profits[index]
-}));
-
-// เรียงตามยอดขายจากมากไปน้อย
-combinedData.sort((a, b) => b.salePrice - a.salePrice);
-
-// แยกข้อมูลที่เรียงแล้ว
-let sortedCategories = combinedData.map(item => item.category);
-let sortedSalePrices = combinedData.map(item => item.salePrice);
-let sortedProfits = combinedData.map(item => item.profit);
-
-Highcharts.chart('price-comparison-chart', {
-    chart: {
-        type: 'column'
-    },
-    title: {
-        text: ''
-    },
-    xAxis: {
-        categories: sortedCategories,
-        crosshair: true,
-        labels: {
-            rotation: -45,
-            style: {
-                fontSize: '11px'
-            }
-        }
-    },
-    yAxis: {
-        min: 0,
-        title: {
-            text: 'ราคา (บาท)'
-        }
-    },
-    tooltip: {
-        shared: true,
-        useHTML: true,
-        formatter: function () {
-            let categoryName = this.points[0].point.category;
-            let s = '<span style="font-size:10px">' + categoryName + '</span><table>';
-
-            this.points.forEach(p => {
-                s += '<tr><td style="color:' + p.series.color + ';padding:0">' + 
-                     p.series.name + ':</td>' +
-                     '<td style="padding:0"><b>' + (p.y / 1000).toFixed(1) + 'K' + '</b></td></tr>';
-            });
-
-            s += '</table>';
-            return s;
-        }
-    },
-
-    plotOptions: {
-        column: {
-            stacking: 'normal',
-            pointPadding: 0.2,
-            borderWidth: 0,
-            dataLabels: {
-                enabled: true,
-                rotation: -45,
-                style: {
-                    fontWeight: 'normal',
-                    textOutline: 'none'
-                },
-                y: -10,
+$(function() {
+    // Price Comparison Chart
+    Highcharts.chart('price-comparison-chart', {
+        chart: { type: 'column' },
+        title: { text: '' },
+        xAxis: { categories: $priceCategories },
+        yAxis: { 
+            title: { text: 'จำนวนเงิน (บาท)' },
+            labels: {
                 formatter: function() {
-                    if (this.y >= 1000) {
-                        return (this.y / 1000).toFixed(1) + 'K';
-                    }
-                    return this.y;
+                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
                 }
             }
-        }
-    },
-    series: [{
-        name: 'ยอดขาย',
-        data: sortedSalePrices,
-        color: '#00a65a'
-    }, {
-        name: 'กำไร',
-        data: sortedProfits,
-        color: '#3c8dbc'
-    }]
-});
-
-// Top Products Chart (Sales)
-Highcharts.chart('top-products-chart', {
-    chart: {
-        type: 'bar'
-    },
-    title: {
-        text: ''
-    },
-    xAxis: {
-        categories: {$topProductsJson}.categories,
-        title: {
-            text: null
-        }
-    },
-    yAxis: {
-        min: 0,
-        title: {
-            text: 'ยอดขาย (บาท)',
-            align: 'high'
         },
-        labels: {
-            overflow: 'justify'
-        }
-    },
-    tooltip: {
-        valueSuffix: ' บาท'
-    },
-    plotOptions: {
-        bar: {
-            dataLabels: {
-                enabled: true,
-                rotation: -45,
-                style: {
-                    fontWeight: 'normal',
-                    textOutline: 'none'
-                },
-                x: 10,
-                formatter: function() {
-                    if (this.y >= 1000) {
-                        return (this.y / 1000).toFixed(1) + 'K';
-                    }
-                    return this.y;
+        tooltip: {
+            shared: true,
+            valuePrefix: '฿',
+            valueDecimals: 2
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0,
+                dataLabels: {
+                    enabled: true,
+                    format: '฿{point.y:,.0f}'
                 }
             }
-        }
-    },
-    legend: {
-        layout: 'vertical',
-        align: 'right',
-        verticalAlign: 'top',
-        x: -40,
-        y: 80,
-        floating: true,
-        borderWidth: 1,
-        backgroundColor: ((Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'),
-        shadow: true
-    },
-    credits: {
-        enabled: false
-    },
-    series: [{
-        name: 'ยอดขาย',
-        data: {$topProductsJson}.sales,
-        color: '#00c0ef'
-    }]
-});
+        },
+        series: [
+            { name: 'ยอดขาย', data: $priceSales, color: '#3c8dbc' },
+            { name: 'กำไร', data: $priceProfits, color: '#00a65a' }
+        ]
+    });
 
-// Top Products Profit/Loss Chart (New)
-Highcharts.chart('top-products-profit-chart', {
-    chart: {
-        type: 'column'
-    },
-    title: {
-        text: ''
-    },
-    xAxis: {
-        categories: {$topProductsJson}.categories,
-        labels: {
-            rotation: -45,
-            style: {
-                fontSize: '11px'
-            }
-        }
-    },
-    yAxis: {
-        title: {
-            text: 'กำไร (บาท)'
-        }
-    },
-    plotOptions: {
-        column: {
-            dataLabels: {
-                enabled: true,
-                rotation: -45,
-                style: {
-                    fontWeight: 'normal',
-                    textOutline: 'none'
-                },
-                y: -10,
+    // Top 10 Products Chart (Sales)
+    Highcharts.chart('top-products-chart', {
+        chart: { type: 'bar' },
+        title: { text: '' },
+        xAxis: { categories: $topCategories },
+        yAxis: { 
+            title: { text: 'ยอดขาย (บาท)' },
+            labels: {
                 formatter: function() {
-                    if (Math.abs(this.y) >= 1000) {
-                        return (this.y / 1000).toFixed(1) + 'K';
-                    }
-                    return this.y;
+                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
                 }
             }
-        }
-    },
-    series: [{
-        name: 'กำไร/ขาดทุน',
-        data: {$topProductsJson}.profits,
-        color: '#f39c12'
-    }],
-    credits: {
-        enabled: false
-    }
-});
-
-// DataTable Enhancement
-$(document).ready(function() {
-    if ($.fn.DataTable) {
-        $('.table').DataTable({
-            'paging': true,
-            'lengthChange': true,
-            'searching': true,
-            'ordering': true,
-            'info': true,
-            'autoWidth': false,
-            'language': {
-                'url': '//cdn.datatables.net/plug-ins/1.10.19/i18n/Thai.json'
+        },
+        tooltip: {
+            valuePrefix: '฿',
+            valueDecimals: 2
+        },
+        plotOptions: {
+            bar: {
+                dataLabels: {
+                    enabled: true,
+                    format: '฿{point.y:,.0f}'
+                }
             }
-        });
-    }
+        },
+        series: [{ name: 'ยอดขาย', data: $topSales, color: '#f39c12' }]
+    });
+
+    // Top Products Profit Chart
+    Highcharts.chart('top-products-profit-chart', {
+        chart: { type: 'column' },
+        title: { text: '' },
+        xAxis: { categories: $topCategories },
+        yAxis: { 
+            title: { text: 'จำนวนเงิน (บาท)' },
+            labels: {
+                formatter: function() {
+                    return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
+                }
+            }
+        },
+        tooltip: {
+            shared: true,
+            valuePrefix: '฿',
+            valueDecimals: 2
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0,
+                dataLabels: {
+                    enabled: true,
+                    format: '฿{point.y:,.0f}'
+                }
+            }
+        },
+        series: [
+            { name: 'ยอดขาย', data: $topSales, color: '#00c0ef' },
+            { name: 'กำไร', data: $topProfits, color: '#dd4b39' }
+        ]
+    });
+
+    // DataTable
+    $('.table').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Thai.json"
+        },
+        "order": [[3, "desc"]] // Order by Sales column descending
+    });
 });
 JS;
 
@@ -519,5 +408,15 @@ $this->registerJs($js);
     .bg-red {
         background-color: #dd4b39 !important;
         color: #fff;
+    }
+    
+    .panel {
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .panel-heading {
+        background-color: #f8f9fa !important;
+        font-weight: bold;
     }
 </style>
