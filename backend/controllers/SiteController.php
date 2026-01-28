@@ -432,7 +432,7 @@ class SiteController extends Controller
     {
         $query = (new Query())
             ->select([
-                'pb.name',
+                'p.name',
                 'SUM(jtl.qty) as total_qty',
 
                 // รวมยอดขายทั้งหมด
@@ -456,12 +456,11 @@ class SiteController extends Controller
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
-            ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
             ->andFilterWhere(['!=', 'jtl.status', 300])
-            ->groupBy(['pb.name'])
+            ->groupBy(['p.name'])
             ->having('SUM(jtl.qty) > 0')
             ->orderBy(['total_sale' => SORT_DESC])
             ->limit(20);

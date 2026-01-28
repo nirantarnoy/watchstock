@@ -118,7 +118,7 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามยี่ห้อ</h5>
+                        <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามสินค้า</h5>
                     </div>
                     <div class="panel-body">
                         <div id="price-comparison-chart" style="height: 400px;"></div>
