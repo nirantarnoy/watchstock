@@ -111,9 +111,15 @@ class SiteController extends Controller
         $query = (new Query())
             ->select([
                 "DATE(FROM_UNIXTIME(jt.created_at)) as sale_date",
-                "SUM(jtl.qty * jtl.sale_price) as daily_sales"
+                "SUM(jtl.qty * jtl.sale_price) as daily_sales",
+                new \yii\db\Expression("
+                    SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
+                    AS daily_profit
+                ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
+            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
@@ -125,21 +131,25 @@ class SiteController extends Controller
 
         $categories = [];
         $sales = [];
+        $profits = [];
 
         // เติมวันที่ที่ไม่มีข้อมูล (ถ้าต้องการ)
         $current = $fromTimestamp;
-        $dataMap = ArrayHelper::map($data, 'sale_date', 'daily_sales');
+        $dataMapSales = ArrayHelper::map($data, 'sale_date', 'daily_sales');
+        $dataMapProfits = ArrayHelper::map($data, 'sale_date', 'daily_profit');
 
         while ($current <= $toTimestamp) {
             $dateStr = date('Y-m-d', $current);
             $categories[] = $dateStr;
-            $sales[] = isset($dataMap[$dateStr]) ? floatval($dataMap[$dateStr]) : 0;
+            $sales[] = isset($dataMapSales[$dateStr]) ? floatval($dataMapSales[$dateStr]) : 0;
+            $profits[] = isset($dataMapProfits[$dateStr]) ? floatval($dataMapProfits[$dateStr]) : 0;
             $current = strtotime('+1 day', $current);
         }
 
         return [
             'categories' => $categories,
-            'sales' => $sales
+            'sales' => $sales,
+            'profits' => $profits
         ];
     }
 
@@ -151,7 +161,12 @@ class SiteController extends Controller
         $query = (new Query())
             ->select([
                 'pg.name',
-                'SUM(jtl.qty * jtl.sale_price) as total_sales'
+                'SUM(jtl.qty * jtl.sale_price) as total_sales',
+                new \yii\db\Expression("
+                    SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
+                    AS profit
+                ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
@@ -167,14 +182,17 @@ class SiteController extends Controller
 
         $categories = [];
         $sales = [];
+        $profits = [];
         foreach ($data as $item) {
             $categories[] = $item['name'];
             $sales[] = floatval($item['total_sales']);
+            $profits[] = floatval($item['profit']);
         }
 
         return [
             'categories' => $categories,
-            'sales' => $sales
+            'sales' => $sales,
+            'profits' => $profits
         ];
     }
 
