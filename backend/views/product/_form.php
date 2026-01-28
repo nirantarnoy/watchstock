@@ -207,7 +207,7 @@ $this->registerCss('
         </div>
         <br/>
 
-        <?php if (Yii::$app->user->identity->username == 'Mhee' || Yii::$app->user->identity->username == 'Tan' || Yii::$app->user->identity->username == 'mheeadmin'): ?>
+        <?php if (!Yii::$app->user->isGuest && (Yii::$app->user->identity->username == 'Mhee' || Yii::$app->user->identity->username == 'Tan' || Yii::$app->user->identity->username == 'mheeadmin')): ?>
             <div class="row">
                 <div class="col-lg-12">
                     <?php echo $form->field($model, 'edit_stock_qty')->widget(\toxor88\switchery\Switchery::className(), ['options' => ['label' => '', 'class' => 'form-control']])->label() ?>

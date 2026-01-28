@@ -391,7 +391,7 @@
                                 <p>สรุปการขาย</p>
                             </a>
                         </li>
-                        <?php if (\Yii::$app->user->identity->group_id == 3): ?>
+                        <?php if (!Yii::$app->user->isGuest && \Yii::$app->user->identity->group_id == 3): ?>
                             <!--                            3-->
                             <li class="nav-item">
                                 <a href="index.php?r=pos/manageclose" class="nav-link manageclose">
@@ -584,7 +584,7 @@
                 </li>
                 <?php // if (isset($_SESSION['user_group_id'])): ?>
                 <?php //if ($_SESSION['user_group_id'] == 1 || $_SESSION['user_group_id'] == 3): ?>
-                <?php if (\Yii::$app->user->identity->username == 'iceadmin'): ?>
+                <?php if (!Yii::$app->user->isGuest && \Yii::$app->user->identity->username == 'iceadmin'): ?>
                     <li class="nav-item has-treeview has-sub">
                         <a href="#" class="nav-link">
                             <i class="nav-icon fas fa-user"></i>

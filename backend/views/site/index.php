@@ -211,7 +211,7 @@ $priceComparisonJson = json_encode($priceComparisonData);
 $topProductsJson = json_encode($topProducts);
 
 $js = <<<JS
-// Price Comparison Chart - เรียงตามกำไรมากสุด
+// Price Comparison Chart - เรียงตามยอดขายมากสุด
 let chartData = {$priceComparisonJson};
 
 // รวมข้อมูลและเรียงลำดับ
@@ -221,8 +221,8 @@ let combinedData = chartData.categories.map((category, index) => ({
     profit: chartData.profits[index]
 }));
 
-// เรียงตามกำไรจากมากไปน้อย
-combinedData.sort((a, b) => b.profit - a.profit);
+// เรียงตามยอดขายจากมากไปน้อย
+combinedData.sort((a, b) => b.salePrice - a.salePrice);
 
 // แยกข้อมูลที่เรียงแล้ว
 let sortedCategories = combinedData.map(item => item.category);
@@ -277,6 +277,12 @@ Highcharts.chart('price-comparison-chart', {
             borderWidth: 0,
             dataLabels: {
                 enabled: true,
+                rotation: -45,
+                style: {
+                    fontWeight: 'normal',
+                    textOutline: 'none'
+                },
+                y: -10,
                 formatter: function() {
                     if (this.y >= 1000) {
                         return (this.y / 1000).toFixed(1) + 'K';
@@ -314,7 +320,7 @@ Highcharts.chart('top-products-chart', {
     yAxis: {
         min: 0,
         title: {
-            text: 'จำนวนขาย (ชิ้น)',
+            text: 'ยอดขาย (บาท)',
             align: 'high'
         },
         labels: {
@@ -322,12 +328,24 @@ Highcharts.chart('top-products-chart', {
         }
     },
     tooltip: {
-        valueSuffix: ' ชิ้น'
+        valueSuffix: ' บาท'
     },
     plotOptions: {
         bar: {
             dataLabels: {
-                enabled: true
+                enabled: true,
+                rotation: -45,
+                style: {
+                    fontWeight: 'normal',
+                    textOutline: 'none'
+                },
+                x: 10,
+                formatter: function() {
+                    if (this.y >= 1000) {
+                        return (this.y / 1000).toFixed(1) + 'K';
+                    }
+                    return this.y;
+                }
             }
         }
     },
@@ -346,8 +364,8 @@ Highcharts.chart('top-products-chart', {
         enabled: false
     },
     series: [{
-        name: 'จำนวนขาย',
-        data: {$topProductsJson}.quantities,
+        name: 'ยอดขาย',
+        data: {$topProductsJson}.sales,
         color: '#00c0ef'
     }]
 });
@@ -406,13 +424,13 @@ $this->registerJs($js);
 
     .info-box-text {
         text-transform: uppercase;
-        font-weight: bold;
+        font-weight: normal;
         font-size: 14px;
     }
 
     .info-box-number {
         display: block;
-        font-weight: bold;
+        font-weight: normal;
         font-size: 20px;
     }
 

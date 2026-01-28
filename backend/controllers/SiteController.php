@@ -358,8 +358,6 @@ class SiteController extends Controller
                 'SUM(jtl.qty) as total_qty',
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 'AVG(jtl.sale_price) as avg_price',
-//                'AVG(jtl.line_price) as cost_price',
-//                'SUM(jtl.qty * jtl.sale_price) - SUM(jtl.qty * jtl.line_price) as profit'
                 new \yii\db\Expression("
                     CASE 
                         WHEN COALESCE(AVG(jtl.line_price), 0) = 0 
@@ -377,9 +375,10 @@ class SiteController extends Controller
             ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3,9]]) // สมมติว่า status 1 = ขายสำเร็จ
-            ->andFilterWhere(['!=','jtl.status',300])
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
+            ->andFilterWhere(['!=', 'jtl.status', 300])
             ->groupBy(['p.id', 'p.code', 'p.name'])
+            ->having('SUM(jtl.qty) > 0')
             ->orderBy(['total_sales' => SORT_DESC]);
 
         return $query->all();
@@ -460,11 +459,11 @@ class SiteController extends Controller
             ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
             ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3,9]])
-            ->andFilterWhere(['!=','jtl.status',300])
+            ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
+            ->andFilterWhere(['!=', 'jtl.status', 300])
             ->groupBy(['pb.name'])
             ->having('SUM(jtl.qty) > 0')
-            ->orderBy(['total_qty' => SORT_DESC])
+            ->orderBy(['total_sale' => SORT_DESC])
             ->limit(20);
 
         $data = $query->all();
@@ -477,13 +476,13 @@ class SiteController extends Controller
         foreach ($data as $item) {
             $categories[] = $item['name'];
             $salePrices[] = floatval($item['total_sale']); // ยอดขายรวม
-            $profits[]    = floatval($item['profit']);      // กำไร
+            $profits[] = floatval($item['profit']);      // กำไร
         }
 
         return [
             'categories' => $categories,
             'salePrices' => $salePrices,
-            'profits'    => $profits
+            'profits' => $profits
         ];
     }
 
@@ -549,7 +548,7 @@ class SiteController extends Controller
             ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
             ->andFilterWhere(['!=','jtl.status',300])
             ->groupBy(['p.id', 'p.name', 'p.code'])
-            ->orderBy(['total_qty' => SORT_DESC])
+            ->orderBy(['total_sales' => SORT_DESC])
             ->limit(10);
 
         $data = $query->all();

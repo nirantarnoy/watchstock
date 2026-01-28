@@ -393,6 +393,15 @@ class ProductController extends Controller
                                 $model_trans->status = 1;
                                 $model_trans->save(false);
 
+                                // Add JournalTransLine for destination warehouse
+                                $model_trans_to = new \common\models\JournalTransLine();
+                                $model_trans_to->product_id = $model->id;
+                                $model_trans_to->journal_trans_id = $model_journal_trans->id;
+                                $model_trans_to->warehouse_id = $to_wh;
+                                $model_trans_to->qty = $move_qty;
+                                $model_trans_to->status = 1;
+                                $model_trans_to->save(false);
+
                                 // หา stock คลังปลายทาง
                                 $stock_to = \backend\models\Stocksum::find()
                                     ->where(['product_id' => $model->id, 'warehouse_id' => $to_wh])

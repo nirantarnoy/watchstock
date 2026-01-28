@@ -7,10 +7,10 @@ use kartik\date\DatePicker;
 
 $company_id = 1;
 $branch_id = 1;
-if (!empty(\Yii::$app->user->identity->company_id)) {
+if (!Yii::$app->user->isGuest && !empty(\Yii::$app->user->identity->company_id)) {
     $company_id = \Yii::$app->user->identity->company_id;
 }
-if (!empty(\Yii::$app->user->identity->branch_id)) {
+if (!Yii::$app->user->isGuest && !empty(\Yii::$app->user->identity->branch_id)) {
     $branch_id = \Yii::$app->user->identity->branch_id;
 }
 

@@ -4,10 +4,10 @@ use kartik\daterange\DateRangePicker;
 
 $company_id = 0;
 $branch_id = 0;
-if (!empty(\Yii::$app->user->identity->company_id)) {
+if (!Yii::$app->user->isGuest && !empty(\Yii::$app->user->identity->company_id)) {
     $company_id = \Yii::$app->user->identity->company_id;
 }
-if (!empty(\Yii::$app->user->identity->branch_id)) {
+if (!Yii::$app->user->isGuest && !empty(\Yii::$app->user->identity->branch_id)) {
     $branch_id = \Yii::$app->user->identity->branch_id;
 }
 
