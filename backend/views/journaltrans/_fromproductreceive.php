@@ -163,6 +163,20 @@ if ($create_type == 7) {
 ?>
 
     <div class="journal-trans-form">
+        <!-- Modal สำหรับแสดงตอนกำลังบันทึก -->
+        <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-4">
+                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h4>กำลังบันทึกข้อมูล...</h4>
+                        <p class="text-muted mb-0">กรุณารอสักครู่ ระบบกำลังประมวลผลรายการของคุณ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
         <?php $model->trans_type_id = $model->isNewRecord ? $create_type : $model->trans_type_id ?>
@@ -389,35 +403,18 @@ $(document).ready(function() {
         width: '100%'
     });
      
-      // Initialize all existing select2
-    // setupSelect2('.product-select');
-    // setupSelect2('.select2-single');
+    // ป้องกันการกดบันทึกซ้ำและแสดง modal กำลังบันทึก
+    $('#dynamic-form').on('beforeSubmit', function() {
+        var \$form = $(this);
+        if (\$form.find('.has-error').length) {
+            return false;
+        }
+        \$form.find('button[type="submit"]').prop('disabled', true);
+        var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        loadingModal.show();
+        return true;
+    });
 });
-
-// function setupSelect2(selector) {
-//         $(selector).each(function() {
-//             var \$element = $(this);
-//            
-//             // Skip if already initialized
-//             if (\$element.hasClass('select2-hidden-accessible')) {
-//                 return;
-//             }
-//            
-//             // Get placeholder text
-//             var placeholder = \$element.find('option:first').text() || '-- เลือก --';
-//            
-//             // Initialize Select2
-//             \$element.select2({
-//                 theme: 'default',
-//                 width: '100%',
-//                 placeholder: placeholder,
-//                 allowClear: true,
-//                 minimumResultsForSearch: 5
-//             });
-//         });
-// }
-    
-   
 
 function initializeDynamicForm() {
     // Create main add button
@@ -546,43 +543,6 @@ $(window).on('load', function() {
             });
         });
     }
-    
-    // Initialize all existing select2
-    //setupSelect2('.product-select');
-    //setupSelect2('.select2-single');
-    
-    // // Fix for dynamic form
-    // var dynamicFormReady = false;
-    //
-    // $('.dynamicform_wrapper').on('afterInsert', function(e, item) {
-    //     if (!dynamicFormReady) {
-    //         dynamicFormReady = true;
-    //        
-    //         setTimeout(function() {
-    //             // Find new select elements
-    //             var \$newSelects = $(item).find('select[name*="product_id"]');
-    //            
-    //             // Remove any existing Select2
-    //             \$newSelects.each(function() {
-    //                 if ($(this).hasClass('select2-hidden-accessible')) {
-    //                     $(this).select2('destroy');
-    //                 }
-    //             });
-    //            
-    //             // Remove old containers
-    //             $(item).find('.select2-container').remove();
-    //            
-    //             // Initialize Select2
-    //             setupSelect2(\$newSelects);
-    //            
-    //             dynamicFormReady = false;
-    //         }, 200);
-    //     }
-    //    
-    //     // Update other fields
-    //     updateItemNumbers();
-    //     updateWarehouseValue(item);
-    // });
     
     // Function to update item numbers
     function updateItemNumbers() {

@@ -193,6 +193,21 @@ if($create_type == 10){
 <?php endif; ?>
 
     <div class="journal-trans-form">
+        <!-- Modal สำหรับแสดงตอนกำลังบันทึก -->
+        <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-4">
+                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h4>กำลังบันทึกข้อมูล...</h4>
+                        <p class="text-muted mb-0">กรุณารอสักครู่ ระบบกำลังประมวลผลรายการของคุณ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <input type="hidden" id="create-type" value="<?= $create_type ?>">
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
         <?php $model->trans_type_id = $model->isNewRecord ? $create_type : $model->trans_type_id ?>
@@ -429,6 +444,19 @@ $(document).ready(function() {
         allowClear: true,
         width: '100%',
         minimumResultsForSearch: 0
+    });
+    
+    // ป้องกันการกดบันทึกซ้ำและแสดง modal กำลังบันทึก
+    $('#dynamic-form').on('beforeSubmit', function() {
+        var \$form = $(this);
+        if (\$form.find('.has-error').length) {
+            return false;
+        }
+        \$form.find('button[type="submit"]').prop('disabled', true);
+        var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        loadingModal.show();
+        return true;
+       //return false;
     });
 });
 
