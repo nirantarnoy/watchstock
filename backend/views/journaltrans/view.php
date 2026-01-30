@@ -460,6 +460,13 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     },
                 ],
                 [
+                    'label' => 'ต้นทุนเฉลี่ย',
+                    'attribute' => 'line_price',
+                    'format' => ['decimal', 2],
+                    'headerOptions' => ['style' => 'text-align:right'],
+                    'contentOptions' => ['style' => 'text-align:right'],
+                ],
+                [
                     'attribute' => 'qty',
                     'format' => ['decimal', 2],
                     'headerOptions' => ['style' => 'text-align:right'],

@@ -323,6 +323,7 @@ class ProductController extends Controller
                             $model_trans->journal_trans_id = $model_journal_trans->id;
                             $model_trans->warehouse_id = $line_warehouse[$i];
                             $model_trans->qty = $line_qty[$i];
+                            $model_trans->cost_price = $model->cost_price; // Save current cost price
                             $model_trans->status = 1;
                             if($model_trans->save(false)){
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
@@ -493,6 +494,7 @@ class ProductController extends Controller
 //                }
 
                 $this->updateProductStock($model->id);
+                \backend\models\Product::recalculateCostAvg($model->id);
                 if($removelist!=null){
                     $xdel = explode(',', $removelist);
                     for($i=0;$i<count($xdel);$i++){

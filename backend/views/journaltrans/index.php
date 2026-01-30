@@ -156,6 +156,19 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             [
+                'label' => 'ต้นทุน',
+                'headerOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
+                'format' => 'raw',
+                'value' => function ($model) {
+                    $html = '';
+                    foreach ($model->journalTransLines as $line) {
+                        $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($line->line_price, 2) . '</div>';
+                    }
+                    return $html;
+                }
+            ],
+            [
                 'label' => 'คงเหลือ',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],

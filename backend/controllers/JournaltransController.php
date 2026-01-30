@@ -262,6 +262,12 @@ class JournaltransController extends Controller
                         $balance = $this->getStockBalance($modelLine->product_id);
                         $modelLine->balance = $balance;
                         $modelLine->save(false);
+
+                        if($model->trans_type_id == 10){
+                            $this->updateProductPrice($modelLine->product_id,$modelLine->sale_price); 
+                        }else{
+                            $this->updateProductPrice($modelLine->product_id,0); // Recalculate cost_avg only
+                        }
                     }
                 }
                 if ($flag) {
@@ -420,15 +426,14 @@ class JournaltransController extends Controller
     }
 
     public function updateProductPrice($product_id,$new_price){
-        if($product_id && $new_price >0){
-            $cost_avg = 0;
-             
-            $sql = "SELECT AVG(jl.cost_price) as cost_avg FROM journal_trans_line jl INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id WHERE jl.product_id = $product_id AND jt.trans_type_id = 10";
-            $cost_avg = Yii::$app->db->createCommand($sql)->queryScalar();
+        if($product_id){
+            $cost_avg = \backend\models\Product::recalculateCostAvg($product_id);
 
             $model = \backend\models\Product::find()->where(['id'=>$product_id])->one();
             if($model){
-                $model->sale_price = $new_price;
+                if ($new_price > 0) {
+                    $model->sale_price = $new_price;
+                }
                 $model->cost_avg = $cost_avg;
                 $model->save(false);
             }

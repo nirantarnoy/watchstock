@@ -207,4 +207,38 @@ class Product extends \common\models\Product
 
 
 
+    public static function recalculateCostAvg($product_id)
+    {
+        if (!$product_id) return 0;
+
+        // Calculate weighted average cost from:
+        // 1. Opening Balance (Some units might have been entered during product creation/update)
+        // 2. Adjust In (Type 10) transactions
+        
+        // Sum(qty * cost_price) / Sum(qty)
+        
+        $sql = "SELECT SUM(jl.qty * jl.cost_price) / SUM(jl.qty) as cost_avg 
+                FROM journal_trans_line jl 
+                INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id 
+                WHERE jl.product_id = :product_id 
+                AND jt.trans_type_id IN (1, 10) 
+                AND jl.qty > 0 
+                AND jl.cost_price > 0";
+        
+        $cost_avg = Yii::$app->db->createCommand($sql, [':product_id' => $product_id])->queryScalar();
+        
+        if ($cost_avg > 0) {
+            Product::updateAll(['cost_avg' => $cost_avg], ['id' => $product_id]);
+        } else {
+            // Fallback to cost_price if no transactions found
+            $model = Product::findOne($product_id);
+            if ($model && $model->cost_price > 0) {
+                $model->cost_avg = $model->cost_price;
+                $model->save(false);
+                $cost_avg = $model->cost_price;
+            }
+        }
+        
+        return $cost_avg ?: 0;
+    }
 }

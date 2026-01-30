@@ -361,9 +361,9 @@ if($create_type == 10){
                                         <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
                                         <?= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price']) ?>
                                     </div>
-                                    <div class="col-sm-2" style="<?= $create_type == 3 ? '' : 'display: none;' ?>">
+                                    <div class="col-sm-2">
                                         <label for="">ต้นทุนเฉลี่ย</label>
-                                        <input type="text" class="form-control line-cost-avg-price" name="line_cost_avg_price" readonly value="">
+                                        <input type="text" class="form-control line-cost-avg-price" name="line_cost_avg_price" readonly value="<?= !$modelLine->isNewRecord ? \backend\models\Product::findCostAvgPrice($modelLine->product_id) : '' ?>">
                                     </div>
                                   <div class="col-sm-2" style="<?= $create_type == 10 ? '' : 'display: none;' ?>">
                                         <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
