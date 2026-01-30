@@ -114,8 +114,13 @@ class SiteController extends Controller
                 "SUM(jtl.qty * jtl.sale_price) as daily_sales",
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
-                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
-                    AS daily_profit
+                    SUM(jtl.qty * 
+                        CASE 
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            ELSE p.cost_price 
+                        END
+                    ) AS daily_profit
                 ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
@@ -164,8 +169,13 @@ class SiteController extends Controller
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
-                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
-                    AS profit
+                    SUM(jtl.qty * 
+                        CASE 
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            ELSE p.cost_price 
+                        END
+                    ) AS profit
                 ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
@@ -430,28 +440,6 @@ class SiteController extends Controller
      */
     private function getSalesByProduct($fromTimestamp, $toTimestamp)
     {
-//        $query = (new Query())
-//            ->select([
-//                'p.id',
-//                'p.code',
-//                'p.name',
-//                'SUM(jtl.qty) as total_qty',
-//                'SUM(jtl.qty * jtl.sale_price) as total_sales',
-//                'AVG(jtl.sale_price) as avg_price',
-//                'AVG(p.cost_price) as cost_price',
-//                'SUM(jtl.qty * p.sale_price) - SUM(jtl.qty * p.cost_price) as profit'
-//            ])
-//            ->from(['jtl' => 'journal_trans_line'])
-//            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
-//            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
-//            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-//            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => 3]) // สมมติว่า status 1 = ขายสำเร็จ
-//            ->groupBy(['p.id', 'p.name', 'p.cost_price'])
-//            ->having('SUM(jt.qty) > 0')
-//            ->orderBy(['total_sales' => SORT_DESC]);
-//
-//        return $query->all();
-
         $query = (new Query())
             ->select([
                 'p.id',
@@ -463,15 +451,20 @@ class SiteController extends Controller
                 'AVG(jtl.sale_price) as avg_price',
                 new \yii\db\Expression("
                     CASE 
-                        WHEN COALESCE(AVG(jtl.line_price), 0) = 0 
-                        THEN p.cost_price 
-                        ELSE AVG(jtl.line_price) 
+                        WHEN COALESCE(AVG(jtl.line_price), 0) > 0 THEN AVG(jtl.line_price)
+                        WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                        ELSE p.cost_price 
                     END AS cost_price
                 "),
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
-                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
-                    AS profit
+                    SUM(jtl.qty * 
+                        CASE 
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            ELSE p.cost_price 
+                        END
+                    ) AS profit
                 ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
@@ -544,7 +537,13 @@ class SiteController extends Controller
                 // ต้นทุนถ่วงน้ำหนัก (ใช้ line_price ถ้ามี ไม่งั้นใช้ p.cost_price)
                 new \yii\db\Expression("
                 (
-                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
+                    SUM(jtl.qty * 
+                        CASE 
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            ELSE p.cost_price 
+                        END
+                    )
                     / SUM(jtl.qty)
                 ) AS cost_price
             "),
@@ -553,8 +552,13 @@ class SiteController extends Controller
                 new \yii\db\Expression("
                 SUM(jtl.sale_price * jtl.qty)
                 -
-                SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
-                AS profit
+                SUM(jtl.qty * 
+                    CASE 
+                        WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                        WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                        ELSE p.cost_price 
+                    END
+                ) AS profit
             ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
@@ -645,8 +649,13 @@ class SiteController extends Controller
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
-                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
-                    AS profit
+                    SUM(jtl.qty * 
+                        CASE 
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            ELSE p.cost_price 
+                        END
+                    ) AS profit
                 ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
