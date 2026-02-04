@@ -1607,4 +1607,67 @@ class ProductController extends Controller
 
         return $content;
     }
+
+    public function actionExportCheckStock()
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $headers = [
+            'A1' => 'Code',
+            'B1' => 'Name',
+            'C1' => 'Master Stock Qty',
+            'D1' => 'Warehouse',
+            'E1' => 'Warehouse Qty',
+            'F1' => 'Reserve Qty',
+        ];
+
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        $headerStyle = [
+            'font' => ['bold' => true],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'borders' => ['bottom' => ['borderStyle' => Border::BORDER_THIN]]
+        ];
+        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+
+        // Fetch Data
+        $sql = "SELECT p.code, p.name, p.stock_qty, s.qty, s.reserv_qty, w.name as warehouse_name 
+                FROM product p 
+                LEFT JOIN stock_sum s ON p.id = s.product_id 
+                LEFT JOIN warehouse w ON s.warehouse_id = w.id
+                ORDER BY p.code, w.name";
+        $data = Yii::$app->db->createCommand($sql)->queryAll();
+
+        $row = 2;
+        foreach ($data as $item) {
+            $sheet->setCellValue('A' . $row, $item['code']);
+            $sheet->setCellValue('B' . $row, $item['name']);
+            $sheet->setCellValue('C' . $row, $item['stock_qty']);
+            $sheet->setCellValue('D' . $row, $item['warehouse_name'] ?? '-');
+            $sheet->setCellValue('E' . $row, $item['qty'] ?? 0);
+            $sheet->setCellValue('F' . $row, $item['reserv_qty'] ?? 0);
+            $row++;
+        }
+
+        foreach(range('A','F') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        // Set response headers for download
+        \Yii::$app->response->format = Response::FORMAT_RAW;
+        \Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        \Yii::$app->response->headers->add('Content-Disposition', 'attachment;filename="stock_check_export_' . date('Y-m-d_H-i-s') . '.xlsx"');
+        \Yii::$app->response->headers->add('Cache-Control', 'max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        return $content;
+    }
 }
