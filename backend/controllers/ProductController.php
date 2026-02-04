@@ -341,6 +341,7 @@ class ProductController extends Controller
                                     $model_sum->product_id = $model->id;
                                     $model_sum->warehouse_id = $line_warehouse[$i];
                                     $model_sum->qty = $line_qty[$i];
+                                    $model_sum->reserv_qty = 0;
                                     if($model_sum->save(false)){
 //                                        $model->stock_qty = $line_qty[$i];
 //                                        $model->save(false);
@@ -454,6 +455,7 @@ class ProductController extends Controller
                                     $stock_to->product_id = $model->id;
                                     $stock_to->warehouse_id = $to_wh;
                                     $stock_to->qty = $move_qty;
+                                    $stock_to->reserv_qty = 0;
                                     $stock_to->save(false);
                                 }
                             }

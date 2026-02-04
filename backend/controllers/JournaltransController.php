@@ -612,20 +612,14 @@ class JournaltransController extends Controller
     function updateProductStock($product_id)
     {
         if ($product_id) {
-            //    $model_stock = \backend\models\Stocksum::find()->where(['product_id'=>$product_id])->andFilterWhere(['is not','warehouse_id',new Expression('null')])->all();
-            $model_stock = \backend\models\Stocksum::find()->where(['product_id' => $product_id])->all();
-            if ($model_stock) {
-                $all_stock = 0;
-                foreach ($model_stock as $model) {
-                    if ($model->warehouse_id == null || $model->warehouse_id == '') continue;
-                    $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
-                    $all_stock += ($model->qty + $res_qty); // รวมจํานวน + จํานวนจอง
-                }
+            $total_stock = \backend\models\Stocksum::find()
+                ->where(['product_id' => $product_id])
+                ->sum('qty + COALESCE(reserv_qty, 0)');
 
-                \backend\models\Product::updateAll(['stock_qty' => $all_stock], ['id' => $product_id]);
-            }else{
-                \backend\models\Product::updateAll(['stock_qty' => 0], ['id' => $product_id]);
-            }
+            \backend\models\Product::updateAll(
+                ['stock_qty' => $total_stock ?: 0],
+                ['id' => $product_id]
+            );
         }
     }
 
@@ -1257,17 +1251,7 @@ class JournaltransController extends Controller
         $model_product = \backend\models\Product::find()->where(['status' => 1])->all();
         if ($model_product) {
             foreach ($model_product as $value) {
-                $model_stock = \backend\models\Stocksum::find()->where(['product_id' => $value->id])->all();
-                if ($model_stock) {
-                    $all_stock = 0;
-                    foreach ($model_stock as $model) {
-                        if ($model->warehouse_id == null || $model->warehouse_id == '') continue;
-                        $res_qty = $model->reserv_qty != null ? $model->reserv_qty : 0;
-                        $all_stock += ($model->qty + $res_qty); // รวมจํานวน + จํานวนจอง
-                    }
-
-                    \backend\models\Product::updateAll(['stock_qty' => $all_stock], ['id' => $value->id]);
-                }
+                $this->updateProductStock($value->id);
             }
         }
     }
