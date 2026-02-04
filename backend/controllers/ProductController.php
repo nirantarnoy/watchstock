@@ -1621,6 +1621,8 @@ class ProductController extends Controller
             'D1' => 'Warehouse',
             'E1' => 'Warehouse Qty',
             'F1' => 'Reserve Qty',
+            'G1' => 'Total (Qty + Reserve)',
+            'H1' => 'Status',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -1632,28 +1634,66 @@ class ProductController extends Controller
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             'borders' => ['bottom' => ['borderStyle' => Border::BORDER_THIN]]
         ];
-        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
 
         // Fetch Data
-        $sql = "SELECT p.code, p.name, p.stock_qty, s.qty, s.reserv_qty, w.name as warehouse_name 
+        $sql = "SELECT p.id, p.code, p.name, p.stock_qty, s.qty, s.reserv_qty, w.name as warehouse_name 
                 FROM product p 
                 LEFT JOIN stock_sum s ON p.id = s.product_id 
                 LEFT JOIN warehouse w ON s.warehouse_id = w.id
+                WHERE p.status = 1
                 ORDER BY p.code, w.name";
         $data = Yii::$app->db->createCommand($sql)->queryAll();
 
+        // Pre-calculate sum per product
+        $productSums = [];
+        foreach ($data as $item) {
+            $pid = $item['id'];
+            if (!isset($productSums[$pid])) {
+                $productSums[$pid] = 0;
+            }
+            $qty = isset($item['qty']) ? (float)$item['qty'] : 0;
+            $res = isset($item['reserv_qty']) ? (float)$item['reserv_qty'] : 0;
+            $productSums[$pid] += ($qty + $res);
+        }
+
         $row = 2;
         foreach ($data as $item) {
+            $pid = $item['id'];
+            $stock_qty = (float)$item['stock_qty'];
+            $wh_qty = isset($item['qty']) ? (float)$item['qty'] : 0;
+            $res_qty = isset($item['reserv_qty']) ? (float)$item['reserv_qty'] : 0;
+            $line_total = $wh_qty + $res_qty;
+            
+            $total_sum = isset($productSums[$pid]) ? $productSums[$pid] : 0;
+            
+            $status = 'Match';
+            if (abs($stock_qty - $total_sum) > 0.0001) {
+                if ($stock_qty > $total_sum) {
+                    $status = 'Master > Sum (Diff: ' . ($stock_qty - $total_sum) . ')';
+                } else {
+                    $status = 'Master < Sum (Diff: ' . ($stock_qty - $total_sum) . ')';
+                }
+            }
+
             $sheet->setCellValue('A' . $row, $item['code']);
             $sheet->setCellValue('B' . $row, $item['name']);
-            $sheet->setCellValue('C' . $row, $item['stock_qty']);
+            $sheet->setCellValue('C' . $row, $stock_qty);
             $sheet->setCellValue('D' . $row, $item['warehouse_name'] ?? '-');
-            $sheet->setCellValue('E' . $row, $item['qty'] ?? 0);
-            $sheet->setCellValue('F' . $row, $item['reserv_qty'] ?? 0);
+            $sheet->setCellValue('E' . $row, $wh_qty);
+            $sheet->setCellValue('F' . $row, $res_qty);
+            $sheet->setCellValue('G' . $row, $line_total);
+            $sheet->setCellValue('H' . $row, $status);
+            
+            // Highlight mismatch rows
+            if ($status !== 'Match') {
+                 $sheet->getStyle('H' . $row)->getFont()->getColor()->setRGB('FF0000');
+            }
+
             $row++;
         }
 
-        foreach(range('A','F') as $columnID) {
+        foreach(range('A','H') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 

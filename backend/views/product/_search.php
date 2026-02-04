@@ -31,6 +31,7 @@ unset($currentParams['r']); // ลบ route parameter
                 <?= Html::a(Yii::t('app', '<i class="fa fa-plus"></i> สร้างใหม่'), ['create'], ['class' => 'btn btn-success']) ?>
                 <?= Html::a(Yii::t('app', '<i class="fa fa-download"></i> Export'), array_merge(['export-products'], $currentParams), ['class' => 'btn btn-info','data-pjax' => '0', // ปิดการทำงานของ PJAX สำหรับลิงค์นี้
                     'target' => '_blank']) ?>
+                <?= Html::a('<i class="fa fa-file-excel"></i> Export Check Stock', ['export-check-stock'], ['class' => 'btn btn-warning', 'target' => '_blank', 'data-pjax' => '0']) ?>
             </p>
         </div>
         <div class="col-lg-2" style="text-align: right">

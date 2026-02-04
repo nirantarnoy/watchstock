@@ -28,9 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 
         <?php echo $this->render('_search', ['model' => $searchModel, 'viewstatus' => $viewstatus]); ?>
-        <div style="text-align: right; margin-bottom: 10px;">
-             <a href="<?=Url::to(['product/export-check-stock'])?>" class="btn btn-info" target="_blank"><i class="fa fa-file-excel"></i> Export Check Stock</a>
-        </div>
+
         <div id="div-delete-btn" style="padding: 10px;display: none">
             <?php echo Html::button('ลบ', [
                 'class' => 'btn btn-danger',
