@@ -355,6 +355,7 @@ Highcharts.setOptions({
         title: { text: 'ยอดขายและกำไรตามยี่ห้อ' },
         xAxis: { categories: categories },
         yAxis: { 
+            reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
             labels: {
                 formatter: function() {
@@ -404,6 +405,7 @@ Highcharts.setOptions({
             }
         },
         yAxis: { 
+            reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
             labels: {
                 formatter: function() {
@@ -452,6 +454,7 @@ Highcharts.setOptions({
         title: { text: 'ยอดขายและกำไรแยกตามกลุ่มสินค้า' },
         xAxis: { categories: groupCategories },
         yAxis: { 
+            reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
             labels: {
                 formatter: function() {
@@ -494,6 +497,7 @@ Highcharts.setOptions({
         title: { text: 'เปรียบเทียบกำไรขาดทุน สินค้าขายดี' },
         xAxis: { categories: topCategories },
         yAxis: { 
+            reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
             labels: {
                 formatter: function() {
