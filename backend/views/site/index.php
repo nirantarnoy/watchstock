@@ -418,7 +418,8 @@ Highcharts.setOptions({
         },
         plotOptions: {
             areaspline: {
-                fillOpacity: 0.1,
+                stacking: 'normal',
+                fillOpacity: 0.8,
                 marker: {
                     enabled: false,
                     states: {
@@ -430,13 +431,13 @@ Highcharts.setOptions({
             }
         },
         series: [{
-            name: 'ยอดขาย',
-            data: trendSales,
-            color: '#007bff'
-        }, {
             name: 'กำไร',
             data: trendProfits,
             color: '#28a745'
+        }, {
+            name: 'ต้นทุน',
+            data: trendSales.map((val, i) => val - trendProfits[i]),
+            color: '#007bff'
         }]
     });
 })();

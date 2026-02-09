@@ -116,8 +116,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
                     ) AS daily_profit
@@ -171,8 +171,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
                     ) AS profit
@@ -451,8 +451,8 @@ class SiteController extends Controller
                 'AVG(jtl.sale_price) as avg_price',
                 new \yii\db\Expression("
                     CASE 
-                        WHEN COALESCE(AVG(jtl.line_price), 0) > 0 THEN AVG(jtl.line_price)
                         WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                        WHEN COALESCE(AVG(jtl.line_price), 0) > 0 THEN AVG(jtl.line_price)
                         ELSE p.cost_price 
                     END AS cost_price
                 "),
@@ -460,8 +460,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
                     ) AS profit
@@ -539,8 +539,8 @@ class SiteController extends Controller
                 (
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
                     )
@@ -554,8 +554,8 @@ class SiteController extends Controller
                 -
                 SUM(jtl.qty * 
                     CASE 
-                        WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                         WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                        WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                         ELSE p.cost_price 
                     END
                 ) AS profit
@@ -651,8 +651,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
+                            WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
                     ) AS profit
