@@ -115,8 +115,8 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
         <br/>
 
         <div class="row">
-            <!-- Price Comparison Chart -->
-            <div class="col-md-6">
+            <!-- Price Comparison Chart (Full Width) -->
+            <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <div class="row">
@@ -131,7 +131,33 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
                         </div>
                     </div>
                     <div class="panel-body">
-                        <div id="price-comparison-chart" style="height: 400px;"></div>
+                        <div id="price-comparison-chart" style="height: 450px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sales Trend Chart -->
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">แนวโน้มยอดขายและกำไรรายวัน</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div id="sales-trend-chart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sales by Group Chart (Moved here) -->
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">ยอดขายและกำไรแยกตามกลุ่มสินค้า</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div id="sales-by-group-chart" style="height: 400px;"></div>
                     </div>
                 </div>
             </div>
@@ -166,34 +192,13 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
                     </div>
                 </div>
             </div>
-
-            <!-- Sales Trend Chart -->
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h5 class="panel-title">แนวโน้มยอดขายและกำไรรายวัน</h5>
-                    </div>
-                    <div class="panel-body">
-                        <div id="sales-trend-chart" style="height: 400px;"></div>
-                    </div>
-                </div>
-            </div>
         </div>
         <br/>
         
         <!-- Charts Row 2 -->
         <div class="row">
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h5 class="panel-title">ยอดขายและกำไรแยกตามกลุ่มสินค้า</h5>
-                    </div>
-                    <div class="panel-body">
-                        <div id="sales-by-group-chart" style="height: 400px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
+            <!-- Top Products Profit Chart (Full Width) -->
+            <div class="col-md-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h5 class="panel-title">เปรียบเทียบกำไรขาดทุน สินค้าขายดี</h5>
