@@ -423,7 +423,13 @@ $('#save-brands-btn').on('click', function() {
     const profits = $profitsJson;
 
     Highcharts.chart('price-comparison-chart', {
-        chart: { type: 'column' },
+        chart: { 
+            type: 'column',
+            scrollablePlotArea: {
+                minWidth: 1000,
+                scrollPositionX: 0
+            }
+        },
         title: { text: 'ยอดขายและกำไรตามยี่ห้อ' },
         xAxis: { 
             categories: categories,
@@ -444,11 +450,13 @@ $('#save-brands-btn').on('click', function() {
         },
         tooltip: {
             shared: true,
-            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b> ({point.percentage:.1f}%)<br/>'
+            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>฿{point.y:,.2f}</b><br/>'
         },
         plotOptions: { 
             column: { 
-                stacking: 'normal',
+                grouping: false,
+                shadow: false,
+                borderWidth: 0,
                 minPointLength: 5,
                 dataLabels: {
                     enabled: true,
@@ -460,7 +468,7 @@ $('#save-brands-btn').on('click', function() {
                         if (this.y >= 1000) return Highcharts.numberFormat(this.y / 1000, 1) + 'K';
                         return Highcharts.numberFormat(this.y, 0, '.', ',');
                     },
-                    y: 5,
+                    y: -5, 
                     allowOverlap: true,
                     crop: false,
                     overflow: 'none',
@@ -471,13 +479,17 @@ $('#save-brands-btn').on('click', function() {
             } 
         },
         series: [{
+            name: 'ยอดขาย',
+            data: salePrices,
+            color: '#007bff',
+            pointPadding: 0,
+            pointPlacement: 0
+        }, {
             name: 'กำไร',
             data: profits,
-            color: '#28a745'
-        }, {
-            name: 'ต้นทุน',
-            data: salePrices.map((val, i) => val - profits[i]),
-            color: '#007bff'
+            color: '#28a745',
+            pointPadding: 0.2,
+            pointPlacement: 0
         }]
     });
 })();
