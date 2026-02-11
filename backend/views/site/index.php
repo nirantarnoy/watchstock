@@ -451,7 +451,7 @@ $('#save-brands-btn').on('click', function() {
                 dataLabels: {
                     enabled: true,
                     rotation: -65,
-                    color: '#FFFFFF',
+                    color: '#000000',
                     align: 'right',
                     format: '{point.y:,.0f}',
                     y: 5,
@@ -459,8 +459,7 @@ $('#save-brands-btn').on('click', function() {
                     crop: false,
                     overflow: 'none',
                     style: {
-                        fontSize: '9px',
-                        textOutline: 'none'
+                        textOutline: '1px contrast'
                     }
                 }
             } 
@@ -567,7 +566,7 @@ $('#save-brands-btn').on('click', function() {
                 dataLabels: {
                     enabled: true,
                     rotation: -65,
-                    color: '#FFFFFF',
+                    color: '#000000',
                     align: 'right',
                     format: '{point.y:,.0f}',
                     y: 5,
@@ -575,8 +574,7 @@ $('#save-brands-btn').on('click', function() {
                     crop: false,
                     overflow: 'none',
                     style: {
-                        fontSize: '9px',
-                        textOutline: 'none'
+                        textOutline: '1px contrast'
                     }
                 }
             } 
@@ -627,7 +625,7 @@ $('#save-brands-btn').on('click', function() {
                 dataLabels: {
                     enabled: true,
                     rotation: -65,
-                    color: '#FFFFFF',
+                    color: '#000000',
                     align: 'right',
                     format: '{point.y:,.0f}',
                     y: 5,
@@ -635,8 +633,7 @@ $('#save-brands-btn').on('click', function() {
                     crop: false,
                     overflow: 'none',
                     style: {
-                        fontSize: '9px',
-                        textOutline: 'none'
+                        textOutline: '1px contrast'
                     }
                 }
             } 
@@ -683,12 +680,12 @@ $('#save-brands-btn').on('click', function() {
                 dataLabels: {
                     enabled: true,
                     format: '{point.y:,.0f}',
+                    color: '#000000',
                     allowOverlap: true,
                     crop: false,
                     overflow: 'none',
                     style: {
-                        fontSize: '10px',
-                        textOutline: 'none'
+                        textOutline: '1px contrast'
                     }
                 }
             }
