@@ -425,7 +425,12 @@ $('#save-brands-btn').on('click', function() {
     Highcharts.chart('price-comparison-chart', {
         chart: { type: 'column' },
         title: { text: 'ยอดขายและกำไรตามยี่ห้อ' },
-        xAxis: { categories: categories },
+        xAxis: { 
+            categories: categories,
+            labels: {
+                rotation: -90
+            }
+        },
         yAxis: { 
             reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
@@ -444,7 +449,11 @@ $('#save-brands-btn').on('click', function() {
                 stacking: 'normal',
                 dataLabels: {
                     enabled: true,
-                    format: '฿{point.y:,.0f}'
+                    rotation: -90,
+                    color: '#FFFFFF',
+                    align: 'right',
+                    format: '฿{point.y:,.0f}',
+                    y: 10
                 }
             } 
         },
@@ -524,7 +533,12 @@ $('#save-brands-btn').on('click', function() {
     Highcharts.chart('sales-by-group-chart', {
         chart: { type: 'column' },
         title: { text: 'ยอดขายและกำไรแยกตามกลุ่มสินค้า' },
-        xAxis: { categories: groupCategories },
+        xAxis: { 
+            categories: groupCategories,
+            labels: {
+                rotation: -90
+            }
+        },
         yAxis: { 
             reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
@@ -543,7 +557,11 @@ $('#save-brands-btn').on('click', function() {
                 stacking: 'normal',
                 dataLabels: {
                     enabled: true,
-                    format: '฿{point.y:,.0f}'
+                    rotation: -90,
+                    color: '#FFFFFF',
+                    align: 'right',
+                    format: '฿{point.y:,.0f}',
+                    y: 10
                 }
             } 
         },
@@ -567,7 +585,12 @@ $('#save-brands-btn').on('click', function() {
     Highcharts.chart('top-products-profit-chart', {
         chart: { type: 'column' },
         title: { text: 'เปรียบเทียบกำไรขาดทุน สินค้าขายดี' },
-        xAxis: { categories: topCategories },
+        xAxis: { 
+            categories: topCategories,
+            labels: {
+                rotation: -90
+            }
+        },
         yAxis: { 
             reversedStacks: false,
             title: { text: 'จำนวนเงิน (฿)' },
@@ -586,7 +609,11 @@ $('#save-brands-btn').on('click', function() {
                 stacking: 'normal',
                 dataLabels: {
                     enabled: true,
-                    format: '฿{point.y:,.0f}'
+                    rotation: -90,
+                    color: '#FFFFFF',
+                    align: 'right',
+                    format: '฿{point.y:,.0f}',
+                    y: 10
                 }
             } 
         },
