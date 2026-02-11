@@ -447,13 +447,21 @@ $('#save-brands-btn').on('click', function() {
         plotOptions: { 
             column: { 
                 stacking: 'normal',
+                minPointLength: 5,
                 dataLabels: {
                     enabled: true,
                     rotation: -65,
                     color: '#FFFFFF',
                     align: 'right',
-                    format: '฿{point.y:,.0f}',
-                    y: 10
+                    format: '{point.y:,.0f}',
+                    y: 5,
+                    allowOverlap: true,
+                    crop: false,
+                    overflow: 'none',
+                    style: {
+                        fontSize: '9px',
+                        textOutline: 'none'
+                    }
                 }
             } 
         },
@@ -555,13 +563,21 @@ $('#save-brands-btn').on('click', function() {
         plotOptions: { 
             column: { 
                 stacking: 'normal',
+                minPointLength: 5,
                 dataLabels: {
                     enabled: true,
                     rotation: -65,
                     color: '#FFFFFF',
                     align: 'right',
-                    format: '฿{point.y:,.0f}',
-                    y: 10
+                    format: '{point.y:,.0f}',
+                    y: 5,
+                    allowOverlap: true,
+                    crop: false,
+                    overflow: 'none',
+                    style: {
+                        fontSize: '9px',
+                        textOutline: 'none'
+                    }
                 }
             } 
         },
@@ -607,13 +623,21 @@ $('#save-brands-btn').on('click', function() {
         plotOptions: { 
             column: { 
                 stacking: 'normal',
+                minPointLength: 5,
                 dataLabels: {
                     enabled: true,
                     rotation: -65,
                     color: '#FFFFFF',
                     align: 'right',
-                    format: '฿{point.y:,.0f}',
-                    y: 10
+                    format: '{point.y:,.0f}',
+                    y: 5,
+                    allowOverlap: true,
+                    crop: false,
+                    overflow: 'none',
+                    style: {
+                        fontSize: '9px',
+                        textOutline: 'none'
+                    }
                 }
             } 
         },
@@ -658,7 +682,14 @@ $('#save-brands-btn').on('click', function() {
             bar: {
                 dataLabels: {
                     enabled: true,
-                    format: '฿{point.y:,.2f}'
+                    format: '{point.y:,.0f}',
+                    allowOverlap: true,
+                    crop: false,
+                    overflow: 'none',
+                    style: {
+                        fontSize: '10px',
+                        textOutline: 'none'
+                    }
                 }
             }
         },
