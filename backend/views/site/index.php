@@ -428,7 +428,7 @@ $('#save-brands-btn').on('click', function() {
         xAxis: { 
             categories: categories,
             labels: {
-                rotation: -90
+                rotation: -65
             }
         },
         yAxis: { 
@@ -449,7 +449,7 @@ $('#save-brands-btn').on('click', function() {
                 stacking: 'normal',
                 dataLabels: {
                     enabled: true,
-                    rotation: -90,
+                    rotation: -65,
                     color: '#FFFFFF',
                     align: 'right',
                     format: '฿{point.y:,.0f}',
@@ -536,7 +536,7 @@ $('#save-brands-btn').on('click', function() {
         xAxis: { 
             categories: groupCategories,
             labels: {
-                rotation: -90
+                rotation: -65
             }
         },
         yAxis: { 
@@ -557,7 +557,7 @@ $('#save-brands-btn').on('click', function() {
                 stacking: 'normal',
                 dataLabels: {
                     enabled: true,
-                    rotation: -90,
+                    rotation: -65,
                     color: '#FFFFFF',
                     align: 'right',
                     format: '฿{point.y:,.0f}',
@@ -588,7 +588,7 @@ $('#save-brands-btn').on('click', function() {
         xAxis: { 
             categories: topCategories,
             labels: {
-                rotation: -90
+                rotation: -65
             }
         },
         yAxis: { 
@@ -609,7 +609,7 @@ $('#save-brands-btn').on('click', function() {
                 stacking: 'normal',
                 dataLabels: {
                     enabled: true,
-                    rotation: -90,
+                    rotation: -65,
                     color: '#FFFFFF',
                     align: 'right',
                     format: '฿{point.y:,.0f}',
