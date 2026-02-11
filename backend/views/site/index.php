@@ -460,9 +460,9 @@ $('#save-brands-btn').on('click', function() {
                 minPointLength: 5,
                 dataLabels: {
                     enabled: true,
-                    rotation: -65,
+                    rotation: 0,
                     color: '#000000',
-                    align: 'right',
+                    align: 'center',
                     formatter: function() {
                         if (this.y >= 1000000) return Highcharts.numberFormat(this.y / 1000000, 1) + 'M';
                         if (this.y >= 1000) return Highcharts.numberFormat(this.y / 1000, 1) + 'K';
@@ -488,7 +488,7 @@ $('#save-brands-btn').on('click', function() {
             name: 'กำไร',
             data: profits,
             color: '#28a745',
-            pointPadding: 0.2,
+            pointPadding: 0,
             pointPlacement: 0
         }]
     });
