@@ -149,7 +149,6 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
@@ -204,7 +203,6 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
@@ -484,7 +482,6 @@ class SiteController extends Controller
                 'AVG(jtl.sale_price) as avg_price',
                 new \yii\db\Expression("
                     CASE 
-                        WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                         WHEN COALESCE(AVG(jtl.line_price), 0) > 0 THEN AVG(jtl.line_price)
                         ELSE p.cost_price 
                     END AS cost_price
@@ -493,7 +490,6 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
@@ -516,47 +512,6 @@ class SiteController extends Controller
     /**
      * ดึงข้อมูลสำหรับกราฟเปรียบเทียบราคาขายกับต้นทุน
      */
-//    private function getPriceComparisonData($fromTimestamp, $toTimestamp)
-//    {
-//        $query = (new Query())
-//            ->select([
-//                'pb.name',
-//                'SUM(p.cost_price) as cost_price',
-//                'SUM(jtl.sale_price * jtl.qty) as avg_sale_price',
-//                'SUM(jtl.qty) as total_qty'
-//            ])
-//            ->from(['jtl' => 'journal_trans_line'])
-//            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
-//            ->innerJoin(['pb' => 'product_brand'], 'pb.id = p.brand_id')
-//            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
-//            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-//            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
-//            ->groupBy(['pb.name'])
-//            ->having('SUM(jt.qty) > 0')
-//            ->orderBy(['total_qty' => SORT_DESC])
-//            ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
-//
-//        $data = $query->all();
-//
-//        // จัดรูปแบบข้อมูลสำหรับ Highcharts
-//        $categories = [];
-//        $salePrices = [];
-//        $profits = [];
-//
-//        foreach ($data as $item) {
-//            $categories[] = $item['name'];
-//            $salePrices[] = floatval($item['avg_sale_price']);
-//            $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
-//        }
-//
-//        return [
-//            'categories' => $categories,
-//            'costPrices' => null,
-//            'salePrices' => $salePrices,
-//            'profits' => $profits
-//        ];
-//    }
-
     private function getPriceComparisonData($fromTimestamp, $toTimestamp, $brandIds = [])
     {
         $query = (new Query())
@@ -572,7 +527,6 @@ class SiteController extends Controller
                 (
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
@@ -587,7 +541,6 @@ class SiteController extends Controller
                 -
                 SUM(jtl.qty * 
                     CASE 
-                        WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                         WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                         ELSE p.cost_price 
                     END
@@ -626,49 +579,6 @@ class SiteController extends Controller
         ];
     }
 
-
-//    private function getPriceComparisonData($fromTimestamp, $toTimestamp)
-//    {
-//        $query = (new Query())
-//            ->select([
-//                'p.name',
-//                'p.cost_price',
-//                'AVG(jtl.sale_price) as avg_sale_price',
-//                'SUM(jtl.qty) as total_qty'
-//            ])
-//            ->from(['jtl' => 'journal_trans_line'])
-//            ->innerJoin(['p' => 'product'], 'jtl.product_id = p.id')
-//            ->innerJoin(['jt' => 'journal_trans'], 'jtl.journal_trans_id = jt.id')
-//            ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
-//            ->andWhere(['jt.status' => 3,'jt.trans_type_id' => [3,9]])
-//            ->groupBy(['p.id', 'p.name', 'p.cost_price'])
-//            ->having('SUM(jt.qty) > 0')
-//            ->orderBy(['total_qty' => SORT_DESC])
-//            ->limit(20); // จำกัดแค่ 20 สินค้าสำหรับกราฟ
-//
-//        $data = $query->all();
-//
-//        // จัดรูปแบบข้อมูลสำหรับ Highcharts
-//        $categories = [];
-//        $costPrices = [];
-//        $salePrices = [];
-//        $profits = [];
-//
-//        foreach ($data as $item) {
-//            $categories[] = $item['name'];
-//            $costPrices[] = floatval($item['cost_price']);
-//            $salePrices[] = floatval($item['avg_sale_price']);
-//            $profits[] = floatval($item['avg_sale_price']) - floatval($item['cost_price']);
-//        }
-//
-//        return [
-//            'categories' => $categories,
-//            'costPrices' => $costPrices,
-//            'salePrices' => $salePrices,
-//            'profits' => $profits
-//        ];
-//    }
-
     /**
      * ดึงข้อมูลสินค้าขายดี 10 อันดับ
      */
@@ -684,7 +594,6 @@ class SiteController extends Controller
                     SUM(jtl.qty * jtl.sale_price) - 
                     SUM(jtl.qty * 
                         CASE 
-                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
                             ELSE p.cost_price 
                         END
