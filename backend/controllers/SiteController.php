@@ -32,7 +32,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index', 'changepassword','grab','logoutdriver','export'],
+                        'actions' => ['logout', 'index', 'changepassword','grab','logoutdriver','export', 'save-dashboard-brands'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -72,6 +72,13 @@ class SiteController extends Controller
         // รับค่าวันที่จาก request หรือใช้ค่า default (30 วันย้อนหลัง)
         $fromDate = Yii::$app->request->get('from_date', date('Y-m-d', strtotime('-30 days')));
         $toDate = Yii::$app->request->get('to_date', date('Y-m-d'));
+        
+        // ดึงค่าจาก DB เป็น default
+        $brand_ids = (new Query())
+            ->select('brand_id')
+            ->from('dashboard_brand_setting')
+            ->where(['user_id' => Yii::$app->user->id])
+            ->column();
 
         // แปลงวันที่เป็น timestamp
         $fromTimestamp = strtotime($fromDate);
@@ -81,7 +88,7 @@ class SiteController extends Controller
         $salesByProduct = $this->getSalesByProduct($fromTimestamp, $toTimestamp);
 
         // 2. ข้อมูลสำหรับกราฟเปรียบเทียบราคาขายกับต้นทุน
-        $priceComparisonData = $this->getPriceComparisonData($fromTimestamp, $toTimestamp);
+        $priceComparisonData = $this->getPriceComparisonData($fromTimestamp, $toTimestamp, $brand_ids);
 
         // 3. สินค้าขายดี 10 อันดับ
         $topProducts = $this->getTopProducts($fromTimestamp, $toTimestamp);
@@ -92,6 +99,8 @@ class SiteController extends Controller
         // 5. ข้อมูลแนวโน้มยอดขาย (Daily Sales Trend)
         $salesTrend = $this->getSalesTrendData($fromTimestamp, $toTimestamp);
 
+        $all_brands = (new Query())->select(['id', 'name'])->from('product_brand')->orderBy(['name' => SORT_ASC])->all();
+
         return $this->render('index', [
             'fromDate' => $fromDate,
             'toDate' => $toDate,
@@ -100,8 +109,32 @@ class SiteController extends Controller
             'topProducts' => $topProducts,
             'salesByGroup' => $salesByGroup,
             'salesTrend' => $salesTrend,
+            'brand_ids' => $brand_ids,
+            'all_brands' => $all_brands,
         ]);
     }
+
+    public function actionSaveDashboardBrands()
+    {
+        $brand_ids = Yii::$app->request->post('brand_ids', []);
+        $user_id = Yii::$app->user->id;
+
+        Yii::$app->db->createCommand()
+            ->delete('dashboard_brand_setting', ['user_id' => $user_id])
+            ->execute();
+
+        foreach ($brand_ids as $brand_id) {
+            Yii::$app->db->createCommand()
+                ->insert('dashboard_brand_setting', [
+                    'user_id' => $user_id,
+                    'brand_id' => $brand_id
+                ])->execute();
+        }
+
+        return $this->asJson(['success' => true]);
+    }
+
+
 
     /**
      * ดึงข้อมูลแนวโน้มยอดขายรายวัน
@@ -524,7 +557,7 @@ class SiteController extends Controller
 //        ];
 //    }
 
-    private function getPriceComparisonData($fromTimestamp, $toTimestamp)
+    private function getPriceComparisonData($fromTimestamp, $toTimestamp, $brandIds = [])
     {
         $query = (new Query())
             ->select([
@@ -568,10 +601,10 @@ class SiteController extends Controller
             ->where(['between', 'jt.created_at', $fromTimestamp, $toTimestamp])
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
             ->andFilterWhere(['!=', 'jtl.status', 300])
+            ->andFilterWhere(['p.brand_id' => $brandIds])
             ->groupBy(['pb.name'])
             ->having('SUM(jtl.qty) > 0')
-            ->orderBy(['total_sale' => SORT_DESC])
-            ->limit(20);
+            ->orderBy(['profit' => SORT_DESC]);
 
         $data = $query->all();
 

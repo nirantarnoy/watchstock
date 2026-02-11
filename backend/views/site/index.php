@@ -114,16 +114,55 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
         <br/>
         <br/>
 
-        <!-- Charts Row 1 -->
         <div class="row">
             <!-- Price Comparison Chart -->
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามยี่ห้อ</h5>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="panel-title">เปรียบเทียบยอดขายกำไรตามยี่ห้อ</h5>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <button type="button" class="btn btn-xs btn-info" data-toggle="modal" data-target="#brandModal">
+                                    <i class="fa fa-cog"></i> เลือกยี่ห้อ
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="panel-body">
                         <div id="price-comparison-chart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for Brand Selection -->
+            <div class="modal fade" id="brandModal" tabindex="-1" role="dialog" aria-labelledby="brandModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="brandModalLabel">เลือกยี่ห้อที่ต้องการแสดงบนกราฟ</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <?php foreach ($all_brands as $brand): ?>
+                                    <div class="col-md-4">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" class="brand-checkbox" value="<?= $brand['id'] ?>" 
+                                                    <?= in_array($brand['id'], $brand_ids) ? 'checked' : '' ?>> 
+                                                <?= Html::encode($brand['name']) ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">ยกเลิก</button>
+                            <button type="button" class="btn btn-primary" id="save-brands-btn">บันทึกการตั้งค่า</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -338,11 +377,39 @@ $trendCategoriesJson = json_encode($salesTrend['categories']);
 $trendSalesJson = json_encode($salesTrend['sales']);
 $trendProfitsJson = json_encode($salesTrend['profits']);
 
+$url_save_brands = Url::to(['save-dashboard-brands']);
+$csrfParam = Yii::$app->request->csrfParam;
 $js = <<<JS
 Highcharts.setOptions({
     lang: {
         thousandsSep: ','
     }
+});
+
+$('#save-brands-btn').on('click', function() {
+    var brandIds = [];
+    $('.brand-checkbox:checked').each(function() {
+        brandIds.push($(this).val());
+    });
+
+    $.ajax({
+        url: '$url_save_brands',
+        type: 'POST',
+        data: { 
+            brand_ids: brandIds,
+            '$csrfParam': yii.getCsrfToken()
+        },
+        success: function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            }
+        },
+        error: function() {
+            alert('ไม่สามารถติดต่อเซิร์ฟเวอร์ได้');
+        }
+    });
 });
 
 (function() {
