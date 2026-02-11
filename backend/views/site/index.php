@@ -436,6 +436,8 @@ $('#save-brands-btn').on('click', function() {
             title: { text: 'จำนวนเงิน (฿)' },
             labels: {
                 formatter: function() {
+                    if (this.value >= 1000000) return '฿' + Highcharts.numberFormat(this.value / 1000000, 1) + 'M';
+                    if (this.value >= 1000) return '฿' + Highcharts.numberFormat(this.value / 1000, 1) + 'K';
                     return '฿' + Highcharts.numberFormat(this.value, 0, '.', ',');
                 }
             }
@@ -453,7 +455,11 @@ $('#save-brands-btn').on('click', function() {
                     rotation: -65,
                     color: '#000000',
                     align: 'right',
-                    format: '{point.y:,.0f}',
+                    formatter: function() {
+                        if (this.y >= 1000000) return Highcharts.numberFormat(this.y / 1000000, 1) + 'M';
+                        if (this.y >= 1000) return Highcharts.numberFormat(this.y / 1000, 1) + 'K';
+                        return Highcharts.numberFormat(this.y, 0, '.', ',');
+                    },
                     y: 5,
                     allowOverlap: true,
                     crop: false,
