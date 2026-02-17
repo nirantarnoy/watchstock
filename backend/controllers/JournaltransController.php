@@ -91,11 +91,6 @@ class JournaltransController extends Controller
         ]);
     }
 
-    /**
-     * Creates a new JournalTrans model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
-     */
     public function actionCreate($type = null)
     {
         $model = new JournalTrans();
@@ -143,80 +138,86 @@ class JournaltransController extends Controller
 
 
             if ($valid) {
-                // Stock Availability Check
-                if ($model->stock_type_id == 2) { // เฉพาะรายการจ่ายออก
-                    foreach ($modelLines as $i => $line) {
-                        if ($line->product_id > 0 && $line->warehouse_id > 0) {
-                            $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
-                            if ($onhand < $line->qty) {
-                                $product_name = \backend\models\Product::findName($line->product_id);
-                                Yii::$app->session->setFlash('error', "สินค้า $product_name ในคลังมีไม่พอ (คงเหลือ $onhand)");
-                                return $this->render('create', [
-                                    'model' => $model,
-                                    'modelLines' => $modelLines,
-                                    'create_type' => $type,
-                                ]);
+                $transaction = \Yii::$app->db->beginTransaction();
+                try {
+                    // Stock Availability Check
+                    if ($model->stock_type_id == 2) { // เฉพาะรายการจ่ายออก
+                        foreach ($modelLines as $i => $line) {
+                            if ($line->product_id > 0 && $line->warehouse_id > 0) {
+                                $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
+                                if ($onhand < $line->qty) {
+                                    $product_name = \backend\models\Product::findName($line->product_id);
+                                    throw new Exception("สินค้า $product_name ในคลังมีไม่พอ (คงเหลือ $onhand)");
+                                }
                             }
                         }
                     }
-                }
-                //$transaction = \Yii::$app->db->beginTransaction();
-                // try {
-                $model->journal_no = $model::generateJournalNoNew($type);
-                if ($flag = $model->save(false)) {
-                    // echo "ok";return;
-                    foreach ($modelLines as $modelLine) {
-                        if($type != 9){
-                            $modelLine->line_price = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
-                        }
-                        $modelLine->journal_trans_id = $model->id;
-                        if($type == 5 || $type == 7){
-                            $modelLine->status = 0; // ยังไม่คืน
-                        }
-                        if (!($flag = $modelLine->save(false))) {
-                            break;
-                        }
-                    }
-                }
 
-                if ($flag) {
-                    $total_qty = 0;
-                    foreach ($modelLines as $modelLine) {
-                        $total_qty += (int)$modelLine->qty;
-                        $model_stock_trans = new \common\models\StockTrans();
-                        $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                        $model_stock_trans->journal_trans_id = $model->id;
-                        $model_stock_trans->trans_type_id = $model->trans_type_id;
-                        $model_stock_trans->product_id = $modelLine->product_id;
-                        $model_stock_trans->qty = (int)$modelLine->qty;
-                        $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
-                        $model_stock_trans->stock_type_id = $model->stock_type_id;
-                        $model_stock_trans->remark = $modelLine->remark;
-                        $model_stock_trans->created_by = \Yii::$app->user->id;
-                        if ($model_stock_trans->save(false)) {
-                            $this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id);
-                            if($type == 10){
-                                $this->updateProductPrice($modelLine->product_id,$modelLine->sale_price); // ปรับยอดแล้วปรับราคาขายด้วย
+                    $model->journal_no = $model::generateJournalNoNew($type);
+                    if ($flag = $model->save(false)) {
+                        $total_qty = 0;
+                        $processed_products = [];
+                        foreach ($modelLines as $modelLine) {
+                            if($type != 9){
+                                $modelLine->line_price = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                            }
+                            $modelLine->journal_trans_id = $model->id;
+                            if($type == 5 || $type == 7){
+                                $modelLine->status = 0; // ยังไม่คืน
+                            }
+                            if (!($modelLine->save(false))) {
+                                throw new Exception("Error saving journal line");
                             }
 
-                            // Calculate and save balance to journal_trans_line
-                            $balance = $this->getStockBalance($modelLine->product_id);
-                            $modelLine->balance = $balance;
-                            $modelLine->save(false);
-                        }
-                    }
-                    \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
+                            $total_qty += (int)$modelLine->qty;
+                            $model_stock_trans = new \common\models\StockTrans();
+                            $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                            $model_stock_trans->journal_trans_id = $model->id;
+                            $model_stock_trans->trans_type_id = $model->trans_type_id;
+                            $model_stock_trans->product_id = $modelLine->product_id;
+                            $model_stock_trans->qty = (int)$modelLine->qty;
+                            $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
+                            $model_stock_trans->stock_type_id = $model->stock_type_id;
+                            $model_stock_trans->remark = $modelLine->remark;
+                            $model_stock_trans->created_by = \Yii::$app->user->id;
+                            
+                            if ($model_stock_trans->save(false)) {
+                                if (!$this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id)) {
+                                     throw new Exception("Error updating stock balance");
+                                }
+                                
+                                if($type == 10){
+                                    // Update price later after loop for efficiency
+                                    $processed_products[$modelLine->product_id] = $modelLine->sale_price;
+                                }
 
-                    \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
-                    return $this->redirect(['view', 'id' => $model->id]);
-                }else{
-                    Yii::$app->session->setFlash(
-                        'error',
-                        'เกิดข้อผิดพลาด: ' . implode('; ', array_map(function ($e) {
-                            return implode(', ', $e);
-                        }, $model->getErrors()))
-                    );
-                    return $this->refresh();
+                                // Calculate and save balance to journal_trans_line
+                                $balance = $this->getStockBalance($modelLine->product_id);
+                                $modelLine->balance = $balance;
+                                $modelLine->save(false);
+                            } else {
+                                throw new Exception("Error saving stock transaction");
+                            }
+                        }
+
+                        // Batch update products
+                        foreach($processed_products as $pid => $price) {
+                            $this->updateProductPrice($pid, $price);
+                        }
+
+                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
+                        $transaction->commit();
+                        \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
+                        return $this->redirect(['view', 'id' => $model->id]);
+                    }
+                } catch (Exception $e) {
+                    $transaction->rollBack();
+                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+                    return $this->render('create', [
+                        'model' => $model,
+                        'modelLines' => $modelLines,
+                        'create_type' => $type,
+                    ]);
                 }
             } else {
                  Yii::$app->session->setFlash(
@@ -268,91 +269,103 @@ class JournaltransController extends Controller
             $valid = JournalTransLine::validateMultiple($modelLines) && $valid;
 
             if ($valid) {
-                // Stock Availability Check for Update
-                if ($model->stock_type_id == 2) {
-                    foreach ($modelLines as $line) {
-                        if ($line->product_id > 0 && $line->warehouse_id > 0) {
-                            $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
-                            
-                            // Virtual add-back of old qty for existing lines
-                            if (!$line->isNewRecord) {
-                                $old_line = \common\models\JournalTransLine::findOne($line->id);
-                                if ($old_line && $old_line->product_id == $line->product_id && $old_line->warehouse_id == $line->warehouse_id) {
-                                    $onhand += (float)$old_line->qty;
+                $transaction = \Yii::$app->db->beginTransaction();
+                try {
+                    // Stock Availability Check for Update
+                    if ($model->stock_type_id == 2) {
+                        foreach ($modelLines as $line) {
+                            if ($line->product_id > 0 && $line->warehouse_id > 0) {
+                                $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
+                                
+                                // Virtual add-back of old qty for existing lines
+                                if (!$line->isNewRecord) {
+                                    $old_line = \common\models\JournalTransLine::findOne($line->id);
+                                    if ($old_line && $old_line->product_id == $line->product_id && $old_line->warehouse_id == $line->warehouse_id) {
+                                        $onhand += (float)$old_line->qty;
+                                    }
+                                }
+
+                                if ($onhand < $line->qty) {
+                                    $product_name = \backend\models\Product::findName($line->product_id);
+                                    throw new Exception("สินค้า $product_name ในคลังมีไม่พอ");
                                 }
                             }
+                        }
+                    }
 
-                            if ($onhand < $line->qty) {
-                                $product_name = \backend\models\Product::findName($line->product_id);
-                                Yii::$app->session->setFlash('error', "สินค้า $product_name ในคลังมีไม่พอ");
-                                return $this->render('update', [
-                                    'model' => $model,
-                                    'modelLines' => $modelLines,
-                                ]);
+                    if ($flag = $model->save(false)) {
+                        if (!empty($deletedIDs)) {
+                            foreach ($deletedIDs as $del_id) {
+                                $this->updateCancelTrans($del_id);
+                                JournalTransLine::findOne($del_id)->delete();
                             }
                         }
-                    }
-                }
 
-                if ($flag = $model->save(false)) {
-                    if (!empty($deletedIDs)) {
-                        foreach ($deletedIDs as $del_id) {
-                            $this->updateCancelTrans($del_id);
-                            JournalTransLine::findOne($del_id)->delete();
-                        }
-                    }
-                    foreach ($modelLines as $modelLine) {
-                        // Reverse old stock before updating
-                        if (!$modelLine->isNewRecord) {
-                            $this->updateCancelTrans($modelLine->id);
-                        }
+                        $processed_products = [];
+                        foreach ($modelLines as $modelLine) {
+                            // Reverse old stock before updating
+                            if (!$modelLine->isNewRecord) {
+                                $this->updateCancelTrans($modelLine->id);
+                            }
 
-                        if($model->trans_type_id != 9){
-                             $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
-                        }
-                        $modelLine->journal_trans_id = $model->id;
-                        if($model->trans_type_id == 5 || $model->trans_type_id == 7){
-                            $modelLine->status = 0; // ยังไม่คืน
-                        }
-                        if (($flag = $modelLine->save(false))) {
-                            // Apply new stock
-                            $this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id);
-                            
-                            // --------------------------------
-                            //  RECORD STOCKTRANS FOR UPDATE
-                            // --------------------------------
-                            $model_stock_trans = new \common\models\StockTrans();
-                            $model_stock_trans->trans_date = date('Y-m-d H:i:s');
-                            $model_stock_trans->journal_trans_id = $model->id;
-                            $model_stock_trans->trans_type_id = $model->trans_type_id;
-                            $model_stock_trans->product_id = $modelLine->product_id;
-                            $model_stock_trans->qty = (int)$modelLine->qty;
-                            $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
-                            $model_stock_trans->stock_type_id = $model->stock_type_id;
-                            $model_stock_trans->remark = $modelLine->remark;
-                            $model_stock_trans->created_by = \Yii::$app->user->id;
-                            $model_stock_trans->save(false);
+                            if($model->trans_type_id != 9){
+                                 $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
+                            }
+                            $modelLine->journal_trans_id = $model->id;
+                            if($model->trans_type_id == 5 || $model->trans_type_id == 7){
+                                $modelLine->status = 0; // ยังไม่คืน
+                            }
+                            if (($modelLine->save(false))) {
+                                // Apply new stock
+                                $this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id);
+                                
+                                // RECORD STOCKTRANS FOR UPDATE
+                                $model_stock_trans = new \common\models\StockTrans();
+                                $model_stock_trans->trans_date = date('Y-m-d H:i:s');
+                                $model_stock_trans->journal_trans_id = $model->id;
+                                $model_stock_trans->trans_type_id = $model->trans_type_id;
+                                $model_stock_trans->product_id = $modelLine->product_id;
+                                $model_stock_trans->qty = (int)$modelLine->qty;
+                                $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
+                                $model_stock_trans->stock_type_id = $model->stock_type_id;
+                                $model_stock_trans->remark = $modelLine->remark;
+                                $model_stock_trans->created_by = \Yii::$app->user->id;
+                                $model_stock_trans->save(false);
 
-                            // Update balance and cost
-                            $balance = $this->getStockBalance($modelLine->product_id);
-                            $modelLine->balance = $balance;
-                            $modelLine->save(false);
+                                // Update balance 
+                                $balance = $this->getStockBalance($modelLine->product_id);
+                                $modelLine->balance = $balance;
+                                $modelLine->save(false);
 
-                            if($model->trans_type_id == 10){
-                                $this->updateProductPrice($modelLine->product_id,$modelLine->sale_price); 
-                            }else{
-                                $this->updateProductPrice($modelLine->product_id,0); 
+                                // Save for later production price update
+                                if($model->trans_type_id == 10){
+                                    $processed_products[$modelLine->product_id] = $modelLine->sale_price;
+                                } else {
+                                    $processed_products[$modelLine->product_id] = 0;
+                                }
                             }
                         }
+
+                        foreach($processed_products as $pid => $price) {
+                            $this->updateProductPrice($pid, $price);
+                        }
+
+                        $total_qty = 0;
+                        foreach ($modelLines as $modelLine) {
+                            $total_qty += (int)$modelLine->qty;
+                        }
+                        \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
+
+                        $transaction->commit();
+                        return $this->redirect(['view', 'id' => $model->id]);
                     }
-                }
-                if ($flag) {
-                    $total_qty = 0;
-                    foreach ($modelLines as $modelLine) {
-                        $total_qty += (int)$modelLine->qty;
-                    }
-                    \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
-                    return $this->redirect(['view', 'id' => $model->id]);
+                } catch (Exception $e) {
+                    $transaction->rollBack();
+                    Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+                    return $this->render('update', [
+                        'model' => $model,
+                        'modelLines' => $modelLines,
+                    ]);
                 }
             }
         }
@@ -391,11 +404,13 @@ class JournaltransController extends Controller
             if($journal){
                 $stock_type = 0;
                 if($journal->stock_type_id == 1){
-                    $stock_type = 2;
+                    $stock_type = 2; // In -> Reverse with Out
                 }else if($journal->stock_type_id == 2){
-                    $stock_type = 1;
+                    $stock_type = 1; // Out -> Reverse with In
                 }
-                $this->calStock($model->product_id, $stock_type, $model->warehouse_id, $model->qty, $journal->trans_type_id);
+                
+                // FORCE reversal even if stock is low for adjusting-in corrections
+                $this->calStock($model->product_id, $stock_type, $model->warehouse_id, $model->qty, $journal->trans_type_id, true);
                 
                 // Record Reversal instead of deleting
                 $model_stock_trans = new \common\models\StockTrans();
@@ -429,7 +444,7 @@ class JournaltransController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
 
-    public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type)
+    public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type, $force = false)
     {
         $qty = (float)$qty;
         if (!$product_id || !$stock_type_id || $qty <= 0) {
@@ -442,7 +457,8 @@ class JournaltransController extends Controller
                 ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
                 ->one();
 
-            if ($model && $model->qty >= $qty) {
+            // Allow negative stock on FORCE (reversals)
+            if ($model && ($force || $model->qty >= $qty)) {
                 $model->qty -= $qty;
                 if (in_array($activity_type, [5, 7])) { // ยืม (5) หรือ ส่งช่าง (7)
                     $model->reserv_qty += $qty;
@@ -1244,6 +1260,57 @@ class JournaltransController extends Controller
         }
 
         return $this->redirect(['view', 'id' => $journal_id]);
+    }
+
+    public function actionSyncStock()
+    {
+        $transaction = \Yii::$app->db->beginTransaction();
+        try {
+            // First, zero out all StockSum quantities for clean recalculation
+            // (Only for those that have at least one stock transaction record)
+            $pids = \Yii::$app->db->createCommand("SELECT DISTINCT product_id FROM stock_trans")->queryColumn();
+            
+            if ($pids) {
+                // We keep reserv_qty as it might be managed by other parts of the system not in stock_trans
+                \common\models\StockSum::updateAll(['qty' => 0], ['product_id' => $pids]);
+
+                foreach ($pids as $product_id) {
+                    $summary = \common\models\StockTrans::find()
+                        ->select(['warehouse_id', 'SUM(CASE WHEN stock_type_id = 1 THEN qty ELSE -qty END) as total_qty'])
+                        ->where(['product_id' => $product_id])
+                        ->groupBy(['warehouse_id'])
+                        ->asArray()
+                        ->all();
+
+                    foreach ($summary as $row) {
+                        $wh_id = $row['warehouse_id'];
+                        $total = (float)$row['total_qty'];
+
+                        $model_sum = \common\models\StockSum::find()
+                            ->where(['product_id' => $product_id, 'warehouse_id' => $wh_id])
+                            ->one();
+
+                        if (!$model_sum) {
+                            $model_sum = new \common\models\StockSum();
+                            $model_sum->product_id = $product_id;
+                            $model_sum->warehouse_id = $wh_id;
+                            $model_sum->reserv_qty = 0;
+                        }
+                        $model_sum->qty = $total;
+                        $model_sum->updated_at = date('Y-m-d H:i:s');
+                        $model_sum->save(false);
+                    }
+                    $this->updateProductStock($product_id);
+                }
+            }
+
+            $transaction->commit();
+            \Yii::$app->session->setFlash('success', 'ปรับปรุงยอดคงเหลือจากประวัติการทำรายการเรียบร้อยแล้ว');
+        } catch (Exception $e) {
+            $transaction->rollBack();
+            \Yii::$app->session->setFlash('error', 'เกิดข้อผิดพลาดในการ Sync: ' . $e->getMessage());
+        }
+        return $this->redirect(['index']);
     }
 
     public function actionCalallstock()

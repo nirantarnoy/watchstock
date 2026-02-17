@@ -33,6 +33,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 <?= Html::a('<i class="fa fa-wrench"></i> บันทึกส่งช่าง', ['create', 'type' => 7], ['class' => 'btn btn-primary']) ?>
                 <?= Html::a('<i class="fa fa-shopping-cart"></i> บันทึกขาย Drop Ship', ['create', 'type' => 9], ['class' => 'btn btn-secondary']) ?>
                 <?= Html::a('<i class="fa fa-file-import"></i> บันทึกรับยอดสินค้าเข้าคลัง', ['create', 'type' => 10], ['class' => 'btn btn-warning']) ?>
+                <?php /* echo Html::a('<i class="fa fa-sync"></i> ประมวลผลยอดคงเหลือใหม่', ['sync-stock'], [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'คุณต้องการประมวลผลยอดคงเหลือใหม่จากประวัติการทำรายการใช่หรือไม่? (อาจใช้เวลาสักครู่)',
+                        'method' => 'post',
+                    ],
+                ]) */ ?>
             </p>
 
         </div>
