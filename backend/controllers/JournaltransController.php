@@ -1104,7 +1104,7 @@ class JournaltransController extends Controller
                     // --------------------------------
                     //  ปรับยอดสต๊อกตามจำนวนยกเลิกจริง
                     // --------------------------------
-                    if ($model->stock_type_id == 2) { // stock out (ขาย)
+                    if ($model->stock_type_id == 2) { // stock out (ขาย/ยืม/ส่งช่าง)
                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
 
                             $model_sum->qty += (float)$cancel_qty;
@@ -1116,19 +1116,24 @@ class JournaltransController extends Controller
 
                         }
 
-                    } else if ($model->stock_type_id == 1) { // stock in
-                        $model_sum->qty -= (float)$cancel_qty;
+                    } else if ($model->stock_type_id == 1) { // stock in (คืนยืม/คืนส่งช่าง)
+                        if ($model->trans_type_id == 6 || $model->trans_type_id == 8) {
+                            $model_sum->qty -= (float)$cancel_qty;
+                            $model_sum->reserv_qty += (float)$cancel_qty;
+                        } else {
+                            $model_sum->qty -= (float)$cancel_qty;
+                        }
                     }
 
                     if ($model_sum->save(false)) {
                         $res += 1;
                         $new_trans_type_id = 0;
-                        if($origin_trans_type_id == 3){
+                        if($origin_trans_type_id == 3 || $origin_trans_type_id == 4){
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
-                        }else if($origin_trans_type_id == 5){
+                        }else if($origin_trans_type_id == 5 || $origin_trans_type_id == 6){
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_LOAN_CANCELED;
                         }
-                        else if($origin_trans_type_id == 7){
+                        else if($origin_trans_type_id == 7 || $origin_trans_type_id == 8){
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
                         }else if($origin_trans_type_id == 9){
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
@@ -1136,7 +1141,7 @@ class JournaltransController extends Controller
 
                         $model_trans = new \backend\models\JournalTrans();
                         $model_trans->trans_type_id = $new_trans_type_id;
-                        $model_trans->stock_type_id = 1;
+                        $model_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
                         $model_trans->created_by = Yii::$app->user->id;
                         $model_trans->trans_date = date('Y-m-d H:i:s');
                         $model_trans->status=3; //3 completed
@@ -1147,7 +1152,7 @@ class JournaltransController extends Controller
                             $model_trans_line->warehouse_id = $model_line->warehouse_id;
                             $model_trans_line->qty = (float)$cancel_qty;
                             $model_trans_line->line_price = $model_line->line_price;
-                            $model_trans_line->remark = 'ยกเลิกจากการขาย';
+                            $model_trans_line->remark = 'ยกเลิกจากรายการ' . $model->getTransactionTypeName();
                             if($model_trans_line->save(false)){
                                 // Update balance for this line
                                 $balance = $this->getStockBalance($model_line->product_id);
@@ -1160,7 +1165,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans = new \common\models\StockTrans();
                                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                                 $model_stock_trans->journal_trans_id = $model_trans->id;
-                                $model_stock_trans->trans_type_id = $model->trans_type_id;
+                                $model_stock_trans->trans_type_id = $new_trans_type_id;
                                 $model_stock_trans->product_id = $model_line->product_id;
                                 $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                                 $model_stock_trans->warehouse_id = $model_line->warehouse_id;
@@ -1181,7 +1186,7 @@ class JournaltransController extends Controller
                         $model_stock_trans = new \common\models\StockTrans();
                         $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                         $model_stock_trans->journal_trans_id = $model->id;
-                        $model_stock_trans->trans_type_id = $model->trans_type_id;
+                        $model_stock_trans->trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
                         $model_stock_trans->product_id = $model_line->product_id;
                         $model_stock_trans->qty = (float)$cancel_qty;      // ← ใช้ยอดยกเลิกจริง
                         $model_stock_trans->warehouse_id = 0;
@@ -1194,8 +1199,19 @@ class JournaltransController extends Controller
                         }
                     }else{
                         $model_trans = new \backend\models\JournalTrans();
-                        $model_trans->trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
-                        $model_trans->stock_type_id = 1;
+                        $new_trans_type_id = 0;
+                        if($origin_trans_type_id == 3 || $origin_trans_type_id == 4){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
+                        }else if($origin_trans_type_id == 5 || $origin_trans_type_id == 6){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_LOAN_CANCELED;
+                        }
+                        else if($origin_trans_type_id == 7 || $origin_trans_type_id == 8){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
+                        }else if($origin_trans_type_id == 9){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
+                        }
+                        $model_trans->trans_type_id = $new_trans_type_id;
+                        $model_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
                         $model_trans->created_by = Yii::$app->user->id;
                         $model_trans->trans_date = date('Y-m-d H:i:s');
                         $model_trans->status=3; //3 completed
@@ -1206,7 +1222,7 @@ class JournaltransController extends Controller
                             $model_trans_line->warehouse_id = $model_line->warehouse_id;
                             $model_trans_line->qty = (float)$cancel_qty;
                             $model_trans_line->line_price = $model_line->line_price;
-                            $model_trans_line->remark = 'ยกเลิกจากการขาย';
+                            $model_trans_line->remark = 'ยกเลิกจากรายการ' . $model->getTransactionTypeName();
                             if ($model_trans_line->save(false)) {
                                 // Update balance for this line
                                 $balance = $this->getStockBalance($model_line->product_id);
@@ -1216,7 +1232,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans = new \common\models\StockTrans();
                                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                                 $model_stock_trans->journal_trans_id = $model_trans->id;
-                                $model_stock_trans->trans_type_id = $model->trans_type_id;
+                                $model_stock_trans->trans_type_id = $new_trans_type_id;
                                 $model_stock_trans->product_id = $model_line->product_id;
                                 $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                                 $model_stock_trans->warehouse_id = $model_line->warehouse_id;
