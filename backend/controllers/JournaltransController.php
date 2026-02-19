@@ -124,8 +124,8 @@ class JournaltransController extends Controller
             } else {
                 $model->stock_type_id = 2; // 1 เข้า 2 ออก
             }
-            if ($model->trans_type_id == 7 || $model->trans_type_id == 5) { // ยืม และ ส่งช่าง
-                $model->status = 1;
+            if ($model->trans_type_id == JournalTrans::TYPE_SEND || $model->trans_type_id == JournalTrans::TYPE_LOAN) { // ยืม และ ส่งช่าง
+                $model->status = JournalTrans::JOURNAL_TRANS_STATUS_ACTIVE;
             } else {
                 $model->status = 3;
             }
@@ -170,6 +170,7 @@ class JournaltransController extends Controller
                             }
 
                             $total_qty += (int)$modelLine->qty;
+
                             $model_stock_trans = new \common\models\StockTrans();
                             $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                             $model_stock_trans->journal_trans_id = $model->id;
@@ -180,24 +181,24 @@ class JournaltransController extends Controller
                             $model_stock_trans->stock_type_id = $model->stock_type_id;
                             $model_stock_trans->remark = $modelLine->remark;
                             $model_stock_trans->created_by = \Yii::$app->user->id;
-                            
+
                             if ($model_stock_trans->save(false)) {
                                 if (!$this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id)) {
-                                     throw new Exception("Error updating stock balance");
+                                    throw new Exception("Error updating stock balance");
                                 }
-                                
-                                if($type == 10){
-                                    // Update price later after loop for efficiency
-                                    $processed_products[$modelLine->product_id] = $modelLine->sale_price;
-                                }
-
-                                // Calculate and save balance to journal_trans_line
-                                $balance = $this->getStockBalance($modelLine->product_id);
-                                $modelLine->balance = $balance;
-                                $modelLine->save(false);
                             } else {
                                 throw new Exception("Error saving stock transaction");
                             }
+
+                            if ($type == 10) {
+                                // Update price later after loop for efficiency
+                                $processed_products[$modelLine->product_id] = $modelLine->sale_price;
+                            }
+
+                            // Calculate and save balance to journal_trans_line
+                            $balance = $this->getStockBalance($modelLine->product_id);
+                            $modelLine->balance = $balance;
+                            $modelLine->save(false);
                         }
 
                         // Batch update products
@@ -318,7 +319,7 @@ class JournaltransController extends Controller
                             if (($modelLine->save(false))) {
                                 // Apply new stock
                                 $this->calStock($modelLine->product_id, $model->stock_type_id, $modelLine->warehouse_id, $modelLine->qty, $model->trans_type_id);
-                                
+
                                 // RECORD STOCKTRANS FOR UPDATE
                                 $model_stock_trans = new \common\models\StockTrans();
                                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
@@ -332,17 +333,17 @@ class JournaltransController extends Controller
                                 $model_stock_trans->created_by = \Yii::$app->user->id;
                                 $model_stock_trans->save(false);
 
-                                // Update balance 
-                                $balance = $this->getStockBalance($modelLine->product_id);
-                                $modelLine->balance = $balance;
-                                $modelLine->save(false);
+                            // Update balance 
+                            $balance = $this->getStockBalance($modelLine->product_id);
+                            $modelLine->balance = $balance;
+                            $modelLine->save(false);
 
-                                // Save for later production price update
-                                if($model->trans_type_id == 10){
-                                    $processed_products[$modelLine->product_id] = $modelLine->sale_price;
-                                } else {
-                                    $processed_products[$modelLine->product_id] = 0;
-                                }
+                            // Save for later production price update
+                            if($model->trans_type_id == 10){
+                                $processed_products[$modelLine->product_id] = $modelLine->sale_price;
+                            } else {
+                                $processed_products[$modelLine->product_id] = 0;
+                            }
                             }
                         }
 
@@ -446,6 +447,9 @@ class JournaltransController extends Controller
 
     public function calStock($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type, $force = false)
     {
+        if ($activity_type == JournalTrans::TYPE_DROP) {
+            return true;
+        }
         $qty = (float)$qty;
         if (!$product_id || !$stock_type_id || $qty <= 0) {
             return false;
