@@ -145,7 +145,7 @@ class JournalTrans extends \yii\db\ActiveRecord
      */
     public function beforeSave($insert)
     {
-        if ($insert) {
+        if ($insert && empty($this->journal_no)) {
             $this->journal_no = $this->generateJournalNoNew();
         }
 
@@ -203,6 +203,9 @@ class JournalTrans extends \yii\db\ActiveRecord
                 break;
             case self::TYPE_DROP_CANCELED:
                 $prefix = 'CDS';
+                break;
+            default:
+                $prefix = 'UNK';
                 break;
         }
 
@@ -270,6 +273,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_DROP_CANCELED:
                 $prefix = 'CDS';
                 break;
+            default:
+                $prefix = 'UNK';
+                break;
         }
 
         $lastRecord = self::find()
@@ -282,7 +288,7 @@ class JournalTrans extends \yii\db\ActiveRecord
         $prefix .= date('Ym');
 
         if ($lastRecord) {
-            $cnum = substr((string)$lastRecord->journal_no, 9);
+            $cnum = substr((string)$lastRecord->journal_no, strlen($prefix));
             $newNum = (int)$cnum + 1;
             return $prefix . str_pad((string)$newNum, 4, '0', STR_PAD_LEFT);
         } else {
