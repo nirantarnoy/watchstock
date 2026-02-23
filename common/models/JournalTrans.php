@@ -49,6 +49,7 @@ class JournalTrans extends \yii\db\ActiveRecord
     const TYPE_LOAN_CANCELED = 13;
     const TYPE_SEND_CANCELED = 14;
     const TYPE_DROP_CANCELED = 15;
+    const TYPE_ADJUST_IN_CANCELED = 16;
 
 
 
@@ -204,6 +205,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_DROP_CANCELED:
                 $prefix = 'CDS';
                 break;
+            case self::TYPE_ADJUST_IN_CANCELED:
+                $prefix = 'CIN';
+                break;
             default:
                 $prefix = 'UNK';
                 break;
@@ -273,6 +277,9 @@ class JournalTrans extends \yii\db\ActiveRecord
             case self::TYPE_DROP_CANCELED:
                 $prefix = 'CDS';
                 break;
+            case self::TYPE_ADJUST_IN_CANCELED:
+                $prefix = 'CIN';
+                break;
             default:
                 $prefix = 'UNK';
                 break;
@@ -317,6 +324,7 @@ class JournalTrans extends \yii\db\ActiveRecord
             self::TYPE_LOAN_CANCELED => 'ยกเลิกยืมสินค้า',
             self::TYPE_SEND_CANCELED => 'ยกเลิกส่งช่าง',
             self::TYPE_DROP_CANCELED => 'ยกเลิกขาย DropShip',
+            self::TYPE_ADJUST_IN_CANCELED => 'ยกเลิกจากรายการปรับยอดเข้า',
         ];
     }
 

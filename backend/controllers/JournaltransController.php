@@ -1141,6 +1141,8 @@ class JournaltransController extends Controller
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
                         }else if($origin_trans_type_id == 9){
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
+                        }else if($origin_trans_type_id == 10){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN_CANCELED;
                         }
 
                         $model_trans = new \backend\models\JournalTrans();
@@ -1213,6 +1215,8 @@ class JournaltransController extends Controller
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
                         }else if($origin_trans_type_id == 9){
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
+                        }else if($origin_trans_type_id == 10){
+                            $new_trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN_CANCELED;
                         }
                         $model_trans->trans_type_id = $new_trans_type_id;
                         $model_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
