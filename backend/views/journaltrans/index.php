@@ -170,7 +170,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function ($model) {
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
-                        $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($line->line_price, 2) . '</div>';
+                        $cost = $line->line_price > 0 ? $line->line_price : $line->cost_price;
+                        $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($cost, 2) . '</div>';
                     }
                     return $html;
                 }

@@ -187,6 +187,25 @@ $this->params['breadcrumbs'][] = $this->title;
                         }
                     ],
                     [
+                        'attribute' => 'line_price',
+                        'label' => 'ต้นทุน',
+                        'headerOptions' => ['style' => 'text-align: right'],
+                        'contentOptions' => ['style' => 'text-align: right'],
+                        'visible' => \Yii::$app->user->can('ViewCostPrice'),
+                        'value' => function ($data) {
+                            return number_format($data->line_price, 2);
+                        }
+                    ],
+                    [
+                        'label' => 'คงเหลือ',
+                        'headerOptions' => ['style' => 'text-align: right'],
+                        'contentOptions' => ['style' => 'text-align: right'],
+                        'value' => function ($data) {
+                             $line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $data->journal_trans_id, 'product_id' => $data->product_id, 'warehouse_id' => $data->warehouse_id])->one();
+                             return $line !=null? number_format($line->balance, 0):'-';
+                        }
+                    ],
+                    [
                         'attribute' => 'stock_type_id',
                         'headerOptions' => ['style' => 'text-align: center'],
                         'contentOptions' => ['style' => 'text-align: center'],

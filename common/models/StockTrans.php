@@ -37,7 +37,7 @@ class StockTrans extends \yii\db\ActiveRecord
         return [
             [['journal_trans_id', 'product_id', 'trans_type_id', 'created_at', 'created_by', 'status', 'stock_type_id','warehouse_id'], 'integer'],
             [['trans_date','journal_trans_ref_id'], 'safe'],
-            [['qty'], 'number'],
+            [['qty', 'line_price'], 'number'],
             [['remark'], 'string', 'max' => 255],
         ];
     }
@@ -60,6 +60,7 @@ class StockTrans extends \yii\db\ActiveRecord
             'remark' => 'Remark',
             'stock_type_id' => 'ประเภทสต็อก',
             'warehouse_id' => 'คลังจัดเก็บ',
+            'line_price' => 'ต้นทุน',
             'journal_trans_ref_id'=>''
         ];
     }

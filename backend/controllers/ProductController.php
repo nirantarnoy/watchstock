@@ -162,6 +162,8 @@ class ProductController extends Controller
                             $model_trans->trans_date = date('Y-m-d H:i:s');
                             $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
                             $model_trans->qty = $line_qty[$i];
+                            $model_trans->warehouse_id = $line_warehouse[$i];
+                            $model_trans->line_price = $model->cost_price;
                             $model_trans->status = 1;
                             if($model_trans->save(false)){
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
@@ -313,6 +315,7 @@ class ProductController extends Controller
                                 $model_stock_trans->warehouse_id = $line_warehouse[$i];
                                 $model_stock_trans->stock_type_id = $find_stock_type_id; // 1 IN , 2 OUT
                                 $model_stock_trans->remark = 'Adjust from Product Form';
+                                $model_stock_trans->line_price = $model->cost_price;
                                 $model_stock_trans->created_by = Yii::$app->user->id;
                                 $model_stock_trans->save(false);
 
@@ -324,6 +327,7 @@ class ProductController extends Controller
                                 $model_trans->warehouse_id = $line_warehouse[$i];
                                 $model_trans->qty = $diff_qty;
                                 $model_trans->cost_price = $model->cost_price; // Save current cost price
+                                $model_trans->line_price = $model->cost_price;
                                 $model_trans->status = 1;
                                 if($model_trans->save(false)){
                                     $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
@@ -388,8 +392,14 @@ class ProductController extends Controller
                                 $model_trans->journal_trans_id = $model_journal_trans->id;
                                 $model_trans->warehouse_id = $from_wh;
                                 $model_trans->qty = $move_qty;
+                                $model_trans->cost_price = $model->cost_price;
+                                $model_trans->line_price = $model->cost_price;
                                 $model_trans->status = 1;
-                                $model_trans->save(false);
+                                if($model_trans->save(false)){
+                                    $current_balance = (float)\common\models\StockSum::find()->where(['product_id' => $model->id])->sum('qty + COALESCE(reserv_qty, 0)');
+                                    $model_trans->balance = $current_balance;
+                                    $model_trans->save(false);
+                                }
 
                                 // Add JournalTransLine for destination warehouse
                                 $model_trans_to = new \common\models\JournalTransLine();
@@ -397,8 +407,14 @@ class ProductController extends Controller
                                 $model_trans_to->journal_trans_id = $model_journal_trans->id;
                                 $model_trans_to->warehouse_id = $to_wh;
                                 $model_trans_to->qty = $move_qty;
+                                $model_trans_to->cost_price = $model->cost_price;
+                                $model_trans_to->line_price = $model->cost_price;
                                 $model_trans_to->status = 1;
-                                $model_trans_to->save(false);
+                                if($model_trans_to->save(false)){
+                                    $current_balance = (float)\common\models\StockSum::find()->where(['product_id' => $model->id])->sum('qty + COALESCE(reserv_qty, 0)');
+                                    $model_trans_to->balance = $current_balance;
+                                    $model_trans_to->save(false);
+                                }
 
                                 // หา stock คลังปลายทาง
                                 $stock_to = \backend\models\Stocksum::find()
@@ -417,6 +433,7 @@ class ProductController extends Controller
                                 $trans_out->warehouse_id = $from_wh;
                                 $trans_out->stock_type_id = 2;        // OUT
                                 $trans_out->remark = 'Transfer OUT';
+                                $trans_out->line_price = $model->cost_price;
                                 $trans_out->created_by = Yii::$app->user->id;
                                 $trans_out->save(false);
 
@@ -432,6 +449,7 @@ class ProductController extends Controller
                                 $trans_in->warehouse_id = $to_wh;
                                 $trans_in->stock_type_id = 1;         // IN
                                 $trans_in->remark = 'Transfer IN';
+                                $trans_in->line_price = $model->cost_price;
                                 $trans_in->created_by = Yii::$app->user->id;
                                 $trans_in->save(false);
 

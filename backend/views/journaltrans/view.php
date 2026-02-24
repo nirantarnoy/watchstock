@@ -460,11 +460,13 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     },
                 ],
                 [
-                    'label' => 'ต้นทุนเฉลี่ย',
-                    'attribute' => 'line_price',
-                    'format' => ['decimal', 2],
+                    'label' => 'ราคาทุน',
                     'headerOptions' => ['style' => 'text-align:right'],
                     'contentOptions' => ['style' => 'text-align:right'],
+                    'value' => function($model){
+                        $cost = $model->line_price > 0 ? $model->line_price : $model->cost_price;
+                        return number_format($cost, 2);
+                    }
                 ],
                 [
                     'attribute' => 'qty',
