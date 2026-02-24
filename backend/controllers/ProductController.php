@@ -280,8 +280,8 @@ class ProductController extends Controller
 
                             if ($check_stock_change) {
 
-                                $old_qty = (int)$check_stock_change->qty;
-                                $new_qty = (int)$line_qty[$i];
+                                $old_qty = (float)$check_stock_change->qty;
+                                $new_qty = (float)$line_qty[$i];
 
                                 // มากกว่า = Stock IN
                                 if ($new_qty > $old_qty) {
@@ -293,6 +293,9 @@ class ProductController extends Controller
                                     $diff_qty = $old_qty - $new_qty;
                                     $find_stock_type_id = 2;
                                 }
+                            } else {
+                                $diff_qty = (float)$line_qty[$i];
+                                $find_stock_type_id = 1; // IN
                             }
 
                             // ถ้ามีการเปลี่ยนแปลงค่อยบันทึก StockTrans
@@ -309,44 +312,37 @@ class ProductController extends Controller
 
                                 $model_stock_trans->warehouse_id = $line_warehouse[$i];
                                 $model_stock_trans->stock_type_id = $find_stock_type_id; // 1 IN , 2 OUT
-                                $model_stock_trans->remark = '';
+                                $model_stock_trans->remark = 'Adjust from Product Form';
                                 $model_stock_trans->created_by = Yii::$app->user->id;
                                 $model_stock_trans->save(false);
-                            }
 
 
 
-
-
-                            $model_trans = new \common\models\JournalTransLine();
-                            $model_trans->product_id = $model->id;
-                            $model_trans->journal_trans_id = $model_journal_trans->id;
-                            $model_trans->warehouse_id = $line_warehouse[$i];
-                            $model_trans->qty = $line_qty[$i];
-                            $model_trans->cost_price = $model->cost_price; // Save current cost price
-                            $model_trans->status = 1;
-                            if($model_trans->save(false)){
-                                $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
-                                if($model_sum){
-                                    $model_sum->qty = $line_qty[$i];
-                                 //   $model_sum->qty = $line_qty[$i] + ($model_sum->qty ?? 0);
-                                    if($model_sum->save(false)){
-//                                        $model->stock_qty = $line_qty[$i];
-//                                        $model->save(false);
-                                      //  $this->updateProductStock($model->id);
+                                $model_trans = new \common\models\JournalTransLine();
+                                $model_trans->product_id = $model->id;
+                                $model_trans->journal_trans_id = $model_journal_trans->id;
+                                $model_trans->warehouse_id = $line_warehouse[$i];
+                                $model_trans->qty = $diff_qty;
+                                $model_trans->cost_price = $model->cost_price; // Save current cost price
+                                $model_trans->status = 1;
+                                if($model_trans->save(false)){
+                                    $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
+                                    if($model_sum){
+                                        $model_sum->qty = $line_qty[$i];
+                                        $model_sum->save(false);
+                                    }else{
+                                        $model_sum = new \backend\models\Stocksum();
+                                        $model_sum->product_id = $model->id;
+                                        $model_sum->warehouse_id = $line_warehouse[$i];
+                                        $model_sum->qty = $line_qty[$i];
+                                        $model_sum->reserv_qty = 0;
+                                        $model_sum->save(false);
                                     }
-                                }else{
 
-                                    $model_sum = new \backend\models\Stocksum();
-                                    $model_sum->product_id = $model->id;
-                                    $model_sum->warehouse_id = $line_warehouse[$i];
-                                    $model_sum->qty = $line_qty[$i];
-                                    $model_sum->reserv_qty = 0;
-                                    if($model_sum->save(false)){
-//                                        $model->stock_qty = $line_qty[$i];
-//                                        $model->save(false);
-                                       // $this->updateProductStock($model->id);
-                                    }
+                                    // Update balance for this line to show correctly in history
+                                    $current_balance = (float)\common\models\StockSum::find()->where(['product_id' => $model->id])->sum('qty + COALESCE(reserv_qty, 0)');
+                                    $model_trans->balance = $current_balance;
+                                    $model_trans->save(false);
                                 }
                             }
                         }
