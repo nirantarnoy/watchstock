@@ -1404,4 +1404,43 @@ class JournaltransController extends Controller
        echo "Update {$cnt} records";
     }
 
+    public function actionUpdateAllCosts()
+    {
+        $lines = \common\models\JournalTransLine::find()
+            ->where(['or',
+                ['cost_price' => 0],
+                ['cost_price' => null],
+                ['line_price' => 0],
+                ['line_price' => null]
+            ])
+            ->all();
+
+        $updated_count = 0;
+        $no_product_cost_count = 0;
+
+        foreach ($lines as $line) {
+            $product = \common\models\Product::findOne($line->product_id);
+            if ($product) {
+                $new_cost = $product->cost_price > 0 ? $product->cost_price : $product->cost_avg;
+                if ($new_cost > 0) {
+                    $line->cost_price = $new_cost;
+                    $line->line_price = $new_cost;
+                    if ($line->save(false)) {
+                        $updated_count++;
+                        \common\models\StockTrans::updateAll(['line_price' => $new_cost], [
+                            'journal_trans_id' => $line->journal_trans_id,
+                            'product_id' => $line->product_id,
+                            'line_price' => [0, null]
+                        ]);
+                    }
+                } else {
+                    $no_product_cost_count++;
+                }
+            }
+        }
+
+        \Yii::$app->session->setFlash('success', "อัพเดทสำเร็จ {$updated_count} รายการ, สินค้าไม่มีต้นทุน {$no_product_cost_count} รายการ");
+        return $this->redirect(['index']);
+    }
+
 }
