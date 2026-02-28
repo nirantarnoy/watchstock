@@ -159,7 +159,12 @@ class JournaltransController extends Controller
                         $processed_products = [];
                         foreach ($modelLines as $modelLine) {
                             if($type != 9){
-                                $modelLine->line_price = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                                $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                                if ($cost <= 0) {
+                                    $cost = \backend\models\Product::findCostPrice($modelLine->product_id);
+                                }
+                                $modelLine->line_price = $cost;
+                                $modelLine->cost_price = $cost;
                             }
                             $modelLine->journal_trans_id = $model->id;
                             if($type == 5 || $type == 7){
@@ -310,7 +315,12 @@ class JournaltransController extends Controller
                             }
 
                             if($model->trans_type_id != 9){
-                                 $modelLine->line_price = \backend\models\Product::findCostPrice($modelLine->product_id);
+                                 $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                                 if ($cost <= 0) {
+                                     $cost = \backend\models\Product::findCostPrice($modelLine->product_id);
+                                 }
+                                 $modelLine->line_price = $cost;
+                                 $modelLine->cost_price = $cost;
                             }
                             $modelLine->journal_trans_id = $model->id;
                             if($model->trans_type_id == 5 || $model->trans_type_id == 7){
@@ -422,6 +432,7 @@ class JournaltransController extends Controller
                 $model_stock_trans->qty = (int)$model->qty;
                 $model_stock_trans->warehouse_id = $model->warehouse_id;
                 $model_stock_trans->stock_type_id = $stock_type;
+                $model_stock_trans->line_price = $model->line_price;
                 $model_stock_trans->remark = 'Reversal/Delete/Update';
                 $model_stock_trans->created_by = \Yii::$app->user->id;
                 $model_stock_trans->save(false);
@@ -594,6 +605,11 @@ class JournaltransController extends Controller
                         $model_trans->qty = $qty;
                         $model_trans->warehouse_id = $warehouse_id;
                         $model_trans->status = 1;
+                        $cost = \backend\models\Product::findCostAvgPrice($product_id);
+                        if ($cost <= 0) {
+                            $cost = \backend\models\Product::findCostPrice($product_id);
+                        }
+                        $model_trans->line_price = $cost;
                         if ($model_trans->save(false)) {
                             $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
                             if ($model) {
@@ -730,6 +746,13 @@ class JournaltransController extends Controller
                             $model_line->return_to_type = $returnToTypeVal;
                             $model_line->journal_trans_ref_id = $journal_trans_id;
 
+                            $cost = \backend\models\Product::findCostAvgPrice($pid);
+                            if ($cost <= 0) {
+                                $cost = \backend\models\Product::findCostPrice($pid);
+                            }
+                            $model_line->line_price = $cost;
+                            $model_line->cost_price = $cost;
+
                             if ($model_line->save(false)) {
                                 // StockTrans
                                 $model_stock_trans = new \common\models\StockTrans();
@@ -741,6 +764,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->remark = $remarkVal;
                                 $model_stock_trans->stock_type_id = 1;
                                 $model_stock_trans->warehouse_id = $whVal;
+                                $model_stock_trans->line_price = $cost;
                                 $model_stock_trans->created_by = \Yii::$app->user->id;
 
                                 if ($model_stock_trans->save(false)) {
@@ -932,6 +956,8 @@ class JournaltransController extends Controller
                     $model_trans->warehouse_id = $warehouse_id;
                     $model_trans->status = 1;
                     if ($model_trans->save(false)) {
+                        $model_trans->line_price = $model_new->cost_price > 0 ? $model_new->cost_price : $model_new->cost_avg;
+                        $model_trans->save(false);
                         $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $model_new->id, 'warehouse_id' => $warehouse_id])->one();
                         if ($model_sum) { // กลับเข้าคลังเดิม
                             $model_sum->qty = $qty;
@@ -1057,6 +1083,7 @@ class JournaltransController extends Controller
                                     $model_stock_trans->qty = (int)$value->qty;
                                     $model_stock_trans->warehouse_id = $value->warehouse_id;
                                     $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1); // Reverse type
+                                    $model_stock_trans->line_price = $value->line_price;
                                     $model_stock_trans->remark = 'Cancel Transaction';
                                     $model_stock_trans->created_by = \Yii::$app->user->id;
                                     $model_stock_trans->save(false);
@@ -1176,6 +1203,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                                 $model_stock_trans->warehouse_id = $model_line->warehouse_id;
                                 $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                                $model_stock_trans->line_price = $model_line->line_price;
                                 $model_stock_trans->remark = $model_line->remark;
                                 $model_stock_trans->created_by = Yii::$app->user->id;
                                 $model_stock_trans->save(false);
@@ -1245,6 +1273,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                                 $model_stock_trans->warehouse_id = $model_line->warehouse_id;
                                 $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                                $model_stock_trans->line_price = $model_line->line_price;
                                 $model_stock_trans->remark = $model_line->remark;
                                 $model_stock_trans->created_by = Yii::$app->user->id;
                                 $model_stock_trans->save(false);
