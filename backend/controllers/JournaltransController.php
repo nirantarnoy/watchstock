@@ -160,9 +160,6 @@ class JournaltransController extends Controller
                         foreach ($modelLines as $modelLine) {
                             if($type != 9){
                                 $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
-                                if ($cost <= 0) {
-                                    $cost = \backend\models\Product::findCostPrice($modelLine->product_id);
-                                }
                                 $modelLine->line_price = $cost;
                                 $modelLine->cost_price = $cost;
                             }
@@ -316,9 +313,6 @@ class JournaltransController extends Controller
 
                             if($model->trans_type_id != 9){
                                  $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
-                                 if ($cost <= 0) {
-                                     $cost = \backend\models\Product::findCostPrice($modelLine->product_id);
-                                 }
                                  $modelLine->line_price = $cost;
                                  $modelLine->cost_price = $cost;
                             }
@@ -606,9 +600,6 @@ class JournaltransController extends Controller
                         $model_trans->warehouse_id = $warehouse_id;
                         $model_trans->status = 1;
                         $cost = \backend\models\Product::findCostAvgPrice($product_id);
-                        if ($cost <= 0) {
-                            $cost = \backend\models\Product::findCostPrice($product_id);
-                        }
                         $model_trans->line_price = $cost;
                         if ($model_trans->save(false)) {
                             $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
@@ -747,9 +738,6 @@ class JournaltransController extends Controller
                             $model_line->journal_trans_ref_id = $journal_trans_id;
 
                             $cost = \backend\models\Product::findCostAvgPrice($pid);
-                            if ($cost <= 0) {
-                                $cost = \backend\models\Product::findCostPrice($pid);
-                            }
                             $model_line->line_price = $cost;
                             $model_line->cost_price = $cost;
 

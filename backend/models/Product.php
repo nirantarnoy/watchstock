@@ -129,7 +129,10 @@ class Product extends \common\models\Product
     }
     public static function findCostAvgPrice($id){
         $model = Product::find()->where(['id'=>$id])->one();
-        return $model != null ?$model->cost_avg:0;
+        if ($model != null) {
+            return $model->cost_avg > 0 ? $model->cost_avg : $model->cost_price;
+        }
+        return 0;
     }
 
     public static function getTotalQty($id){
