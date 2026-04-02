@@ -84,8 +84,13 @@ class SiteController extends Controller
         $fromTimestamp = strtotime($fromDate);
         $toTimestamp = strtotime($toDate . ' 23:59:59');
 
+        // รับค่าการเรียงลำดับ
+        $sortBy = Yii::$app->request->get('sort_by', 'total_sales');
+        $sortTypeString = Yii::$app->request->get('sort_type', 'desc');
+        $sortType = $sortTypeString == 'asc' ? SORT_ASC : SORT_DESC;
+
         // 1. ยอดขายแยกตามสินค้า
-        $salesByProduct = $this->getSalesByProduct($fromTimestamp, $toTimestamp);
+        $salesByProduct = $this->getSalesByProduct($fromTimestamp, $toTimestamp, $sortBy, $sortType);
 
         // 2. ข้อมูลสำหรับกราฟเปรียบเทียบราคาขายกับต้นทุน
         $priceComparisonData = $this->getPriceComparisonData($fromTimestamp, $toTimestamp, $brand_ids);
@@ -111,6 +116,8 @@ class SiteController extends Controller
             'salesTrend' => $salesTrend,
             'brand_ids' => $brand_ids,
             'all_brands' => $all_brands,
+            'sortBy' => $sortBy,
+            'sortType' => $sortTypeString,
         ]);
     }
 
@@ -469,7 +476,7 @@ class SiteController extends Controller
     /**
      * ดึงข้อมูลยอดขายแยกตามสินค้า
      */
-    private function getSalesByProduct($fromTimestamp, $toTimestamp)
+    private function getSalesByProduct($fromTimestamp, $toTimestamp, $sortBy = 'total_sales', $sortType = SORT_DESC)
     {
         $query = (new Query())
             ->select([
@@ -494,6 +501,19 @@ class SiteController extends Controller
                             ELSE p.cost_price 
                         END
                     ) AS profit
+                "),
+                new \yii\db\Expression("
+                    CASE 
+                        WHEN SUM(jtl.qty * jtl.sale_price) > 0 THEN 
+                            ((SUM(jtl.qty * jtl.sale_price) - 
+                            SUM(jtl.qty * 
+                                CASE 
+                                    WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                                    ELSE p.cost_price 
+                                END
+                            )) / SUM(jtl.qty * jtl.sale_price)) * 100
+                        ELSE 0 
+                    END AS profit_percent
                 ")
             ])
             ->from(['jtl' => 'journal_trans_line'])
@@ -503,8 +523,13 @@ class SiteController extends Controller
             ->andWhere(['jt.status' => 3, 'jt.trans_type_id' => [3, 9]])
             ->andFilterWhere(['!=', 'jtl.status', 300])
             ->groupBy(['p.id', 'p.code', 'p.name'])
-            ->having('SUM(jtl.qty) > 0')
-            ->orderBy(['total_sales' => SORT_DESC]);
+            ->having('SUM(jtl.qty) > 0');
+
+        if ($sortBy == 'profit_percent') {
+            $query->orderBy(['profit_percent' => $sortType]);
+        } else {
+            $query->orderBy([$sortBy => $sortType]);
+        }
 
         return $query->all();
     }

@@ -12,6 +12,8 @@ use yii\widgets\ActiveForm;
 /* @var $topProducts array */
 /* @var $salesByGroup array */
 /* @var $salesTrend array */
+/* @var $sortBy string */
+/* @var $sortType string */
 
 $this->title = 'ภาพรวมระบบ';
 $this->params['breadcrumbs'][] = $this->title;
@@ -19,6 +21,22 @@ $this->params['breadcrumbs'][] = $this->title;
 // Register Highcharts
 $this->registerJsFile('https://code.highcharts.com/highcharts.js', ['depends' => [\yii\web\JqueryAsset::className()]]);
 $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depends' => [\yii\web\JqueryAsset::className()]]);
+
+$createSortUrl = function($column) use ($fromDate, $toDate, $sortBy, $sortType) {
+    if ($sortBy == $column) {
+        $newSortType = ($sortType == 'asc') ? 'desc' : 'asc';
+    } else {
+        $newSortType = 'desc';
+    }
+    return Url::to(['index', 'from_date' => $fromDate, 'to_date' => $toDate, 'sort_by' => $column, 'sort_type' => $newSortType]);
+};
+
+$getSortIcon = function($column) use ($sortBy, $sortType) {
+    if ($sortBy == $column) {
+        return $sortType == 'asc' ? ' <i class="fa fa-sort-asc"></i>' : ' <i class="fa fa-sort-desc"></i>';
+    }
+    return ' <i class="fa fa-sort" style="color: #ccc;"></i>';
+};
 ?>
 <?php if (\Yii::$app->user->can('Super user') || \Yii::$app->user->can('System Administrator')): ?>
     <div class="dashboard-index">
@@ -239,13 +257,13 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
                                 <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>ชื่อสินค้า</th>
-                                    <th class="text-right">จำนวนขาย</th>
-                                    <th class="text-right">ยอดขาย</th>
-                                    <th class="text-right">ราคาขายเฉลี่ย</th>
-                                    <th class="text-right">ต้นทุน</th>
-                                    <th class="text-right">กำไร</th>
-                                    <th class="text-right">%กำไร</th>
+                                    <th><a href="<?= $createSortUrl('name') ?>">ชื่อสินค้า <?= $getSortIcon('name') ?></a></th>
+                                    <th class="text-right"><a href="<?= $createSortUrl('total_qty') ?>">จำนวนขาย <?= $getSortIcon('total_qty') ?></a></th>
+                                    <th class="text-right"><a href="<?= $createSortUrl('total_sales') ?>">ยอดขาย <?= $getSortIcon('total_sales') ?></a></th>
+                                    <th class="text-right"><a href="<?= $createSortUrl('avg_price') ?>">ราคาขายเฉลี่ย <?= $getSortIcon('avg_price') ?></a></th>
+                                    <th class="text-right"><a href="<?= $createSortUrl('cost_price') ?>">ต้นทุน <?= $getSortIcon('cost_price') ?></a></th>
+                                    <th class="text-right"><a href="<?= $createSortUrl('profit') ?>">กำไร <?= $getSortIcon('profit') ?></a></th>
+                                    <th class="text-right"><a href="<?= $createSortUrl('profit_percent') ?>">%กำไร <?= $getSortIcon('profit_percent') ?></a></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -259,13 +277,10 @@ $this->registerJsFile('https://code.highcharts.com/modules/exporting.js', ['depe
                                         <td class="text-right">฿<?= number_format($product['cost_price'], 2) ?></td>
                                         <td class="text-right">฿<?= number_format($product['profit'], 2) ?></td>
                                         <td class="text-right">
-                                            <?php
-                                            $profitPercent = $product['total_sales'] > 0 ?
-                                                ($product['profit'] / $product['total_sales']) * 100 : 0;
-                                            ?>
+                                            <?php $profitPercent = $product['profit_percent']; ?>
                                             <span class="label label-<?= $profitPercent > 20 ? 'success' : ($profitPercent > 10 ? 'warning' : 'danger') ?>">
-                                            <?= number_format($profitPercent, 2) ?>%
-                                        </span>
+                                                <?= number_format($profitPercent, 2) ?>%
+                                            </span>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
