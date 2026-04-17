@@ -45,7 +45,8 @@ use yii\helpers\Html;
 
                 <div class="login-logo">
                     <a href="#">
-                        <img src="../../backend/web/uploads/logo/mhee_logo.jpeg" width="65%" alt="">
+                        <!-- <img src="../../backend/web/uploads/logo/mhee_logo.jpeg" width="65%" alt=""> -->
+                        <img src="<?= Yii::getAlias('@web') ?>/uploads/logo/mhee_logo.jpeg" width="65%" alt="">
                     </a>
 <!--                    <h1 style="color: dodgerblue">MMC</h1>-->
 <!--                    <h1 style="color: dodgerblue">Material</h1>-->

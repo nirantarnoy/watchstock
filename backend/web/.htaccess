@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# ถ้าไม่เจอไฟล์ ให้โยนเข้า index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . index.php
