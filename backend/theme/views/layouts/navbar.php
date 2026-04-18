@@ -34,7 +34,7 @@ use yii\web\Session;
                 <a href="index.php?r=site/changepassword" class="dropdown-item">
                     <!-- Message Start -->
                     <div class="media">
-                        <img src="uploads/images/change_password.png" alt="User Avatar"
+                        <img src="<?= Yii::$app->request->baseUrl ?>/uploads/images/change_password.png" alt="User Avatar"
                              class="img-size-50 mr-3 img-circle">
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
@@ -49,7 +49,7 @@ use yii\web\Session;
                 <a href="index.php?r=site/logout" class="dropdown-item">
                     <!-- Message Start -->
                     <div class="media">
-                        <img src="uploads/images/logout.png" alt="User Avatar"
+                        <img src="<?= Yii::$app->request->baseUrl ?>/uploads/images/logout.png" alt="User Avatar"
                              class="img-size-50 mr-3 img-circle">
                         <div class="media-body">
                             <h3 class="dropdown-item-title">

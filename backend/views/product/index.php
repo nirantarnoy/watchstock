@@ -70,15 +70,19 @@ $this->params['breadcrumbs'][] = $this->title;
                     'contentOptions' => ['style' => 'text-align: center'],
                     'format' => 'raw',
                     'value' => function ($data) {
-                        $url = Yii::$app->request->hostInfo . Yii::$app->request->baseUrl . '/uploads/product_photo/' . $data->photo;
-                        return Html::a(
-                            Html::img($url, ['style' => 'max-width:100px']),
-                            $url,
-                            [
-                              'target' => '_blank',
-                              'data-pjax' => '0',
-                            ]
-                        );
+                        if ($data->photo != '') {
+                            $url = Yii::$app->request->baseUrl . '/uploads/product_photo/' . $data->photo;
+                            return Html::a(
+                                Html::img($url, ['style' => 'max-width:100px']),
+                                $url,
+                                [
+                                    'target' => '_blank',
+                                    'data-pjax' => '0',
+                                ]
+                            );
+                        } else {
+                            return '<span>-</span>';
+                        }
                     }
                 ],
                 'name',

@@ -140,7 +140,11 @@ $this->params['breadcrumbs'][] = $this->title;
                         if ($line->product) {
                             $line_photo = \backend\models\Product::getPhoto($line->product_id);
                             $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">';
-                            $html .= '<img src="' . \Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo . '" style="width: 80px; height: 80px; margin-right: 10px;" > ';
+                            if ($line_photo != '') {
+                                $html .= '<img src="' . \Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo . '" style="width: 80px; height: 80px; margin-right: 10px;" > ';
+                            } else {
+                                $html .= '<div style="width: 80px; height: 80px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; margin-right: 10px; color: #ccc;">No Pic</div>';
+                            }
                             $html .= '<span>' . $line->product->name . ' (' . $line->product->description . ')</span>';
                             $html .= '</div>';
                         }

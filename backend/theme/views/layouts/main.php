@@ -38,9 +38,9 @@ $is_pos_user = 0;
     <title><?= "MHEEWATCH" ?></title>
     <link rel="shortcut icon" href="<?php echo Yii::$app->getUrlManager()->baseUrl; ?>/sst.ico" type="image/x-icon"/>
 
-    <link rel="stylesheet" href="plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+    <link rel="stylesheet" href="<?= Yii::$app->request->baseUrl ?>/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
 
-    <link rel="stylesheet" href="plugins/toastr/toastr.min.css">
+    <link rel="stylesheet" href="<?= Yii::$app->request->baseUrl ?>/plugins/toastr/toastr.min.css">
     <!-- Google Font: Source Sans Pro -->
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 
@@ -50,14 +50,14 @@ $is_pos_user = 0;
 <!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
 
-    <link rel="stylesheet" href="css/sweetalert.css">
+    <link rel="stylesheet" href="<?= Yii::$app->request->baseUrl ?>/css/sweetalert.css">
     <?php $this->head() ?>
     <style>
         @font-face {
             font-family: 'Kanit-Regular';
             /*font-family: 'TH-Sarabun-New';*/
             /*src: url('fonts/THSarabunNew.ttf') format('truetype');*/
-            src: url('fonts/Kanit-Regular.ttf') format('truetype');
+            src: url('<?= Yii::$app->request->baseUrl ?>/fonts/Kanit-Regular.ttf') format('truetype');
             /*src: url('../../backend/web/fonts/Kanit-Regular.ttf') format('truetype');*/
             /* src: url('../fonts/thsarabunnew-webfont.eot?#iefix') format('embedded-opentype'),
                   url('../fonts/thsarabunnew-webfont.woff') format('woff'),
@@ -141,26 +141,26 @@ $is_pos_user = 0;
 <?php $this->endBody() ?>
 
 <!-- jQuery -->
-<!--<script src="plugins/jquery/jquery.min.js"></script>-->
+<!--<script src="<?= Yii::$app->request->baseUrl ?>/plugins/jquery/jquery.min.js"></script>-->
 <!-- jQuery UI 1.11.4 -->
-<script src="plugins/jquery-ui/jquery-ui.min.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/plugins/jquery-ui/jquery-ui.min.js"></script>
 
-<script src="plugins/bootstrap-switch/js/bootstrap-switch.min.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/plugins/bootstrap-switch/js/bootstrap-switch.min.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
 <!-- SweetAlert2 -->
-<script src="plugins/sweetalert2/sweetalert2.min.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/plugins/sweetalert2/sweetalert2.min.js"></script>
 <!-- Toastr -->
-<script src="plugins/toastr/toastr.min.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/plugins/toastr/toastr.min.js"></script>
 
-<script src="js/sweetalert.min.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/js/sweetalert.min.js"></script>
 
 <!-- OPTIONAL SCRIPTS -->
-<script src="plugins/chart.js/Chart.min.js"></script>
-<script src="dist/js/demo.js"></script>
-<script src="dist/js/pages/dashboard3.js"></script>
-<script src="js/module_index_delete.js"></script>
-<script src="js/jspdf.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/plugins/chart.js/Chart.min.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/dist/js/demo.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/dist/js/pages/dashboard3.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/js/module_index_delete.js"></script>
+<script src="<?= Yii::$app->request->baseUrl ?>/js/jspdf.js"></script>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
 
