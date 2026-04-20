@@ -406,7 +406,7 @@ class JournaltransController extends Controller
         $model = JournalTransLine::findOne($id);
         if($model){
             $journal = JournalTrans::findOne($model->journal_trans_id);
-            if($journal){
+            if($journal && $journal->status != JournalTrans::JOURNAL_TRANS_STATUS_CANCEL){
                 $stock_type = 0;
                 if($journal->stock_type_id == 1){
                     $stock_type = 2; // In -> Reverse with Out
@@ -644,7 +644,7 @@ class JournaltransController extends Controller
                 ->sum('qty + COALESCE(reserv_qty, 0)');
 
             \backend\models\Product::updateAll(
-                ['stock_qty' => $total_stock ?: 0],
+                ['stock_qty' => $total_stock > 0 ? $total_stock : 0],
                 ['id' => $product_id]
             );
         }
@@ -1038,9 +1038,16 @@ class JournaltransController extends Controller
         if ($id) {
             $model = $this->findModel($id);
             if ($model) {
+                if ($model->status == JournalTrans::JOURNAL_TRANS_STATUS_CANCEL) {
+                    \Yii::$app->session->setFlash('msg-error', 'รายการนี้ถูกยกเลิกไปแล้ว');
+                    return $this->redirect(['view', 'id' => $id]);
+                }
+
                 $model->status = JournalTrans::JOURNAL_TRANS_STATUS_CANCEL;
                 if ($model->save(false)) {
-                    $model_line = JournalTransLine::find()->where(['journal_trans_id' => $id])->all();
+                    $model_line = JournalTransLine::find()->where(['journal_trans_id' => $id])
+                        ->andFilterWhere(['<>', 'status', 300])
+                        ->all();
                     if ($model_line) {
                         foreach ($model_line as $value) {
                             $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $value->product_id, 'warehouse_id' => $value->warehouse_id])->one();
@@ -1101,6 +1108,10 @@ class JournaltransController extends Controller
             $model_line = JournalTransLine::find()->where(['id' => $id])->one();
 
             if ($model_line) {
+                if ($model_line->status == 300) {
+                    Yii::$app->session->setFlash('msg-error', 'รายการนี้ถูกยกเลิกไปแล้ว');
+                    return $this->redirect(Yii::$app->request->referrer);
+                }
 
                 // ❗ ป้องกัน cancel_qty มากกว่า qty จริง
                 if ($cancel_qty > $model_line->qty) {
@@ -1285,6 +1296,7 @@ class JournaltransController extends Controller
                 } else {
                     // ถ้าหมดแล้วลบทั้งบรรทัด
                    // $model_line->delete();
+                    $model_line->qty = 0;
                     $model_line->status  = 300; // ยกเลิก ไม่ใช้งาน
                     $model_line->save(false);
                 }

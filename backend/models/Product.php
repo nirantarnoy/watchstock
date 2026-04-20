@@ -67,6 +67,22 @@ class Product extends \common\models\Product
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($insert) {
+                if ($this->stock_qty === null || $this->stock_qty === '') {
+                    $this->stock_qty = 0;
+                }
+            }
+            if ($this->stock_qty < 0) {
+                $this->stock_qty = 0;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public function getJournaltransLine()
     {
         return $this->hasMany(JournalTransLine::class, ['product_id' => 'id']);

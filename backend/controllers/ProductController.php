@@ -116,6 +116,7 @@ class ProductController extends Controller
     public function actionCreate()
     {
         $model = new Product();
+        $model->stock_qty = 0;
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
@@ -161,21 +162,21 @@ class ProductController extends Controller
                             $model_trans->product_id = $model->id;
                             $model_trans->trans_date = date('Y-m-d H:i:s');
                             $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
-                            $model_trans->qty = $line_qty[$i];
+                            $model_trans->qty = $line_qty[$i] > 0 ? $line_qty[$i] : 0;
                             $model_trans->warehouse_id = $line_warehouse[$i];
                             $model_trans->line_price = $model->cost_price;
                             $model_trans->status = 1;
                             if($model_trans->save(false)){
                                 $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
                                 if($model_sum){
-                                    $model_sum->qty = $line_qty[$i];
+                                    $model_sum->qty = $line_qty[$i] > 0 ? $line_qty[$i] : 0;
                                     $model_sum->reserv_qty = 0;
                                     $model_sum->save(false);
                                 }else{
                                     $model_sum = new \backend\models\Stocksum();
                                     $model_sum->product_id = $model->id;
                                     $model_sum->warehouse_id = $line_warehouse[$i];
-                                    $model_sum->qty = $line_qty[$i];
+                                    $model_sum->qty = $line_qty[$i] > 0 ? $line_qty[$i] : 0;
                                     $model_sum->reserv_qty = 0;
                                     $model_sum->save(false);
                                 }
@@ -552,7 +553,7 @@ class ProductController extends Controller
                 ->sum('qty + COALESCE(reserv_qty, 0)');
 
             \backend\models\Product::updateAll(
-                ['stock_qty' => $total_stock ?: 0],
+                ['stock_qty' => $total_stock > 0 ? $total_stock : 0],
                 ['id' => $product_id]
             );
         }

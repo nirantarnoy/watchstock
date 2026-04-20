@@ -253,7 +253,7 @@ $this->registerCss('
                                     <td>
                                         <input type="hidden" name="line_old_qty[]" value="<?=$value->qty?>">
                                         <input type="number" class="form-control line-qty" name="line_qty[]"
-                                               value="<?= $value->qty ?>">
+                                               value="<?= $value->qty ?>" min="0">
                                     </td>
                                     <td>
                                         <div class="btn btn-danger" onclick="removeline($(this))"><i
@@ -277,7 +277,7 @@ $this->registerCss('
                                 </td>
                                 <td>
                                     <input type="hidden" name="line_old_qty[]" value="0">
-                                    <input type="number" class="form-control line-qty" name="line_qty[]" value="">
+                                    <input type="number" class="form-control line-qty" name="line_qty[]" value="" min="0">
                                 </td>
                                 <td>
                                     <div class="btn btn-danger" onclick="removeline($(this))"><i
@@ -339,7 +339,7 @@ $this->registerCss('
                                         </td>
                                         <td>
                                             <input type="number" class="form-control line-qty" name="line_qty[]"
-                                                   value="<?= $value->qty ?>">
+                                                   value="<?= $value->qty ?>" min="0">
                                         </td>
                                         <td>
                                             <div class="btn btn-danger" onclick="removeline($(this))"><i
@@ -363,7 +363,7 @@ $this->registerCss('
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="number" class="form-control line-qty" name="line_qty[]" value="">
+                                        <input type="number" class="form-control line-qty" name="line_qty[]" value="" min="0">
                                     </td>
                                     <td>
                                         <div class="btn btn-danger" onclick="removeline($(this))"><i

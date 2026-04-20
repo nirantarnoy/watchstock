@@ -43,7 +43,8 @@ class Product extends \yii\db\ActiveRecord
         return [
             [['name'], 'required'],
             [['status', 'product_group_id', 'unit_id', 'created_at', 'created_by', 'updated_at', 'updated_by','type_id','product_type_id','brand_id'], 'integer'],
-            [['cost_price', 'sale_price', 'stock_qty','cost_avg'], 'number'],
+            [['cost_price', 'sale_price', 'cost_avg'], 'number'],
+            [['stock_qty'], 'number', 'min' => 0],
             [['code', 'name', 'description', 'remark', 'photo'], 'string', 'max' => 255],
             [['edit_stock_qty','transfer_warehouse_stock'],'safe'],
 
