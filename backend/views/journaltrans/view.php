@@ -805,8 +805,8 @@ function getBadgeStatus($status, $status_name)
 <?php
 $js = <<<JS
 function checkReturnQty(e){
-    var remain_qty = e.attr('data-var');
-    var return_qty = e.val();
+    var remain_qty = parseFloat(e.attr('data-var'));
+    var return_qty = parseFloat(e.val());
     if(return_qty > remain_qty){
         e.val(remain_qty);
     }
