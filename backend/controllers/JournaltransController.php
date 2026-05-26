@@ -144,7 +144,14 @@ class JournaltransController extends Controller
                     if ($model->stock_type_id == 2) { // เฉพาะรายการจ่ายออก
                         foreach ($modelLines as $i => $line) {
                             if ($line->product_id > 0 && $line->warehouse_id > 0) {
+                                if ($line->qty <= 0) {
+                                    throw new Exception("จำนวนสินค้าต้องมากกว่า 0");
+                                }
                                 $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
+                                if ($onhand <= 0) {
+                                    $product_name = \backend\models\Product::findName($line->product_id);
+                                    throw new Exception("สินค้า $product_name ในคลังไม่มีหรือสต๊อกเป็น 0 (คงเหลือ $onhand)");
+                                }
                                 if ($onhand < $line->qty) {
                                     $product_name = \backend\models\Product::findName($line->product_id);
                                     throw new Exception("สินค้า $product_name ในคลังมีไม่พอ (คงเหลือ $onhand)");
@@ -278,6 +285,9 @@ class JournaltransController extends Controller
                     if ($model->stock_type_id == 2) {
                         foreach ($modelLines as $line) {
                             if ($line->product_id > 0 && $line->warehouse_id > 0) {
+                                if ($line->qty <= 0) {
+                                    throw new Exception("จำนวนสินค้าต้องมากกว่า 0");
+                                }
                                 $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
                                 
                                 // Virtual add-back of old qty for existing lines
@@ -286,6 +296,11 @@ class JournaltransController extends Controller
                                     if ($old_line && $old_line->product_id == $line->product_id && $old_line->warehouse_id == $line->warehouse_id) {
                                         $onhand += (float)$old_line->qty;
                                     }
+                                }
+
+                                if ($onhand <= 0) {
+                                    $product_name = \backend\models\Product::findName($line->product_id);
+                                    throw new Exception("สินค้า $product_name ในคลังไม่มีหรือสต๊อกเป็น 0");
                                 }
 
                                 if ($onhand < $line->qty) {

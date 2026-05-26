@@ -119,7 +119,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php
     $searchModel = new StocktransSearch();
     $dataProvider = $searchModel->search([]);
-    $dataProvider->query->where(['product_id' => $model->id])->andFilterWhere(['IS NOT','journal_trans_id',new \yii\db\Expression('NULL')]);
+    $dataProvider->query->where(['product_id' => $model->id]);
     $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
     ?>
     <h5><b>ประวัติการทำรายการ</b></h5>
@@ -149,7 +149,10 @@ $this->params['breadcrumbs'][] = $this->title;
                         'attribute' => 'journal_no',
                         'label' => 'เลขที่เอกสาร',
                         'value' => function ($data) {
-                            return \backend\models\JournalTrans::findJournalNoFromStockTransId($data->journal_trans_id);
+                            if ($data->journal_trans_id) {
+                                return \backend\models\JournalTrans::findJournalNoFromStockTransId($data->journal_trans_id);
+                            }
+                            return '-';
                         }
                     ],
                     [
@@ -157,7 +160,12 @@ $this->params['breadcrumbs'][] = $this->title;
                         'headerOptions' => ['style' => 'text-align: center'],
                         'contentOptions' => ['style' => 'text-align: center'],
                         'value' => function ($data) {
-                            return \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
+                            if ($data->journal_trans_id) {
+                                return \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
+                            } else {
+                                $list = \backend\models\JournalTrans::getTransactionTypeList();
+                                return isset($list[$data->trans_type_id]) ? $list[$data->trans_type_id] : 'ประวัติคืน/ปรับปรุง';
+                            }
                         }
                     ],
                     [
