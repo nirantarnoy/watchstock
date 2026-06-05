@@ -124,6 +124,11 @@ class ProductController extends Controller
                 $line_qty = \Yii::$app->request->post('line_qty');
                 $line_exp_date = \Yii::$app->request->post('line_exp_date');
 
+                if (empty($line_warehouse)) {
+                    Yii::$app->session->setFlash('error', 'กรุณาระบุที่จัดเก็บสินค้าอย่างน้อย 1 รายการ เพื่อป้องกันสินค้าไม่มีที่เก็บในระบบ');
+                    return $this->refresh();
+                }
+
                 foreach ($line_warehouse as $i => $wid) {
                     if ($wid == -1 || empty($wid)) {
                         Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
@@ -153,33 +158,75 @@ class ProductController extends Controller
                     }
 
                     if($line_warehouse != null){
+                        // Create JournalTrans for the new product stock (Adjust IN)
+                        $has_stock = false;
+                        foreach($line_qty as $qty){
+                            if(!empty($qty) && $qty > 0) $has_stock = true;
+                        }
+
+                        $model_journal_trans = null;
+                        if ($has_stock) {
+                            $model_journal_trans = new \common\models\JournalTrans();
+                            $model_journal_trans->trans_date = date('Y-m-d H:i:s');
+                            $model_journal_trans->journal_no = '';
+                            $model_journal_trans->remark = 'Initial stock on product creation';
+                            $model_journal_trans->trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN; // 10 = ปรับยอดเข้า
+                            $model_journal_trans->status = 3; // 3 complete
+                            $model_journal_trans->stock_type_id = 0;
+                            $model_journal_trans->warehouse_id = 0;
+                            $model_journal_trans->save(false);
+                        }
+
                         foreach($line_warehouse as $i => $wh_id){
                             if(empty($line_qty[$i]) || $line_qty[$i] == 0){
                                 continue;
                             }
 
-                            $model_trans = new \backend\models\Stocktrans();
-                            $model_trans->product_id = $model->id;
+                            $add_qty = (float)$line_qty[$i];
+
+                            $model_trans = new \common\models\StockTrans();
                             $model_trans->trans_date = date('Y-m-d H:i:s');
-                            $model_trans->trans_type_id = 1; // 1 ปรับสต๊อก 2 รับเข้า 3 จ่ายออก
-                            $model_trans->qty = $line_qty[$i] > 0 ? $line_qty[$i] : 0;
+                            if ($model_journal_trans) {
+                                $model_trans->journal_trans_id = $model_journal_trans->id;
+                            }
+                            $model_trans->trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN; // TYPE_ADJUST_IN
+                            $model_trans->product_id = $model->id;
+                            $model_trans->qty = $add_qty;
                             $model_trans->warehouse_id = $line_warehouse[$i];
+                            $model_trans->stock_type_id = 1; // 1 IN
+                            $model_trans->remark = 'Initial stock on product creation';
                             $model_trans->line_price = $model->cost_price;
-                            $model_trans->status = 1;
-                            if($model_trans->save(false)){
-                                $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
-                                if($model_sum){
-                                    $model_sum->qty = $line_qty[$i] > 0 ? $line_qty[$i] : 0;
-                                    $model_sum->reserv_qty = 0;
-                                    $model_sum->save(false);
-                                }else{
-                                    $model_sum = new \backend\models\Stocksum();
-                                    $model_sum->product_id = $model->id;
-                                    $model_sum->warehouse_id = $line_warehouse[$i];
-                                    $model_sum->qty = $line_qty[$i] > 0 ? $line_qty[$i] : 0;
-                                    $model_sum->reserv_qty = 0;
-                                    $model_sum->save(false);
-                                }
+                            $model_trans->created_by = Yii::$app->user->id;
+                            $model_trans->save(false);
+
+                            if ($model_journal_trans) {
+                                $model_jtrans_line = new \common\models\JournalTransLine();
+                                $model_jtrans_line->product_id = $model->id;
+                                $model_jtrans_line->journal_trans_id = $model_journal_trans->id;
+                                $model_jtrans_line->warehouse_id = $line_warehouse[$i];
+                                $model_jtrans_line->qty = $add_qty;
+                                $model_jtrans_line->cost_price = $model->cost_price;
+                                $model_jtrans_line->line_price = $model->cost_price;
+                                $model_jtrans_line->status = 1;
+                                $model_jtrans_line->save(false);
+
+                                $current_balance = (float)\common\models\StockSum::find()->where(['product_id' => $model->id])->sum('qty + COALESCE(reserv_qty, 0)');
+                                $model_jtrans_line->balance = $current_balance + $add_qty; // Will be updated after sum save
+                                $model_jtrans_line->save(false);
+                            }
+
+                            $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
+                            if($model_sum){
+                                $model_sum->qty = $add_qty;
+                                $model_sum->reserv_qty = 0;
+                                $model_sum->save(false);
+                            }else{
+                                $model_sum = new \backend\models\Stocksum();
+                                $model_sum->product_id = $model->id;
+                                $model_sum->warehouse_id = $line_warehouse[$i];
+                                $model_sum->qty = $add_qty;
+                                $model_sum->reserv_qty = 0;
+                                $model_sum->save(false);
                             }
                         }
                         $this->updateProductStock($model->id);
@@ -221,6 +268,11 @@ class ProductController extends Controller
             $line_warehouse = \Yii::$app->request->post('warehouse_id',[]);
             $line_qty = \Yii::$app->request->post('line_qty');
             $line_old_qty = \Yii::$app->request->post('line_old_qty');
+
+            if (empty($line_warehouse)) {
+                Yii::$app->session->setFlash('error', 'กรุณาระบุที่จัดเก็บสินค้าอย่างน้อย 1 รายการ เพื่อป้องกันสินค้าไม่มีที่เก็บในระบบ');
+                return $this->refresh();
+            }
 
             // echo $model->edit_stock_qty;return;
             // if($model->edit_stock_qty == 1) {

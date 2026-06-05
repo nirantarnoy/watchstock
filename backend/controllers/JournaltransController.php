@@ -100,6 +100,11 @@ class JournaltransController extends Controller
             $modelLines = $this->createMultiple(JournalTransLine::class);
             JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
 
+            if (empty($modelLines)) {
+                Yii::$app->session->setFlash('error', 'กรุณาระบุสินค้าและที่จัดเก็บอย่างน้อย 1 รายการ เพื่อป้องกันสินค้าไม่มีที่เก็บในระบบ');
+                return $this->refresh();
+            }
+
             if($modelLines != null && $type !=9){
                 foreach ($modelLines as $i => $wid) {
                     if ($wid->warehouse_id == -1 || empty($wid->warehouse_id)) {
@@ -264,6 +269,20 @@ class JournaltransController extends Controller
             $modelLines = $this->createMultiple(JournalTransLine::class, $modelLines);
             JournalTransLine::loadMultiple($modelLines, \Yii::$app->request->post());
             $deletedIDs = array_diff($oldIDs, array_filter(ArrayHelper::map($modelLines, 'id', 'id')));
+
+            if (empty($modelLines)) {
+                Yii::$app->session->setFlash('error', 'กรุณาระบุสินค้าและที่จัดเก็บอย่างน้อย 1 รายการ เพื่อป้องกันสินค้าไม่มีที่เก็บในระบบ');
+                return $this->refresh();
+            }
+
+            if($modelLines != null && $model->trans_type_id != 9){
+                foreach ($modelLines as $i => $wid) {
+                    if ($wid->warehouse_id == -1 || empty($wid->warehouse_id)) {
+                        Yii::$app->session->setFlash('error', 'กรุณาเลือกที่จัดเก็บในแถวที่ ' . ($i + 1));
+                        return $this->refresh();
+                    }
+                }
+            }
 
             // Ajax validation
             if (\Yii::$app->request->isAjax) {
