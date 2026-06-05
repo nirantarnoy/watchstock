@@ -384,9 +384,12 @@ class ProductController extends Controller
                                     ->where(['product_id' => $model->id, 'warehouse_id' => $from_wh])
                                     ->one();
 
-                                if (!$stock_from || $stock_from->qty <= 0) continue;
-
-                                $move_qty = (int)$stock_from->qty;  // ปริมาณที่จะย้ายทั้งหมด
+                                $line_transfer_qty = Yii::$app->request->post('line_transfer_qty');
+                                $move_qty = (int)$line_transfer_qty[$x];  // ปริมาณที่จะย้ายตามที่ผู้ใช้กรอก
+                                
+                                if ($move_qty <= 0 || $move_qty > $stock_from->qty) {
+                                    continue; // ข้ามถ้าย้าย 0 หรือมากกว่าที่มี
+                                }
 
                                 $model_trans = new \common\models\JournalTransLine();
                                 $model_trans->product_id = $model->id;
@@ -458,7 +461,7 @@ class ProductController extends Controller
                                 // 3) อัปเดตรายการสต๊อกจริง
                                 //------------------------------
                                 // ต้นทาง = จำนวนเดิม - ปริมาณที่ย้าย
-                                $stock_from->qty = 0;
+                                $stock_from->qty -= $move_qty;
                                 $stock_from->save(false);
 
                                 // ปลายทาง = จำนวนเดิม + ปริมาณที่ย้าย

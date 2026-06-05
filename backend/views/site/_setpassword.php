@@ -3,7 +3,7 @@
 use yii\widgets\ActiveForm;
 use yii\helpers\Url;
 
-$session = new Yii::$app->session();
+$session = Yii::$app->session;
 $this->title = "เปลี่ยนรหัสผ่านผู้ใช้งาน";
 
 ?>

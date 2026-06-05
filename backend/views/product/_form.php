@@ -429,7 +429,7 @@ $this->registerCss('
                                 </td>
                                 <td>
                                     <input type="number" class="form-control line-transfer-qty" name="line_transfer_qty[]"
-                                           value="<?= $value->qty ?>" readonly>
+                                           value="<?= $value->qty ?>" max="<?= $value->qty ?>" min="1">
                                 </td>
                                 <td>
                                     <select name="to_warehouse_id[]" id="" class="form-control line-to-warehouse-id" required>

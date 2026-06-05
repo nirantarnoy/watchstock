@@ -9,7 +9,6 @@ class Resetform extends \yii\base\Model{
        return[
            [['oldpw','newpw','confirmpw'],'required'],
            ['confirmpw', 'compare', 'compareAttribute' => 'newpw'],
-           ['oldpw', 'unique', 'targetClass' => \common\models\User::className(), 'targetAttribute' => ['id' => 'id']],
        ];
     }
     public function attributeLabels()

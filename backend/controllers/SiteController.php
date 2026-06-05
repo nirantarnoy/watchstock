@@ -324,7 +324,7 @@ class SiteController extends Controller
                         if ($model_user->save()) {
                             $session = Yii::$app->session;
                             $session->setFlash('msg_success', 'ทำการเปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
-                            return $this->redirect(['site_/logout']);
+                            return $this->redirect(['site/logout']);
                         }
                     } else {
                         $session = Yii::$app->session;
