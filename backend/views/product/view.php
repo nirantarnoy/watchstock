@@ -125,122 +125,124 @@ $this->params['breadcrumbs'][] = $this->title;
     <h5><b>ประวัติการทำรายการ</b></h5>
     <div class="row">
         <div class="col-lg-12">
-            <?= GridView::widget([
-                'dataProvider' => $dataProvider,
-                // 'filterModel' => $searchModel,
-                'emptyCell' => '-',
-                'layout' => "{items}\n{summary}\n<div class='text-center'>{pager}</div>",
-                'summary' => "แสดง {begin} - {end} ของทั้งหมด {totalCount} รายการ",
-                'showOnEmpty' => false,
-                //    'bordered' => true,
-                //     'striped' => false,
-                //    'hover' => true,
-                'id' => 'product-grid',
-                //'tableOptions' => ['class' => 'table table-hover'],
-                'emptyText' => '<div style="color: red;text-align: center;"> <b>ไม่พบรายการไดๆ</b></div>',
-                'columns' => [
-                    [
-                        'class' => 'yii\grid\SerialColumn',
-                        'headerOptions' => ['style' => 'text-align: center'],
-                        'contentOptions' => ['style' => 'text-align: center'],
-                    ],
+            <div class="table-responsive">
+                <?= GridView::widget([
+                    'dataProvider' => $dataProvider,
+                    // 'filterModel' => $searchModel,
+                    'emptyCell' => '-',
+                    'layout' => "{items}\n{summary}\n<div class='text-center'>{pager}</div>",
+                    'summary' => "แสดง {begin} - {end} ของทั้งหมด {totalCount} รายการ",
+                    'showOnEmpty' => false,
+                    //    'bordered' => true,
+                    //     'striped' => false,
+                    //    'hover' => true,
+                    'id' => 'product-grid',
+                    'tableOptions' => ['class' => 'table table-hover table-bordered table-striped'],
+                    'emptyText' => '<div style="color: red;text-align: center;"> <b>ไม่พบรายการไดๆ</b></div>',
+                    'columns' => [
+                        [
+                            'class' => 'yii\grid\SerialColumn',
+                            'headerOptions' => ['style' => 'text-align: center'],
+                            'contentOptions' => ['style' => 'text-align: center'],
+                        ],
 
-                    [
-                        'attribute' => 'journal_no',
-                        'label' => 'เลขที่เอกสาร',
-                        'value' => function ($data) {
-                            if ($data->journal_trans_id) {
-                                return \backend\models\JournalTrans::findJournalNoFromStockTransId($data->journal_trans_id);
+                        [
+                            'attribute' => 'journal_no',
+                            'label' => 'เลขที่เอกสาร',
+                            'value' => function ($data) {
+                                if ($data->journal_trans_id) {
+                                    return \backend\models\JournalTrans::findJournalNoFromStockTransId($data->journal_trans_id);
+                                }
+                                return '-';
                             }
-                            return '-';
-                        }
-                    ],
-                    [
-                        'label' => 'ประเภทกิจกรรม',
-                        'headerOptions' => ['style' => 'text-align: center'],
-                        'contentOptions' => ['style' => 'text-align: center'],
-                        'value' => function ($data) {
-                            if ($data->journal_trans_id) {
-                                return \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
-                            } else {
-                                $list = \backend\models\JournalTrans::getTransactionTypeList();
-                                return isset($list[$data->trans_type_id]) ? $list[$data->trans_type_id] : 'ประวัติคืน/ปรับปรุง';
+                        ],
+                        [
+                            'label' => 'ประเภทกิจกรรม',
+                            'headerOptions' => ['style' => 'text-align: center'],
+                            'contentOptions' => ['style' => 'text-align: center'],
+                            'value' => function ($data) {
+                                if ($data->journal_trans_id) {
+                                    return \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
+                                } else {
+                                    $list = \backend\models\JournalTrans::getTransactionTypeList();
+                                    return isset($list[$data->trans_type_id]) ? $list[$data->trans_type_id] : 'ประวัติคืน/ปรับปรุง';
+                                }
                             }
-                        }
-                    ],
-                    [
-                        'attribute' => 'trans_date',
-                        'value' => function ($data) {
-                            return date('d/m/Y H:i:s', strtotime($data->trans_date));
-                        }
-                    ],
-                    [
-                        'attribute' => 'product_id',
-                        'value' => function ($data) {
-                            return \backend\models\Product::findName($data->product_id);
-                        }
-                    ],
-                    [
-                        'attribute' => 'warehouse_id',
-                        'value' => function ($data) {
-                            return \backend\models\Warehouse::findName($data->warehouse_id);
-                        }
-                    ],
-                    [
-                        'attribute' => 'qty',
-                        'headerOptions' => ['style' => 'text-align: right'],
-                        'contentOptions' => ['style' => 'text-align: right'],
-                        'value' => function ($data) {
-                            return number_format($data->qty, 0);
-                        }
-                    ],
-                    [
-                        'attribute' => 'line_price',
-                        'label' => 'ต้นทุน',
-                        'headerOptions' => ['style' => 'text-align: right'],
-                        'contentOptions' => ['style' => 'text-align: right'],
-                        'visible' => \Yii::$app->user->can('ViewCostPrice'),
-                        'value' => function ($data) {
-                            return number_format($data->line_price, 2);
-                        }
-                    ],
-                    [
-                        'label' => 'คงเหลือ',
-                        'headerOptions' => ['style' => 'text-align: right'],
-                        'contentOptions' => ['style' => 'text-align: right'],
-                        'value' => function ($data) {
-                             $line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $data->journal_trans_id, 'product_id' => $data->product_id, 'warehouse_id' => $data->warehouse_id])->one();
-                             return $line !=null? number_format($line->balance, 0):'-';
-                        }
-                    ],
-                    [
-                        'attribute' => 'stock_type_id',
-                        'headerOptions' => ['style' => 'text-align: center'],
-                        'contentOptions' => ['style' => 'text-align: center'],
-                        'format' => 'html',
-                        'value' => function ($data) {
-                            if ($data->stock_type_id == 1) {
-                                return '<div class="btn btn-sm btn-success" style="text-align: center;">IN</div>';
-                            } else if ($data->stock_type_id == 2) {
-                                return '<div class="btn btn-sm btn-danger" style="text-align: center;">OUT</div>';
+                        ],
+                        [
+                            'attribute' => 'trans_date',
+                            'value' => function ($data) {
+                                return date('d/m/Y H:i:s', strtotime($data->trans_date));
                             }
-                        }
-                    ],
-                    [
-                        'attribute' => 'created_by',
-                        'headerOptions' => ['style' => 'text-align: center'],
-                        'contentOptions' => ['style' => 'text-align: center'],
-                        'label' => 'ผู้ทํารายการ',
-                        'value' => function ($data) {
-                            return \backend\models\User::findName($data->created_by);
-                        }
-                    ],
+                        ],
+                        [
+                            'attribute' => 'product_id',
+                            'value' => function ($data) {
+                                return \backend\models\Product::findName($data->product_id);
+                            }
+                        ],
+                        [
+                            'attribute' => 'warehouse_id',
+                            'value' => function ($data) {
+                                return \backend\models\Warehouse::findName($data->warehouse_id);
+                            }
+                        ],
+                        [
+                            'attribute' => 'qty',
+                            'headerOptions' => ['style' => 'text-align: right'],
+                            'contentOptions' => ['style' => 'text-align: right'],
+                            'value' => function ($data) {
+                                return number_format($data->qty, 0);
+                            }
+                        ],
+                        [
+                            'attribute' => 'line_price',
+                            'label' => 'ต้นทุน',
+                            'headerOptions' => ['style' => 'text-align: right'],
+                            'contentOptions' => ['style' => 'text-align: right'],
+                            'visible' => \Yii::$app->user->can('ViewCostPrice'),
+                            'value' => function ($data) {
+                                return number_format($data->line_price, 2);
+                            }
+                        ],
+                        [
+                            'label' => 'คงเหลือ',
+                            'headerOptions' => ['style' => 'text-align: right'],
+                            'contentOptions' => ['style' => 'text-align: right'],
+                            'value' => function ($data) {
+                                 $line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $data->journal_trans_id, 'product_id' => $data->product_id, 'warehouse_id' => $data->warehouse_id])->one();
+                                 return $line !=null? number_format($line->balance, 0):'-';
+                            }
+                        ],
+                        [
+                            'attribute' => 'stock_type_id',
+                            'headerOptions' => ['style' => 'text-align: center'],
+                            'contentOptions' => ['style' => 'text-align: center'],
+                            'format' => 'html',
+                            'value' => function ($data) {
+                                if ($data->stock_type_id == 1) {
+                                    return '<div class="btn btn-sm btn-success" style="text-align: center;">IN</div>';
+                                } else if ($data->stock_type_id == 2) {
+                                    return '<div class="btn btn-sm btn-danger" style="text-align: center;">OUT</div>';
+                                }
+                            }
+                        ],
+                        [
+                            'attribute' => 'created_by',
+                            'headerOptions' => ['style' => 'text-align: center'],
+                            'contentOptions' => ['style' => 'text-align: center'],
+                            'label' => 'ผู้ทํารายการ',
+                            'value' => function ($data) {
+                                return \backend\models\User::findName($data->created_by);
+                            }
+                        ],
 
-                    //'created_at',
-                    //'stock_type_id',
-                ],
-                'pager' => ['class' => LinkPager::className()],
-            ]); ?>
+                        //'created_at',
+                        //'stock_type_id',
+                    ],
+                    'pager' => ['class' => LinkPager::className()],
+                ]); ?>
+            </div>
         </div>
     </div>
 
