@@ -133,6 +133,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'layout' => "{items}\n{summary}\n<div class='text-center'>{pager}</div>",
                     'summary' => "แสดง {begin} - {end} ของทั้งหมด {totalCount} รายการ",
                     'showOnEmpty' => false,
+                    'responsive' => false,
+                    'responsiveWrap' => false,
                     //    'bordered' => true,
                     //     'striped' => false,
                     //    'hover' => true,
