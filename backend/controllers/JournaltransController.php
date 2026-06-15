@@ -587,12 +587,12 @@ class JournaltransController extends Controller
     }
 
 
-    public function calStockReturnFixProduct($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type, $original_product_id, $original_warehouse_id)
+    public function calStockReturnFixProduct($product_id, $stock_type_id, $warehouse_id, $qty, $activity_type, $original_product_id, $original_warehouse_id, $journal_trans_id = null)
     {
         if ($product_id && $stock_type_id && $qty) {
             if ($stock_type_id == 1) { // stock in
                 if ($activity_type == 8) { // คืนช่าง
-                    if ($original_product_id == $product_id) { // same product
+                    if ((int)$original_product_id == (int)$product_id) { // same product
                         // StockTrans is already recorded by the caller (actionAddreturnproduct)
                         $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
                         if ($model) {
@@ -633,6 +633,10 @@ class JournaltransController extends Controller
                         $model_trans->qty = $qty;
                         $model_trans->warehouse_id = $warehouse_id;
                         $model_trans->status = 1;
+                        $model_trans->stock_type_id = 1; // IN
+                        if ($journal_trans_id) {
+                            $model_trans->journal_trans_id = $journal_trans_id;
+                        }
                         $cost = \backend\models\Product::findCostAvgPrice($product_id);
                         $model_trans->line_price = $cost;
                         if ($model_trans->save(false)) {
@@ -804,7 +808,7 @@ class JournaltransController extends Controller
                                             $this->calForupdateTransLine($journal_trans_id, $pid);
                                         } elseif (!empty($returnToProductVal)) {
                                             // คืนเข้าของที่ระบุ
-                                            $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal);
+                                            $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal, $journal_trans_id);
                                             $this->calForupdateTransLineFixProduct($journal_trans_id, $returnToProductVal, $pid);
                                         } else {
                                             // คืนตาม product เดิม
