@@ -230,34 +230,52 @@ class Product extends \common\models\Product
     {
         if (!$product_id) return 0;
 
-        // Calculate weighted average cost from:
-        // 1. Opening Balance (Some units might have been entered during product creation/update)
-        // 2. Adjust In (Type 10) transactions
-        
-        // Sum(qty * cost_price) / Sum(qty)
-        
-        $sql = "SELECT SUM(jl.qty * jl.cost_price) / SUM(jl.qty) as cost_avg 
+        $model = Product::findOne($product_id);
+        $current_cost = $model && $model->cost_price > 0 ? (float)$model->cost_price : 0;
+        $current_qty = 0;
+
+        // Replay history chronologically for Moving Average
+        $sql = "SELECT jl.qty, jl.cost_price, jt.stock_type_id, jt.trans_type_id
                 FROM journal_trans_line jl 
                 INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id 
                 WHERE jl.product_id = :product_id 
-                AND jt.trans_type_id IN (1, 10) 
-                AND jl.qty > 0 
-                AND jl.cost_price > 0";
+                AND jt.status != 300
+                AND jt.status != 4 -- Cancelled
+                ORDER BY jt.trans_date ASC, jt.id ASC";
         
-        $cost_avg = Yii::$app->db->createCommand($sql, [':product_id' => $product_id])->queryScalar();
+        $transactions = Yii::$app->db->createCommand($sql, [':product_id' => $product_id])->queryAll();
         
-        if ($cost_avg > 0) {
-            Product::updateAll(['cost_avg' => $cost_avg], ['id' => $product_id]);
-        } else {
-            // Fallback to cost_price if no transactions found
-            $model = Product::findOne($product_id);
-            if ($model && $model->cost_price > 0) {
-                $model->cost_avg = $model->cost_price;
-                $model->save(false);
-                $cost_avg = $model->cost_price;
+        foreach ($transactions as $trans) {
+            $qty = (float)$trans['qty'];
+            $cost = (float)$trans['cost_price'];
+            $stock_type = (int)$trans['stock_type_id'];
+            $trans_type = (int)$trans['trans_type_id'];
+
+            if ($stock_type == 1) { // IN
+                // Only Receive (1) and Adjust In (10) change the moving average if cost > 0
+                if (in_array($trans_type, [1, 10]) && $cost > 0) {
+                    if ($current_qty <= 0) {
+                        $current_cost = $cost;
+                        $current_qty = $qty;
+                    } else {
+                        $total_value = ($current_qty * $current_cost) + ($qty * $cost);
+                        $current_qty += $qty;
+                        $current_cost = $total_value / $current_qty;
+                    }
+                } else {
+                    // Other IN transactions (returns, etc) just add to qty, maintaining current average
+                    $current_qty += $qty;
+                }
+            } else if ($stock_type == 2) { // OUT
+                $current_qty -= $qty;
+                if ($current_qty < 0) $current_qty = 0;
             }
         }
         
-        return $cost_avg ?: 0;
+        if ($current_cost > 0) {
+            Product::updateAll(['cost_avg' => $current_cost], ['id' => $product_id]);
+        }
+        
+        return $current_cost;
     }
 }
