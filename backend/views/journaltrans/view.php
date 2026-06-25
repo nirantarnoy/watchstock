@@ -460,11 +460,23 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     },
                 ],
                 [
-                    'label' => 'ราคาทุน',
+                    'label' => 'ราคาขาย',
                     'headerOptions' => ['style' => 'text-align:right'],
                     'contentOptions' => ['style' => 'text-align:right'],
                     'value' => function($model){
-                        $cost = $model->line_price > 0 ? $model->line_price : $model->cost_price;
+                        $sale = $model->sale_price > 0 ? $model->sale_price : ($model->product ? $model->product->sale_price : 0);
+                        return number_format($sale, 2);
+                    }
+                ],
+                [
+                    'label' => 'ต้นทุนเฉลี่ย',
+                    'headerOptions' => ['style' => 'text-align:right'],
+                    'contentOptions' => ['style' => 'text-align:right'],
+                    'value' => function($model){
+                        $cost = \backend\models\Product::findCostAvgPrice($model->product_id);
+                        if ($cost <= 0) {
+                            $cost = $model->cost_price > 0 ? $model->cost_price : $model->line_price;
+                        }
                         return number_format($cost, 2);
                     }
                 ],

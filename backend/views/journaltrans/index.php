@@ -167,14 +167,31 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             [
-                'label' => 'ต้นทุน',
+                'label' => 'ราคาขาย',
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'format' => 'raw',
                 'value' => function ($model) {
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
-                        $cost = $line->line_price > 0 ? $line->line_price : $line->cost_price;
+                        $sale = $line->sale_price > 0 ? $line->sale_price : ($line->product ? $line->product->sale_price : 0);
+                        $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($sale, 2) . '</div>';
+                    }
+                    return $html;
+                }
+            ],
+            [
+                'label' => 'ต้นทุนเฉลี่ย',
+                'headerOptions' => ['style' => 'text-align:center'],
+                'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
+                'format' => 'raw',
+                'value' => function ($model) {
+                    $html = '';
+                    foreach ($model->journalTransLines as $line) {
+                        $cost = \backend\models\Product::findCostAvgPrice($line->product_id);
+                        if ($cost <= 0) {
+                            $cost = $line->cost_price > 0 ? $line->cost_price : $line->line_price;
+                        }
                         $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($cost, 2) . '</div>';
                     }
                     return $html;
