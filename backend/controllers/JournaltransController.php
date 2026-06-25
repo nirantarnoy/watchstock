@@ -1179,7 +1179,6 @@ class JournaltransController extends Controller
                                     $model_stock_trans->created_by = \Yii::$app->user->id;
                                     $model_stock_trans->save(false);
                                 }
-                            }
                             $this->updateProductStock($value->product_id);
                         }
                     }
