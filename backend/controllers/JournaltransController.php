@@ -814,15 +814,15 @@ class JournaltransController extends Controller
                                     // คืนส่งช่าง
                                     if (empty($returnToProductVal) && !empty($remarkVal)) {
                                         // คืนแล้วสร้าง product ใหม่
-                                        $this->crateNewProductFromWatchMaker($pid, $remarkVal, $whVal, $qtyVal, $originalWhVal, $journal_trans_id);
+                                        $this->crateNewProductFromWatchMaker($pid, $remarkVal, $whVal, $qtyVal, $originalWhVal, $model->id);
                                         $this->calForupdateTransLine($journal_trans_id, $pid);
                                     } elseif (!empty($returnToProductVal)) {
                                         // คืนเข้าของที่ระบุ
-                                        $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal, $journal_trans_id);
+                                        $this->calStockReturnFixProduct($returnToProductVal, 1, $whVal, $qtyVal, $trans_type_id, $pid, $originalWhVal, $model->id);
                                         $this->calForupdateTransLineFixProduct($journal_trans_id, $returnToProductVal, $pid);
                                     } else {
                                         // คืนตาม product เดิม
-                                        $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id);
+                                        $this->calStock($pid, 1, $whVal, $qtyVal, $trans_type_id, $model->id);
                                         $this->calForupdateTransLine($journal_trans_id, $pid);
                                     }
                                 }
@@ -989,6 +989,7 @@ class JournaltransController extends Controller
                     $model_trans->trans_type_id = 8; // Change to 8 to match return fix
                     $model_trans->qty = $qty;
                     $model_trans->warehouse_id = $warehouse_id;
+                    $model_trans->stock_type_id = 1; // Explicitly set to IN
                     $model_trans->status = 1;
                     if ($journal_trans_id) {
                         $model_trans->journal_trans_id = $journal_trans_id;

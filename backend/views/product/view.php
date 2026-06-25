@@ -163,12 +163,20 @@ $this->params['breadcrumbs'][] = $this->title;
                             'headerOptions' => ['style' => 'text-align: center'],
                             'contentOptions' => ['style' => 'text-align: center'],
                             'value' => function ($data) {
+                                $is_cancel = (strpos(strtolower($data->remark), 'cancel') !== false || strpos($data->remark, 'ยกเลิก') !== false);
+                                
+                                $name = '';
                                 if ($data->journal_trans_id) {
-                                    return \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
+                                    $name = \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
                                 } else {
                                     $list = \backend\models\JournalTrans::getTransactionTypeList();
-                                    return isset($list[$data->trans_type_id]) ? $list[$data->trans_type_id] : 'ประวัติคืน/ปรับปรุง';
+                                    $name = isset($list[$data->trans_type_id]) ? $list[$data->trans_type_id] : 'ประวัติคืน/ปรับปรุง';
                                 }
+                                
+                                if ($is_cancel) {
+                                    return 'ยกเลิก ' . $name;
+                                }
+                                return $name;
                             }
                         ],
                         [
@@ -212,8 +220,23 @@ $this->params['breadcrumbs'][] = $this->title;
                             'headerOptions' => ['style' => 'text-align: right'],
                             'contentOptions' => ['style' => 'text-align: right'],
                             'value' => function ($data) {
+                                 // For stock trans, it's better to show the running balance at the time, 
+                                 // but if we rely on journal_trans_line, we should check if it's a cancellation.
+                                 $is_cancel = (strpos(strtolower($data->remark), 'cancel') !== false || strpos($data->remark, 'ยกเลิก') !== false);
+                                 if ($is_cancel) {
+                                     // Calculate current stock balance as fallback since line balance might be old or null
+                                     $sum = \backend\models\Stocksum::find()->where(['product_id' => $data->product_id, 'warehouse_id' => $data->warehouse_id])->one();
+                                     return $sum ? number_format($sum->qty, 0) : '-';
+                                 }
+                                 
                                  $line = \common\models\JournalTransLine::find()->where(['journal_trans_id' => $data->journal_trans_id, 'product_id' => $data->product_id, 'warehouse_id' => $data->warehouse_id])->one();
-                                 return $line !=null? number_format($line->balance, 0):'-';
+                                 if ($line != null && $line->balance !== null) {
+                                     return number_format($line->balance, 0);
+                                 }
+                                 
+                                 // Fallback if JournalTransLine is not found (e.g. for new products created from returns)
+                                 $sum = \backend\models\Stocksum::find()->where(['product_id' => $data->product_id, 'warehouse_id' => $data->warehouse_id])->one();
+                                 return $sum ? number_format($sum->qty, 0) : '-';
                             }
                         ],
                         [
