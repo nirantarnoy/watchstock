@@ -50,12 +50,19 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <?php if ($search): ?>
                         <?php if ($product): ?>
-                            <div class="alert alert-info">
-                                <h5>ข้อมูลสินค้า: <?= Html::encode($product->name) ?> - <?= Html::encode($product->description) ?></h5>
-                                <p class="mb-0">
-                                    <strong>ต้นทุนปัจจุบัน (ล่าสุด):</strong> <?= number_format($product->cost_price, 2) ?> บาท <br>
-                                    <strong>จำนวนคงเหลือ (Stock Qty):</strong> <?= number_format($product->stock_qty, 0) ?> 
-                                </p>
+                            <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5>ข้อมูลสินค้า: <?= Html::encode($product->name) ?> - <?= Html::encode($product->description) ?></h5>
+                                    <p class="mb-0">
+                                        <strong>ต้นทุนปัจจุบัน (ล่าสุด):</strong> <?= number_format($product->cost_price, 2) ?> บาท <br>
+                                        <strong>จำนวนคงเหลือ (Stock Qty):</strong> <?= number_format($product->stock_qty, 0) ?> 
+                                    </p>
+                                </div>
+                                <div>
+                                    <button type="button" id="toggle-out-btn" class="btn btn-outline-secondary" onclick="toggleOutRows()">
+                                        <i class="fa fa-eye-slash"></i> ซ่อนรายการออก
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="table-responsive">
@@ -78,7 +85,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <tbody>
                                         <?php if (!empty($history)): ?>
                                             <?php foreach ($history as $index => $row): ?>
-                                                <tr>
+                                                <tr class="<?= $row['stock_type_id'] == 2 ? 'row-out' : 'row-in' ?>">
                                                     <td class="text-center"><?= $index + 1 ?></td>
                                                     <td><?= date('d/m/Y H:i', strtotime($row['trans_date'])) ?></td>
                                                     <td><?= Html::encode($row['journal_no']) ?></td>
@@ -126,3 +133,26 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     </div>
 </div>
+
+<?php
+$js = <<<JS
+    var outVisible = true;
+    function toggleOutRows() {
+        outVisible = !outVisible;
+        var rows = document.querySelectorAll('.row-out');
+        var btn = document.getElementById('toggle-out-btn');
+        rows.forEach(function(row) {
+            row.style.display = outVisible ? '' : 'none';
+        });
+        
+        if (outVisible) {
+            btn.innerHTML = '<i class="fa fa-eye-slash"></i> ซ่อนรายการออก';
+            btn.className = 'btn btn-outline-secondary';
+        } else {
+            btn.innerHTML = '<i class="fa fa-eye"></i> แสดงรายการออก';
+            btn.className = 'btn btn-secondary';
+        }
+    }
+JS;
+$this->registerJs($js, \yii\web\View::POS_END);
+?>

@@ -1854,9 +1854,7 @@ class ProductController extends Controller
                     $step['new_qty'] = $current_qty;
                     $step['new_cost'] = $current_cost;
                     
-                    if (in_array($trans_type, [1, 10])) {
-                        $history[] = $step;
-                    }
+                    $history[] = $step;
                 }
             }
         }
