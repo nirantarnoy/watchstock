@@ -1782,4 +1782,90 @@ class ProductController extends Controller
 
         return $content;
     }
+
+    public function actionCostHistory()
+    {
+        $search = \Yii::$app->request->get('search');
+        $product = null;
+        $history = [];
+        $current_qty = 0;
+        $current_cost = 0;
+
+        if ($search) {
+            $product = \backend\models\Product::find()->where(['name' => trim($search)])->one();
+            if (!$product) {
+                \Yii::$app->session->setFlash('error', 'ไม่พบสินค้าจากรหัสที่ค้นหา');
+            } else {
+                $product_id = $product->id;
+                $current_cost = $product && $product->cost_price > 0 ? (float)$product->cost_price : 0;
+                
+                $sql = "SELECT jt.journal_no, jt.trans_date, jl.qty, jl.cost_price, jt.stock_type_id, jt.trans_type_id
+                        FROM journal_trans_line jl 
+                        INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id 
+                        WHERE jl.product_id = :product_id 
+                        AND jt.status != 300
+                        AND jt.status != 4 -- Cancelled
+                        ORDER BY jt.trans_date ASC, jt.id ASC";
+                
+                $transactions = \Yii::$app->db->createCommand($sql, [':product_id' => $product_id])->queryAll();
+                
+                foreach ($transactions as $trans) {
+                    $qty = (float)$trans['qty'];
+                    $cost = (float)$trans['cost_price'];
+                    $stock_type = (int)$trans['stock_type_id'];
+                    $trans_type = (int)$trans['trans_type_id'];
+
+                    $step = [
+                        'journal_no' => $trans['journal_no'],
+                        'trans_date' => $trans['trans_date'],
+                        'trans_type_id' => $trans_type,
+                        'stock_type_id' => $stock_type,
+                        'qty' => $qty,
+                        'cost_price' => $cost,
+                        'prev_qty' => $current_qty,
+                        'prev_cost' => $current_cost,
+                        'action' => '',
+                        'new_qty' => $current_qty,
+                        'new_cost' => $current_cost,
+                    ];
+
+                    if ($stock_type == 1) { // IN
+                        $step['action'] = 'IN';
+                        if (in_array($trans_type, [1, 10]) && $cost > 0) {
+                            if ($current_qty <= 0) {
+                                $current_cost = $cost;
+                                $current_qty = $qty;
+                            } else {
+                                $total_value = ($current_qty * $current_cost) + ($qty * $cost);
+                                $current_qty += $qty;
+                                $current_cost = $total_value / $current_qty;
+                            }
+                            $step['action'] .= ' (คำนวณเฉลี่ย)';
+                        } else {
+                            $current_qty += $qty;
+                            $step['action'] .= ' (บวกจำนวน)';
+                        }
+                    } else if ($stock_type == 2) { // OUT
+                        $step['action'] = 'OUT (ตัดจำนวน)';
+                        $current_qty -= $qty;
+                        if ($current_qty < 0) $current_qty = 0;
+                    }
+
+                    $step['new_qty'] = $current_qty;
+                    $step['new_cost'] = $current_cost;
+                    
+                    if (in_array($trans_type, [1, 10])) {
+                        $history[] = $step;
+                    }
+                }
+            }
+        }
+
+        return $this->render('cost-history', [
+            'search' => $search,
+            'product' => $product,
+            'history' => $history,
+        ]);
+    }
+
 }
