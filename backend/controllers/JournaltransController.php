@@ -1340,7 +1340,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->product_id = $model_line->product_id;
                                 $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                                 $model_stock_trans->warehouse_id = $model_line->warehouse_id;
-                                $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                                $model_stock_trans->stock_type_id = ($effective_stock_type == 1 ? 2 : 1);
                                 $model_stock_trans->line_price = $model_line->line_price;
                                 $model_stock_trans->remark = $model_line->remark;
                                 $model_stock_trans->created_by = Yii::$app->user->id;
@@ -1362,7 +1362,7 @@ class JournaltransController extends Controller
                         $model_stock_trans->product_id = $model_line->product_id;
                         $model_stock_trans->qty = (float)$cancel_qty;      // ← ใช้ยอดยกเลิกจริง
                         $model_stock_trans->warehouse_id = 0;
-                        $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                        $model_stock_trans->stock_type_id = ($effective_stock_type == 1 ? 2 : 1);
                         $model_stock_trans->remark = $model_line->remark;
                         $model_stock_trans->created_by = Yii::$app->user->id;
 
