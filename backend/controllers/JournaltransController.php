@@ -1104,7 +1104,11 @@ class JournaltransController extends Controller
                         foreach ($model_line as $value) {
                             $model_sum = \backend\models\Stocksum::find()->where(['product_id' => $value->product_id, 'warehouse_id' => $value->warehouse_id])->one();
                             if ($model_sum) {
-                                if ($model->stock_type_id == 2) { // stock out
+                                // Force stock type for Adjust In to prevent issues from bad legacy data
+                                $effective_stock_type = $model->stock_type_id;
+                                if ($model->trans_type_id == 10) $effective_stock_type = 1;
+
+                                if ($effective_stock_type == 2) { // stock out
                                     if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
                                         $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
                                         $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$value->qty;
@@ -1112,7 +1116,7 @@ class JournaltransController extends Controller
                                         $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
                                     }
 
-                                } else if ($model->stock_type_id == 1) { // stock in
+                                } else if ($effective_stock_type == 1) { // stock in
                                     if ($model->trans_type_id == 8 || $model->trans_type_id == 6) { // Return to mechanic or Return loan
                                         // Find original warehouse from original trans line
                                         $orig_line = \common\models\JournalTransLine::find()
@@ -1156,7 +1160,7 @@ class JournaltransController extends Controller
                                 }
 
                                 // Skip standard save if it was already handled by the custom logic above
-                                if (!($model->stock_type_id == 1 && ($model->trans_type_id == 8 || $model->trans_type_id == 6))) {
+                                if (!($effective_stock_type == 1 && ($model->trans_type_id == 8 || $model->trans_type_id == 6))) {
                                     if ($model_sum->save(false)) {
                                         // ...
                                     }
@@ -1173,7 +1177,7 @@ class JournaltransController extends Controller
                                     $model_stock_trans->product_id = $value->product_id;
                                     $model_stock_trans->qty = (int)$value->qty;
                                     $model_stock_trans->warehouse_id = $value->warehouse_id;
-                                    $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1); // Reverse type
+                                    $model_stock_trans->stock_type_id = ($effective_stock_type == 1 ? 2 : 1); // Reverse type
                                     $model_stock_trans->line_price = $value->line_price;
                                     $model_stock_trans->remark = 'Cancel Transaction';
                                     $model_stock_trans->created_by = \Yii::$app->user->id;
@@ -1229,7 +1233,10 @@ class JournaltransController extends Controller
                     // --------------------------------
                     //  ปรับยอดสต๊อกตามจำนวนยกเลิกจริง
                     // --------------------------------
-                    if ($model->stock_type_id == 2) { // stock out (ขาย/ยืม/ส่งช่าง)
+                    $effective_stock_type = $model->stock_type_id;
+                    if ($model->trans_type_id == 10) $effective_stock_type = 1;
+
+                    if ($effective_stock_type == 2) { // stock out (ขาย/ยืม/ส่งช่าง)
                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
 
                             $model_sum->qty += (float)$cancel_qty;
@@ -1241,7 +1248,7 @@ class JournaltransController extends Controller
 
                         }
 
-                    } else if ($model->stock_type_id == 1) { // stock in (คืนยืม/คืนส่งช่าง)
+                    } else if ($effective_stock_type == 1) { // stock in (คืนยืม/คืนส่งช่าง)
                         if ($model->trans_type_id == 6 || $model->trans_type_id == 8) {
                             // Find original warehouse
                             $orig_line = \common\models\JournalTransLine::find()
@@ -1304,7 +1311,7 @@ class JournaltransController extends Controller
 
                         $model_trans = new \backend\models\JournalTrans();
                         $model_trans->trans_type_id = $new_trans_type_id;
-                        $model_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                        $model_trans->stock_type_id = ($effective_stock_type == 1 ? 2 : 1);
                         $model_trans->created_by = Yii::$app->user->id;
                         $model_trans->trans_date = date('Y-m-d H:i:s');
                         $model_trans->status=3; //3 completed
@@ -1377,7 +1384,7 @@ class JournaltransController extends Controller
                             $new_trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN_CANCELED;
                         }
                         $model_trans->trans_type_id = $new_trans_type_id;
-                        $model_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                        $model_trans->stock_type_id = ($effective_stock_type == 1 ? 2 : 1);
                         $model_trans->created_by = Yii::$app->user->id;
                         $model_trans->trans_date = date('Y-m-d H:i:s');
                         $model_trans->status=3; //3 completed
@@ -1402,7 +1409,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->product_id = $model_line->product_id;
                                 $model_stock_trans->qty = (float)$cancel_qty;       // ← ใช้ยอดยกเลิกจริง
                                 $model_stock_trans->warehouse_id = $model_line->warehouse_id;
-                                $model_stock_trans->stock_type_id = ($model->stock_type_id == 1 ? 2 : 1);
+                                $model_stock_trans->stock_type_id = ($effective_stock_type == 1 ? 2 : 1);
                                 $model_stock_trans->line_price = $model_line->line_price;
                                 $model_stock_trans->remark = $model_line->remark;
                                 $model_stock_trans->created_by = Yii::$app->user->id;

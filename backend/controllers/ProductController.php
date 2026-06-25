@@ -172,7 +172,7 @@ class ProductController extends Controller
                             $model_journal_trans->remark = 'Initial stock on product creation';
                             $model_journal_trans->trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN; // 10 = ปรับยอดเข้า
                             $model_journal_trans->status = 3; // 3 complete
-                            $model_journal_trans->stock_type_id = 0;
+                            $model_journal_trans->stock_type_id = 1; // 1 = IN
                             $model_journal_trans->warehouse_id = 0;
                             $model_journal_trans->save(false);
                         }
@@ -308,7 +308,7 @@ class ProductController extends Controller
                     $model_journal_trans->remark = '';
                     $model_journal_trans->trans_type_id = JournalTrans::TYPE_ADJUST;
                     $model_journal_trans->status = 3; // 3 complete
-                    $model_journal_trans->stock_type_id = 0;
+                    $model_journal_trans->stock_type_id = 1; // 1 = IN
                     $model_journal_trans->warehouse_id = 0;
 
                     if($model_journal_trans->save(false)){
@@ -419,7 +419,7 @@ class ProductController extends Controller
                         $model_journal_trans->remark = '';
                         $model_journal_trans->trans_type_id = JournalTrans::TYPE_TRANSFER;
                         $model_journal_trans->status = 3; // 3 complete
-                        $model_journal_trans->stock_type_id = 0;
+                        $model_journal_trans->stock_type_id = 1; // 1 = IN
                         $model_journal_trans->warehouse_id = 0;
 
                         if($model_journal_trans->save(false)) {
