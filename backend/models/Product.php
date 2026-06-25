@@ -254,21 +254,12 @@ class Product extends \common\models\Product
             if ($stock_type == 1) { // IN
                 // Only Receive (1) and Adjust In (10) change the moving average if cost > 0
                 if (in_array($trans_type, [1, 10]) && $cost > 0) {
-                    if ($current_qty <= 0) {
-                        $current_cost = $cost;
-                        $current_qty = $qty;
-                    } else {
-                        $total_value = ($current_qty * $current_cost) + ($qty * $cost);
-                        $current_qty += $qty;
-                        $current_cost = $total_value / $current_qty;
-                    }
-                } else {
-                    // Other IN transactions (returns, etc) just add to qty, maintaining current average
+                    $total_value = ($current_qty * $current_cost) + ($qty * $cost);
                     $current_qty += $qty;
+                    $current_cost = $total_value / $current_qty;
                 }
             } else if ($stock_type == 2) { // OUT
-                $current_qty -= $qty;
-                if ($current_qty < 0) $current_qty = 0;
+                // cumulative average does not subtract qty for its divisor
             }
         }
         

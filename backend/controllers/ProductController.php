@@ -1832,23 +1832,16 @@ class ProductController extends Controller
                     if ($stock_type == 1) { // IN
                         $step['action'] = 'IN';
                         if (in_array($trans_type, [1, 10]) && $cost > 0) {
-                            if ($current_qty <= 0) {
-                                $current_cost = $cost;
-                                $current_qty = $qty;
-                            } else {
-                                $total_value = ($current_qty * $current_cost) + ($qty * $cost);
-                                $current_qty += $qty;
-                                $current_cost = $total_value / $current_qty;
-                            }
+                            $total_value = ($current_qty * $current_cost) + ($qty * $cost);
+                            $current_qty += $qty; // current_qty here acts as cumulative IN qty for the average base
+                            $current_cost = $total_value / $current_qty;
                             $step['action'] .= ' (คำนวณเฉลี่ย)';
                         } else {
-                            $current_qty += $qty;
-                            $step['action'] .= ' (บวกจำนวน)';
+                            $step['action'] .= ' (รับเข้าไม่คิดเฉลี่ย)';
                         }
                     } else if ($stock_type == 2) { // OUT
                         $step['action'] = 'OUT (ตัดจำนวน)';
-                        $current_qty -= $qty;
-                        if ($current_qty < 0) $current_qty = 0;
+                        // DO NOT REDUCE current_qty because we want cumulative average of all purchases
                     }
 
                     $step['new_qty'] = $current_qty;
