@@ -81,10 +81,31 @@ class Stocksum extends \common\models\StockSum
     static function getResQty($product_id)
     {
         $qty = 0;
-        $model = Stocksum::find()->where(['product_id'=>$product_id])->sum('reserv_qty');
-        if($model){
-            $qty = $model;
+        
+        // Find all active borrow(5) and send(7) lines for this product
+        $borrow_lines = \common\models\JournalTransLine::find()
+            ->joinWith('journalTrans')
+            ->where(['journal_trans_line.product_id' => $product_id])
+            ->andWhere(['in', 'journal_trans.trans_type_id', [5, 7]])
+            ->andWhere(['!=', 'journal_trans.status', \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL])
+            ->all();
+
+        foreach ($borrow_lines as $line) {
+            // Find total returned qty for this specific borrow/send line
+            // Returns usually refer to the original journal_trans_id via journal_trans_ref_id
+            $return_qty = \common\models\JournalTransLine::find()
+                ->joinWith('journalTrans')
+                ->where(['journal_trans_line.journal_trans_ref_id' => $line->journal_trans_id])
+                ->andWhere(['journal_trans_line.product_id' => $product_id])
+                ->andWhere(['!=', 'journal_trans.status', \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL])
+                ->sum('journal_trans_line.qty');
+                
+            $remaining = $line->qty - ($return_qty ? $return_qty : 0);
+            if ($remaining > 0) {
+                $qty += $remaining;
+            }
         }
+        
         return $qty;
     }
 
