@@ -1228,14 +1228,16 @@ class JournaltransController extends Controller
 
                 $journal_id = $model->id;
                 $origin_trans_type_id = $model->trans_type_id;
+                
+                $effective_stock_type = $model->stock_type_id;
+                if ($model->trans_type_id == 10) $effective_stock_type = 1;
 
                 if ($model_sum) {
 
                     // --------------------------------
                     //  ปรับยอดสต๊อกตามจำนวนยกเลิกจริง
                     // --------------------------------
-                    $effective_stock_type = $model->stock_type_id;
-                    if ($model->trans_type_id == 10) $effective_stock_type = 1;
+
 
                     if ($effective_stock_type == 2) { // stock out (ขาย/ยืม/ส่งช่าง)
                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
