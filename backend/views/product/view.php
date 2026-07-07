@@ -165,15 +165,17 @@ $this->params['breadcrumbs'][] = $this->title;
                             'value' => function ($data) {
                                 $is_cancel = (strpos(strtolower($data->remark), 'cancel') !== false || strpos($data->remark, 'ยกเลิก') !== false);
                                 
+                                $list = \backend\models\JournalTrans::getTransactionTypeList();
                                 $name = '';
-                                if ($data->journal_trans_id) {
+                                if (isset($list[$data->trans_type_id]) && $data->trans_type_id > 0) {
+                                    $name = $list[$data->trans_type_id];
+                                } else if ($data->journal_trans_id) {
                                     $name = \backend\models\JournalTrans::findJournalTypeFromStockTransId($data->journal_trans_id);
                                 } else {
-                                    $list = \backend\models\JournalTrans::getTransactionTypeList();
-                                    $name = isset($list[$data->trans_type_id]) ? $list[$data->trans_type_id] : 'ประวัติคืน/ปรับปรุง';
+                                    $name = 'ประวัติคืน/ปรับปรุง';
                                 }
                                 
-                                if ($is_cancel) {
+                                if ($is_cancel && strpos($name, 'ยกเลิก') === false) {
                                     return 'ยกเลิก ' . $name;
                                 }
                                 return $name;

@@ -193,6 +193,7 @@ class JournaltransController extends Controller
                             $model_stock_trans->qty = (int)$modelLine->qty;
                             $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
                             $model_stock_trans->stock_type_id = $model->stock_type_id;
+                            $model_stock_trans->line_price = $modelLine->line_price;
                             $model_stock_trans->remark = $modelLine->remark;
                             $model_stock_trans->created_by = \Yii::$app->user->id;
 
@@ -367,6 +368,7 @@ class JournaltransController extends Controller
                                 $model_stock_trans->qty = (int)$modelLine->qty;
                                 $model_stock_trans->warehouse_id = $modelLine->warehouse_id;
                                 $model_stock_trans->stock_type_id = $model->stock_type_id;
+                                $model_stock_trans->line_price = $modelLine->line_price;
                                 $model_stock_trans->remark = $modelLine->remark;
                                 $model_stock_trans->created_by = \Yii::$app->user->id;
                                 $model_stock_trans->save(false);
@@ -455,7 +457,21 @@ class JournaltransController extends Controller
                 $model_stock_trans = new \common\models\StockTrans();
                 $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                 $model_stock_trans->journal_trans_id = $journal->id;
-                $model_stock_trans->trans_type_id = $journal->trans_type_id;
+                
+                $new_trans_type_id = $journal->trans_type_id;
+                if($journal->trans_type_id == 3 || $journal->trans_type_id == 4){
+                    $new_trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
+                }else if($journal->trans_type_id == 5 || $journal->trans_type_id == 6){
+                    $new_trans_type_id = \common\models\JournalTrans::TYPE_LOAN_CANCELED;
+                }else if($journal->trans_type_id == 7 || $journal->trans_type_id == 8){
+                    $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
+                }else if($journal->trans_type_id == 9){
+                    $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
+                }else if($journal->trans_type_id == 10){
+                    $new_trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN_CANCELED;
+                }
+                
+                $model_stock_trans->trans_type_id = $new_trans_type_id;
                 $model_stock_trans->product_id = $model->product_id;
                 $model_stock_trans->qty = (int)$model->qty;
                 $model_stock_trans->warehouse_id = $model->warehouse_id;
@@ -503,7 +519,7 @@ class JournaltransController extends Controller
             // Allow negative stock on FORCE (reversals)
             if ($model && ($force || $model->qty >= $qty)) {
                 $model->qty -= $qty;
-                if (in_array($activity_type, [5, 7])) { // ยืม (5) หรือ ส่งช่าง (7)
+                if (in_array($activity_type, [5, 6, 7, 8])) { // ยืม (5), คืนยืม (6), ส่งช่าง (7), คืนช่าง (8)
                     $model->reserv_qty += $qty;
                 }
                 $model->updated_at = date('Y-m-d H:i:s');
@@ -1109,7 +1125,9 @@ class JournaltransController extends Controller
                                 $effective_stock_type = $model->stock_type_id;
                                 if ($model->trans_type_id == 10) $effective_stock_type = 1;
 
-                                if ($effective_stock_type == 2) { // stock out
+                                if ($model->trans_type_id == 9) {
+                                    // Dropship ไม่คืนสต๊อก
+                                } else if ($effective_stock_type == 2) { // stock out
                                     if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
                                         $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
                                         $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$value->qty;
@@ -1161,9 +1179,11 @@ class JournaltransController extends Controller
                                 }
 
                                 // Skip standard save if it was already handled by the custom logic above
-                                if (!($effective_stock_type == 1 && ($model->trans_type_id == 8 || $model->trans_type_id == 6))) {
-                                    if ($model_sum->save(false)) {
-                                        // ...
+                                if ($model->trans_type_id != 9) {
+                                    if (!($effective_stock_type == 1 && ($model->trans_type_id == 8 || $model->trans_type_id == 6))) {
+                                        if ($model_sum->save(false)) {
+                                            // ...
+                                        }
                                     }
                                 }
                                 $res += 1;
@@ -1174,7 +1194,19 @@ class JournaltransController extends Controller
                                     $model_stock_trans = new \common\models\StockTrans();
                                     $model_stock_trans->trans_date = date('Y-m-d H:i:s');
                                     $model_stock_trans->journal_trans_id = $model->id;
-                                    $model_stock_trans->trans_type_id = $model->trans_type_id;
+                                    $new_trans_type_id = $model->trans_type_id;
+                                    if($model->trans_type_id == 3 || $model->trans_type_id == 4){
+                                        $new_trans_type_id = \common\models\JournalTrans::TYPE_SALE_CANCELED;
+                                    }else if($model->trans_type_id == 5 || $model->trans_type_id == 6){
+                                        $new_trans_type_id = \common\models\JournalTrans::TYPE_LOAN_CANCELED;
+                                    }else if($model->trans_type_id == 7 || $model->trans_type_id == 8){
+                                        $new_trans_type_id = \common\models\JournalTrans::TYPE_SEND_CANCELED;
+                                    }else if($model->trans_type_id == 9){
+                                        $new_trans_type_id = \common\models\JournalTrans::TYPE_DROP_CANCELED;
+                                    }else if($model->trans_type_id == 10){
+                                        $new_trans_type_id = \common\models\JournalTrans::TYPE_ADJUST_IN_CANCELED;
+                                    }
+                                    $model_stock_trans->trans_type_id = $new_trans_type_id;
                                     $model_stock_trans->product_id = $value->product_id;
                                     $model_stock_trans->qty = (int)$value->qty;
                                     $model_stock_trans->warehouse_id = $value->warehouse_id;
@@ -1232,7 +1264,7 @@ class JournaltransController extends Controller
                 $effective_stock_type = $model->stock_type_id;
                 if ($model->trans_type_id == 10) $effective_stock_type = 1;
 
-                if ($model_sum) {
+                if ($model_sum && $model->trans_type_id != 9) {
 
                     // --------------------------------
                     //  ปรับยอดสต๊อกตามจำนวนยกเลิกจริง
