@@ -431,6 +431,8 @@ class ProductController extends Controller
                                 $from_wh = (int)$from_warehouse[$x];
                                 $to_wh = (int)$to_warehouse[$x];
 
+                                if ($from_wh == $to_wh) continue;
+
                                 // หา stock คลังต้นทาง
                                 $stock_from = \backend\models\Stocksum::find()
                                     ->where(['product_id' => $model->id, 'warehouse_id' => $from_wh])
