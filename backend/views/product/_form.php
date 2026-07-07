@@ -404,6 +404,22 @@ $(function(){
         reader.readAsDataURL(file);
     }
 });
+
+$(document).on("change", ".line-to-warehouse-id", function() {
+    var to_wh = $(this).val();
+    var from_wh = $(this).closest("tr").find(".line-from-warehouse-id").val();
+    var selectElement = $(this);
+    if (to_wh !== "0" && to_wh === from_wh) {
+        swal({
+            title: "แจ้งเตือน",
+            text: "ไม่สามารถเลือกคลังปลายทางซ้ำกับคลังต้นทางได้",
+            type: "warning",
+            showCancelButton: false,
+            confirmButtonText: "ตกลง"
+        });
+        selectElement.val("0").change();
+    }
+});
 });
 function addline(e){
     var tr = $("#table-list tbody tr:last");
