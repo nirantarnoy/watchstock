@@ -1282,6 +1282,7 @@ class JournaltransController extends Controller
                             $model_sum->qty += (float)$cancel_qty;
 
                         }
+                        $model_sum->save(false);
 
                     } else if ($effective_stock_type == 1) { // stock in (คืนยืม/คืนส่งช่าง)
                         if ($model->trans_type_id == 6 || $model->trans_type_id == 8) {
