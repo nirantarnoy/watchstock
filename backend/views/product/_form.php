@@ -426,13 +426,15 @@ $(document).on("change", ".line-to-warehouse-id", function() {
         var isChecked = $("#product-edit_stock_qty").is(":checked");
         $(".line-qty").prop("readonly", !isChecked);
         if (!isChecked) {
-            $(".line-warehouse-id").css("pointer-events", "none").css("background-color", "#e9ecef");
+            $(".line-warehouse-id").prop("disabled", true);
             $("#table-list .btn-danger").hide();
             $("#table-list tfoot").hide();
         } else {
             $(".line-warehouse-id").each(function() {
                 if ($(this).closest("tr").find(".line-rec-id").val() == "0" || $(this).closest("tr").find(".line-rec-id").val() == "") {
-                    $(this).css("pointer-events", "auto").css("background-color", "");
+                    $(this).prop("disabled", false);
+                } else {
+                    $(this).prop("disabled", true); // Existing rows should always be disabled for warehouse selection
                 }
             });
             $("#table-list .btn-danger").show();
@@ -444,24 +446,29 @@ $(document).on("change", ".line-to-warehouse-id", function() {
         var isChecked = $("#product-transfer_warehouse_stock").is(":checked");
         $(".line-transfer-qty").prop("readonly", !isChecked);
         if (!isChecked) {
-            $(".line-to-warehouse-id").css("pointer-events", "none").css("background-color", "#e9ecef");
+            $(".line-to-warehouse-id").prop("disabled", true);
         } else {
-            $(".line-to-warehouse-id").css("pointer-events", "auto").css("background-color", "");
+            $(".line-to-warehouse-id").prop("disabled", false);
         }
     }
 
-    $("#product-edit_stock_qty").on("change", function() {
+    $(document).on("change", "#product-edit_stock_qty", function() {
         toggleEditStock();
     });
 
-    $("#product-transfer_warehouse_stock").on("change", function() {
+    $(document).on("change", "#product-transfer_warehouse_stock", function() {
         toggleTransferStock();
+    });
+
+    $("form").on("beforeSubmit submit", function() {
+        $(".line-warehouse-id").prop("disabled", false);
+        $(".line-to-warehouse-id").prop("disabled", false);
     });
 
     setTimeout(function() {
         toggleEditStock();
         toggleTransferStock();
-    }, 100);
+    }, 300);
 
 });
 function addline(e){
