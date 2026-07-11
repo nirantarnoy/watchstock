@@ -237,7 +237,7 @@ $this->registerCss('
                                         <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
                                                value="<?= $value->id ?>">
                                         <select name="warehouse_id[]" id="" class="form-control line-warehouse-id"
-                                                required>
+                                                required <?= $value->id > 0 ? 'readonly style="pointer-events: none; background-color: #e9ecef;"' : '' ?>>
                                             <option value="-1">--เลือก-</option>
                                             <?php foreach ($data_warehouse as $xvalue): ?>
                                                 <?php
@@ -328,7 +328,7 @@ $this->registerCss('
                                 <td>
                                     <input type="hidden" class="form-control line-rec-id" name="line_rec_id[]"
                                            value="<?= $value->id ?>">
-                                    <select name="from_warehouse_id[]" id="" class="form-control line-from-warehouse-id" readonly>
+                                    <select name="from_warehouse_id[]" id="" class="form-control line-from-warehouse-id" readonly style="pointer-events: none; background-color: #e9ecef;">
                                         <?php foreach ($data_warehouse as $xvalue): ?>
                                             <?php
                                             $selected = '';
