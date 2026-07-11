@@ -421,6 +421,49 @@ $(document).on("change", ".line-to-warehouse-id", function() {
     }
 });
 });
+    
+    function toggleEditStock() {
+        var isChecked = $("#product-edit_stock_qty").is(":checked");
+        $(".line-qty").prop("readonly", !isChecked);
+        if (!isChecked) {
+            $(".line-warehouse-id").css("pointer-events", "none").css("background-color", "#e9ecef");
+            $("#table-list .btn-danger").hide();
+            $("#table-list tfoot").hide();
+        } else {
+            $(".line-warehouse-id").each(function() {
+                if ($(this).closest("tr").find(".line-rec-id").val() == "0" || $(this).closest("tr").find(".line-rec-id").val() == "") {
+                    $(this).css("pointer-events", "auto").css("background-color", "");
+                }
+            });
+            $("#table-list .btn-danger").show();
+            $("#table-list tfoot").show();
+        }
+    }
+
+    function toggleTransferStock() {
+        var isChecked = $("#product-transfer_warehouse_stock").is(":checked");
+        $(".line-transfer-qty").prop("readonly", !isChecked);
+        if (!isChecked) {
+            $(".line-to-warehouse-id").css("pointer-events", "none").css("background-color", "#e9ecef");
+        } else {
+            $(".line-to-warehouse-id").css("pointer-events", "auto").css("background-color", "");
+        }
+    }
+
+    $("#product-edit_stock_qty").on("change", function() {
+        toggleEditStock();
+    });
+
+    $("#product-transfer_warehouse_stock").on("change", function() {
+        toggleTransferStock();
+    });
+
+    setTimeout(function() {
+        toggleEditStock();
+        toggleTransferStock();
+    }, 100);
+
+});
 function addline(e){
     var tr = $("#table-list tbody tr:last");
     var clone = tr.clone();
