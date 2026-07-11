@@ -420,8 +420,6 @@ $(document).on("change", ".line-to-warehouse-id", function() {
         selectElement.val("0").change();
     }
 });
-});
-    
     function toggleEditStock() {
         var isChecked = $("#product-edit_stock_qty").is(":checked");
         $(".line-qty").prop("readonly", !isChecked);
@@ -434,7 +432,7 @@ $(document).on("change", ".line-to-warehouse-id", function() {
                 if ($(this).closest("tr").find(".line-rec-id").val() == "0" || $(this).closest("tr").find(".line-rec-id").val() == "") {
                     $(this).prop("disabled", false);
                 } else {
-                    $(this).prop("disabled", true); // Existing rows should always be disabled for warehouse selection
+                    $(this).prop("disabled", true);
                 }
             });
             $("#table-list .btn-danger").show();
