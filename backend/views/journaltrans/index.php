@@ -188,9 +188,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function ($model) {
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
-                        $cost = \backend\models\Product::findCostAvgPrice($line->product_id);
-                        if ($cost <= 0) {
-                            $cost = $line->cost_price > 0 ? $line->cost_price : $line->line_price;
+                        if ($model->trans_type_id == 9) {
+                            $cost = $line->line_price;
+                        } else {
+                            $cost = \backend\models\Product::findCostAvgPrice($line->product_id);
+                            if ($cost <= 0) {
+                                $cost = $line->cost_price > 0 ? $line->cost_price : $line->line_price;
+                            }
                         }
                         $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($cost, 2) . '</div>';
                     }
