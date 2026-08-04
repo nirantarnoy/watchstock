@@ -18,8 +18,8 @@ class ProductSearch extends Product
     public function rules()
     {
         return [
-            [['id', 'product_group_id', 'status','product_type_id','type_id','brand_id',], 'integer'],
-            [['code', 'name', 'description','party_id','warehouse_id','stock_empty',], 'safe'],
+            [['id', 'product_group_id', 'status','product_type_id','type_id',], 'integer'],
+            [['code', 'name', 'description','party_id','warehouse_id','stock_empty','brand_id'], 'safe'],
             [['globalSearch'],'string'],
             [['perpage'],'integer']
         ];
