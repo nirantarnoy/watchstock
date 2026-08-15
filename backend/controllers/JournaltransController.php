@@ -153,13 +153,24 @@ class JournaltransController extends Controller
                                     throw new Exception("จำนวนสินค้าต้องมากกว่า 0");
                                 }
                                 $onhand = $this->getStockOnHand($line->product_id, $line->warehouse_id);
+                                $product_name = \backend\models\Product::findName($line->product_id);
+                                $model_stock_sum = \common\models\StockSum::find()->where(['product_id' => $line->product_id, 'warehouse_id' => $line->warehouse_id])->one();
+                                $reserv_qty = $model_stock_sum ? (float)($model_stock_sum->reserv_qty ?? 0) : 0;
+                                $res_qty = \backend\models\Stocksum::getResQty($line->product_id);
+
                                 if ($onhand <= 0) {
-                                    $product_name = \backend\models\Product::findName($line->product_id);
-                                    throw new Exception("สินค้า $product_name ในคลังไม่มีหรือสต๊อกเป็น 0 (คงเหลือ $onhand)");
+                                    if ($reserv_qty > 0 || $res_qty > 0) {
+                                        throw new Exception("สินค้า $product_name ในคลังติดยืม/เบิกส่งช่างอยู่ ต้องทำรายการคืนยืม/คืนส่งช่างก่อนทำรายการขายหรือนำของออก");
+                                    } else {
+                                        throw new Exception("สินค้า $product_name ในคลังไม่มีหรือสต๊อกเป็น 0 (คงเหลือ $onhand)");
+                                    }
                                 }
                                 if ($onhand < $line->qty) {
-                                    $product_name = \backend\models\Product::findName($line->product_id);
-                                    throw new Exception("สินค้า $product_name ในคลังมีไม่พอ (คงเหลือ $onhand)");
+                                    if ($reserv_qty > 0 || $res_qty > 0) {
+                                        throw new Exception("สินค้า $product_name ในคลังมีไม่พอสำหรับขาย/นำออก เนื่องจากติดยืม/เบิกส่งช่างอยู่ (คงเหลือพร้อมใช้ " . (int)$onhand . " ชิ้น)");
+                                    } else {
+                                        throw new Exception("สินค้า $product_name ในคลังมีไม่พอ (คงเหลือ $onhand)");
+                                    }
                                 }
                             }
                         }
@@ -223,6 +234,23 @@ class JournaltransController extends Controller
 
                         \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
                         $transaction->commit();
+
+                        $warn_msgs = [];
+                        foreach ($modelLines as $mline) {
+                            if ($mline->product_id > 0) {
+                                $res_qty = \backend\models\Stocksum::getResQty($mline->product_id);
+                                $stock_sum = \common\models\StockSum::find()->where(['product_id' => $mline->product_id, 'warehouse_id' => $mline->warehouse_id])->one();
+                                $reserv = $stock_sum ? (float)($stock_sum->reserv_qty ?? 0) : 0;
+                                $max_res = max($res_qty, $reserv);
+                                if ($max_res > 0) {
+                                    $pname = \backend\models\Product::findName($mline->product_id);
+                                    $warn_msgs[] = "แจ้งเตือน: สินค้า '$pname' มีรายการติดยืม/เบิกส่งช่างค้างอยู่ " . (int)$max_res . " เรือน (สต๊อกพร้อมขาย = ยอดรวม - จำนวนติดยืม). หากเป็นการรับคืนจากการยืม/ส่งช่าง โปรดใช้เมนู 'คืนยืม' หรือ 'คืนส่งช่าง' เพื่อให้สถานะสต๊อกถูกต้อง";
+                                }
+                            }
+                        }
+                        if (!empty($warn_msgs)) {
+                            \Yii::$app->session->setFlash('warning', implode('<br>', $warn_msgs));
+                        }
                         \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
                         return $this->redirect(['view', 'id' => $model->id]);
                     }
@@ -318,14 +346,25 @@ class JournaltransController extends Controller
                                     }
                                 }
 
+                                $product_name = \backend\models\Product::findName($line->product_id);
+                                $model_stock_sum = \common\models\StockSum::find()->where(['product_id' => $line->product_id, 'warehouse_id' => $line->warehouse_id])->one();
+                                $reserv_qty = $model_stock_sum ? (float)($model_stock_sum->reserv_qty ?? 0) : 0;
+                                $res_qty = \backend\models\Stocksum::getResQty($line->product_id);
+
                                 if ($onhand <= 0) {
-                                    $product_name = \backend\models\Product::findName($line->product_id);
-                                    throw new Exception("สินค้า $product_name ในคลังไม่มีหรือสต๊อกเป็น 0");
+                                    if ($reserv_qty > 0 || $res_qty > 0) {
+                                        throw new Exception("สินค้า $product_name ในคลังติดยืม/เบิกส่งช่างอยู่ ต้องทำรายการคืนยืม/คืนส่งช่างก่อนทำรายการขายหรือนำของออก");
+                                    } else {
+                                        throw new Exception("สินค้า $product_name ในคลังไม่มีหรือสต๊อกเป็น 0");
+                                    }
                                 }
 
                                 if ($onhand < $line->qty) {
-                                    $product_name = \backend\models\Product::findName($line->product_id);
-                                    throw new Exception("สินค้า $product_name ในคลังมีไม่พอ");
+                                    if ($reserv_qty > 0 || $res_qty > 0) {
+                                        throw new Exception("สินค้า $product_name ในคลังมีไม่พอสำหรับขาย/นำออก เนื่องจากติดยืม/เบิกส่งช่างอยู่ (คงเหลือพร้อมใช้ " . (int)$onhand . " ชิ้น)");
+                                    } else {
+                                        throw new Exception("สินค้า $product_name ในคลังมีไม่พอ");
+                                    }
                                 }
                             }
                         }
@@ -398,6 +437,24 @@ class JournaltransController extends Controller
                         \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
 
                         $transaction->commit();
+
+                        $warn_msgs = [];
+                        foreach ($modelLines as $mline) {
+                            if ($mline->product_id > 0) {
+                                $res_qty = \backend\models\Stocksum::getResQty($mline->product_id);
+                                $stock_sum = \common\models\StockSum::find()->where(['product_id' => $mline->product_id, 'warehouse_id' => $mline->warehouse_id])->one();
+                                $reserv = $stock_sum ? (float)($stock_sum->reserv_qty ?? 0) : 0;
+                                $max_res = max($res_qty, $reserv);
+                                if ($max_res > 0) {
+                                    $pname = \backend\models\Product::findName($mline->product_id);
+                                    $warn_msgs[] = "แจ้งเตือน: สินค้า '$pname' มีรายการติดยืม/เบิกส่งช่างค้างอยู่ " . (int)$max_res . " เรือน (สต๊อกพร้อมขาย = ยอดรวม - จำนวนติดยืม). หากเป็นการรับคืนจากการยืม/ส่งช่าง โปรดใช้เมนู 'คืนยืม' หรือ 'คืนส่งช่าง' เพื่อให้สถานะสต๊อกถูกต้อง";
+                                }
+                            }
+                        }
+                        if (!empty($warn_msgs)) {
+                            \Yii::$app->session->setFlash('warning', implode('<br>', $warn_msgs));
+                        }
+                        \Yii::$app->session->setFlash('success', 'บันทึกข้อมูลสำเร็จ');
                         return $this->redirect(['view', 'id' => $model->id]);
                     }
                 } catch (Exception $e) {
@@ -975,7 +1032,12 @@ class JournaltransController extends Controller
     {
         $model_stock_sum = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
         if ($model_stock_sum) {
-            return (float)$model_stock_sum->qty;
+            $qty = (float)$model_stock_sum->qty;
+            $reserv_qty = (float)($model_stock_sum->reserv_qty ?? 0);
+            $res_qty = \backend\models\Stocksum::getResQty($product_id);
+            $effective_reserv = max($reserv_qty, $res_qty);
+            $avail = $qty - $effective_reserv;
+            return $avail > 0 ? $avail : 0;
         }
         return 0;
     }

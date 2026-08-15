@@ -100,6 +100,21 @@ class Stocksum extends \common\models\StockSum
         return $qty > 0 ? $qty : 0;
     }
 
+    static function getAvailableQty($product_id, $warehouse_id)
+    {
+        $model = Stocksum::find()
+            ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+            ->one();
+        if (!$model) {
+            return 0;
+        }
+        $qty = (float)$model->qty;
+        $reserv_qty = (float)($model->reserv_qty ?? 0);
+
+        $avail = $qty - ($reserv_qty > 0 ? $reserv_qty : 0);
+        return $avail > 0 ? $avail : 0;
+    }
+
 //    public static function findName($id){
 //        $model = \common\models\RoutePlan::find()->where(['id'=>$id])->one();
 //        return $model!= null?$model->name:'';

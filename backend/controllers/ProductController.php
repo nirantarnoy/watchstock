@@ -218,7 +218,6 @@ class ProductController extends Controller
                             $model_sum = \backend\models\Stocksum::find()->where(['product_id'=>$model->id,'warehouse_id'=>$line_warehouse[$i]])->one();
                             if($model_sum){
                                 $model_sum->qty = $add_qty;
-                                $model_sum->reserv_qty = 0;
                                 $model_sum->save(false);
                             }else{
                                 $model_sum = new \backend\models\Stocksum();
@@ -345,6 +344,11 @@ class ProductController extends Controller
                                 }
                                 // น้อยกว่า = Stock OUT
                                 else if ($new_qty < $old_qty) {
+                                    $reserv = (float)($check_stock_change->reserv_qty ?? 0);
+                                    if ($new_qty < $reserv) {
+                                        $wh_name = \backend\models\Warehouse::findName($line_warehouse[$i]);
+                                        throw new \yii\db\Exception("ไม่สามารถปรับลดสต๊อกสินค้า {$model->name} ในคลัง {$wh_name} ต่ำกว่าจำนวนที่ติดยืมอยู่ได้ (ติดยืม " . (int)$reserv . " เรือน) กรุณาทำรายการคืนยืมก่อน");
+                                    }
                                     $diff_qty = $old_qty - $new_qty;
                                     $find_stock_type_id = 2;
                                 }
