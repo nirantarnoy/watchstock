@@ -109,10 +109,7 @@ class Stocksum extends \common\models\StockSum
             return 0;
         }
         $qty = (float)$model->qty;
-        $reserv_qty = (float)($model->reserv_qty ?? 0);
-
-        $avail = $qty - ($reserv_qty > 0 ? $reserv_qty : 0);
-        return $avail > 0 ? $avail : 0;
+        return $qty > 0 ? $qty : 0;
     }
 
 //    public static function findName($id){

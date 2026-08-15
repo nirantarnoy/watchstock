@@ -1033,11 +1033,7 @@ class JournaltransController extends Controller
         $model_stock_sum = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
         if ($model_stock_sum) {
             $qty = (float)$model_stock_sum->qty;
-            $reserv_qty = (float)($model_stock_sum->reserv_qty ?? 0);
-            $res_qty = \backend\models\Stocksum::getResQty($product_id);
-            $effective_reserv = max($reserv_qty, $res_qty);
-            $avail = $qty - $effective_reserv;
-            return $avail > 0 ? $avail : 0;
+            return $qty > 0 ? $qty : 0;
         }
         return 0;
     }
