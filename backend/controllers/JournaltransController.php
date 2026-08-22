@@ -163,7 +163,8 @@ class JournaltransController extends Controller
                         }
                     }
                     if (!empty($lock_product_ids)) {
-                        \backend\models\Stocksum::find()->where(['product_id' => $lock_product_ids])->forUpdate()->all();
+                        $inList = implode(',', $lock_product_ids);
+                        \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id IN ($inList) FOR UPDATE")->queryAll();
                     }
 
                     // Stock Availability Check
@@ -351,7 +352,8 @@ class JournaltransController extends Controller
                 $transaction = \Yii::$app->db->beginTransaction();
                 try {
                     // Lock the transaction to prevent concurrent updates
-                    $lock_model = \backend\models\JournalTrans::find()->where(['id' => $id])->limit(1)->forUpdate()->one();
+                    \Yii::$app->db->createCommand("SELECT 1 FROM journal_trans WHERE id = :id FOR UPDATE", [':id' => $id])->queryAll();
+                    $lock_model = \backend\models\JournalTrans::find()->where(['id' => $id])->limit(1)->one();
                     if (!$lock_model) {
                         throw new Exception("ไม่พบเอกสารอ้างอิง");
                     }
@@ -364,7 +366,8 @@ class JournaltransController extends Controller
                         }
                     }
                     if (!empty($lock_product_ids)) {
-                        \backend\models\Stocksum::find()->where(['product_id' => $lock_product_ids])->forUpdate()->all();
+                        $inList = implode(',', $lock_product_ids);
+                        \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id IN ($inList) FOR UPDATE")->queryAll();
                     }
                     
                     // Stock Availability Check for Update
@@ -523,8 +526,9 @@ class JournaltransController extends Controller
     {
         $transaction = \Yii::$app->db->beginTransaction();
         try {
-            // Lock the transaction to prevent concurrent deletes
-            $lock_model = \backend\models\JournalTrans::find()->where(['id' => $id])->limit(1)->forUpdate()->one();
+            // Lock transaction to prevent multiple deletes
+            \Yii::$app->db->createCommand("SELECT 1 FROM journal_trans WHERE id = :id FOR UPDATE", [':id' => $id])->queryAll();
+            $lock_model = \backend\models\JournalTrans::find()->where(['id' => $id])->limit(1)->one();
             if (!$lock_model) {
                 throw new \Exception("ไม่พบข้อมูล หรือถูกลบไปแล้ว");
             }
@@ -622,9 +626,9 @@ class JournaltransController extends Controller
 
         // === Stock Out (2) ===
         if ($stock_type_id == 2) {
+            \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND warehouse_id = :wid FOR UPDATE", [':pid' => $product_id, ':wid' => $warehouse_id])->queryAll();
             $model = \common\models\StockSum::find()
                 ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
-                ->forUpdate()
                 ->one();
 
             // Allow negative stock on FORCE (reversals)
@@ -647,9 +651,9 @@ class JournaltransController extends Controller
         // === Stock In (1) ===
         if ($stock_type_id == 1) {
             // 1. เพิ่ม qty ในคลังที่ระบุ
+            \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND warehouse_id = :wid FOR UPDATE", [':pid' => $product_id, ':wid' => $warehouse_id])->queryAll();
             $model = \common\models\StockSum::find()
                 ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
-                ->forUpdate()
                 ->one();
 
             if (!$model) {
@@ -679,10 +683,10 @@ class JournaltransController extends Controller
                     
                     // ถ้ายังเหลือยอดที่ต้องลด ให้หาจากคลังอื่นของสินค้านี้
                     if ($remaining_to_reduce > 0) {
+                        \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND reserv_qty > 0 FOR UPDATE", [':pid' => $product_id])->queryAll();
                         $other_models = \common\models\StockSum::find()
                             ->where(['product_id' => $product_id])
                             ->andWhere(['>', 'reserv_qty', 0])
-                            ->forUpdate()
                             ->all();
                         foreach ($other_models as $om) {
                             if ($remaining_to_reduce <= 0) break;
@@ -727,7 +731,8 @@ class JournaltransController extends Controller
                 if ($activity_type == 8) { // คืนช่าง
                     if ((int)$original_product_id == (int)$product_id) { // same product
                         // StockTrans is already recorded by the caller (actionAddreturnproduct)
-                        $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->forUpdate()->one();
+                        \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND warehouse_id = :wid FOR UPDATE", [':pid' => $product_id, ':wid' => $warehouse_id])->queryAll();
+                        $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
                         if ($model) {
                             $model->qty += $qty;
                             if ($model->reserv_qty >= ($qty)) { // remove reserve qty
@@ -744,7 +749,8 @@ class JournaltransController extends Controller
                             $model->reserv_qty = 0;
                             $model->updated_at = date('Y-m-d H:i:s');
                             if ($model->save(false)) {
-                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>', 'reserv_qty', 0])->forUpdate()->all();
+                                \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND reserv_qty > 0 FOR UPDATE", [':pid' => $product_id])->queryAll();
+                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>', 'reserv_qty', 0])->all();
                                 if ($model_update_reserve) {
                                     $remaining_to_reduce = $qty;
                                     foreach ($model_update_reserve as $model_reserve) {
@@ -776,7 +782,8 @@ class JournaltransController extends Controller
                         if ($model_trans->save(false)) {
                             // Drain reserv_qty from original product
                             $remaining_to_reduce = $qty;
-                            $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->forUpdate()->one(); // หักยอดจองสินค้าต้นฉบับ
+                            \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND warehouse_id = :wid FOR UPDATE", [':pid' => $original_product_id, ':wid' => $original_warehouse_id])->queryAll();
+                            $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
                             if ($model && $model->reserv_qty > 0) {
                                 $take = min($remaining_to_reduce, $model->reserv_qty);
                                 $model->reserv_qty -= $take;
@@ -784,7 +791,8 @@ class JournaltransController extends Controller
                                 $model->save(false);
                             }
                             if ($remaining_to_reduce > 0) {
-                                $other_models = \common\models\StockSum::find()->where(['product_id' => $original_product_id])->andWhere(['>', 'reserv_qty', 0])->forUpdate()->all();
+                                \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND reserv_qty > 0 FOR UPDATE", [':pid' => $original_product_id])->queryAll();
+                                $other_models = \common\models\StockSum::find()->where(['product_id' => $original_product_id])->andWhere(['>', 'reserv_qty', 0])->all();
                                 foreach ($other_models as $om) {
                                     if ($remaining_to_reduce <= 0) break;
                                     $take = min($remaining_to_reduce, $om->reserv_qty);
@@ -796,7 +804,8 @@ class JournaltransController extends Controller
                             if (true) {
                                     $this->updateProductStock($original_product_id); // update stock qty
 
-                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->forUpdate()->one(); // ตรวจสอบสต๊อกสินค้าใหม่
+                                    \Yii::$app->db->createCommand("SELECT 1 FROM stock_sum WHERE product_id = :pid AND warehouse_id = :wid FOR UPDATE", [':pid' => $product_id, ':wid' => $warehouse_id])->queryAll();
+                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // ตรวจสอบสต๊อกสินค้าใหม่
                                     if ($modelx) { // ถ้ามีเพิ่มยอด
                                         $modelx->qty += $qty;
                                         if ($modelx->save(false)) {
@@ -892,7 +901,8 @@ class JournaltransController extends Controller
                     $transaction = \Yii::$app->db->beginTransaction();
                     try {
                         // Lock the original journal_trans to prevent concurrent returns
-                        $original_trans = \backend\models\JournalTrans::find()->where(['id' => $journal_trans_id])->limit(1)->forUpdate()->one();
+                        \Yii::$app->db->createCommand("SELECT 1 FROM journal_trans WHERE id = :id FOR UPDATE", [':id' => $journal_trans_id])->queryAll();
+                        $original_trans = \backend\models\JournalTrans::find()->where(['id' => $journal_trans_id])->limit(1)->one();
                         if (!$original_trans) {
                             throw new \Exception("ไม่พบเอกสารอ้างอิง");
                         }
@@ -1281,7 +1291,8 @@ class JournaltransController extends Controller
         if ($id) {
             $transaction = \Yii::$app->db->beginTransaction();
             try {
-                $model = \backend\models\JournalTrans::find()->where(['id' => $id])->limit(1)->forUpdate()->one();
+                \Yii::$app->db->createCommand("SELECT 1 FROM journal_trans WHERE id = :id FOR UPDATE", [':id' => $id])->queryAll();
+                $model = \backend\models\JournalTrans::find()->where(['id' => $id])->limit(1)->one();
                 if ($model) {
                     if ($model->status == JournalTrans::JOURNAL_TRANS_STATUS_CANCEL) {
                         $transaction->rollBack();
@@ -1423,7 +1434,8 @@ class JournaltransController extends Controller
         if ($id) {
             $transaction = \Yii::$app->db->beginTransaction();
             try {
-                $model_line = JournalTransLine::find()->where(['id' => $id])->limit(1)->forUpdate()->one();
+                \Yii::$app->db->createCommand("SELECT 1 FROM journal_trans_line WHERE id = :id FOR UPDATE", [':id' => $id])->queryAll();
+                $model_line = JournalTransLine::find()->where(['id' => $id])->limit(1)->one();
 
                 if ($model_line) {
                     if ($model_line->status == 300) {
