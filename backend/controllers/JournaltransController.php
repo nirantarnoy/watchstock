@@ -356,6 +356,17 @@ class JournaltransController extends Controller
                         throw new Exception("ไม่พบเอกสารอ้างอิง");
                     }
                     
+                    // Lock StockSum rows early to prevent concurrent stock depletion
+                    $lock_product_ids = [];
+                    foreach ($modelLines as $line) {
+                        if ($line->product_id > 0) {
+                            $lock_product_ids[] = $line->product_id;
+                        }
+                    }
+                    if (!empty($lock_product_ids)) {
+                        \backend\models\Stocksum::find()->where(['product_id' => $lock_product_ids])->forUpdate()->all();
+                    }
+                    
                     // Stock Availability Check for Update
                     if ($model->stock_type_id == 2) {
                         foreach ($modelLines as $line) {
@@ -613,6 +624,7 @@ class JournaltransController extends Controller
         if ($stock_type_id == 2) {
             $model = \common\models\StockSum::find()
                 ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                ->forUpdate()
                 ->one();
 
             // Allow negative stock on FORCE (reversals)
@@ -635,6 +647,7 @@ class JournaltransController extends Controller
             // 1. เพิ่ม qty ในคลังที่ระบุ
             $model = \common\models\StockSum::find()
                 ->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])
+                ->forUpdate()
                 ->one();
 
             if (!$model) {
@@ -709,7 +722,7 @@ class JournaltransController extends Controller
                 if ($activity_type == 8) { // คืนช่าง
                     if ((int)$original_product_id == (int)$product_id) { // same product
                         // StockTrans is already recorded by the caller (actionAddreturnproduct)
-                        $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one();
+                        $model = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->forUpdate()->one();
                         if ($model) {
                             $model->qty += $qty;
                             if ($model->reserv_qty >= ($qty)) { // remove reserve qty
@@ -726,7 +739,7 @@ class JournaltransController extends Controller
                             $model->reserv_qty = 0;
                             $model->updated_at = date('Y-m-d H:i:s');
                             if ($model->save(false)) {
-                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->all();
+                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->forUpdate()->all();
                                 if ($model_update_reserve) {
                                     foreach ($model_update_reserve as $model_reserve) {
                                         if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
@@ -755,7 +768,7 @@ class JournaltransController extends Controller
                         $cost = \backend\models\Product::findCostAvgPrice($product_id);
                         $model_trans->line_price = $cost;
                         if ($model_trans->save(false)) {
-                            $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->one(); // หักยอดจองสินค้าต้นฉบับ
+                            $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->forUpdate()->one(); // หักยอดจองสินค้าต้นฉบับ
                             if ($model) {
                                 // $model->qty = ($model->qty - $qty); //
                                 $model->reserv_qty = ($model->reserv_qty - $qty); //reduce reserve qty original product
@@ -763,7 +776,7 @@ class JournaltransController extends Controller
                                 if ($model->save(false)) {
                                     $this->updateProductStock($original_product_id); // update stock qty
 
-                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->one(); // ตรวจสอบสต๊อกสินค้าใหม่
+                                    $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->forUpdate()->one(); // ตรวจสอบสต๊อกสินค้าใหม่
                                     if ($modelx) { // ถ้ามีเพิ่มยอด
                                         $modelx->qty += $qty;
                                         if ($modelx->save(false)) {
