@@ -1316,14 +1316,19 @@ class JournaltransController extends Controller
                                     if ($model->trans_type_id == 9) {
                                         // Dropship ไม่คืนสต๊อก
                                     } else if ($effective_stock_type == 2) { // stock out
+                                        $old_qty_log = clone $model_sum;
                                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
                                             $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
                                             $model_sum->reserv_qty = (float)$model_sum->reserv_qty - (float)$value->qty;
                                         } else {
                                             $model_sum->qty = (float)$model_sum->qty + (float)$value->qty;
                                         }
+                                        if ($model_sum->save(false)) {
+                                            \Yii::info("CancelDoc(Act:{$model->trans_type_id}): PID:{$value->product_id} WH:{$value->warehouse_id} | Qty: {$old_qty_log->qty} -> {$model_sum->qty} | Resv: {$old_qty_log->reserv_qty} -> {$model_sum->reserv_qty} | User:" . \Yii::$app->user->id, 'stock-calc');
+                                        }
 
                                     } else if ($effective_stock_type == 1) { // stock in
+                                        $old_qty_log = clone $model_sum;
                                         if ($model->trans_type_id == 8 || $model->trans_type_id == 6) { // Return to mechanic or Return loan
                                             // Find original warehouse from original trans line
                                             $orig_line = \common\models\JournalTransLine::find()
@@ -1370,7 +1375,7 @@ class JournaltransController extends Controller
                                     if ($model->trans_type_id != 9) {
                                         if (!($effective_stock_type == 1 && ($model->trans_type_id == 8 || $model->trans_type_id == 6))) {
                                             if ($model_sum->save(false)) {
-                                                // ...
+                                                \Yii::info("CancelDoc(Act:{$model->trans_type_id}): PID:{$value->product_id} WH:{$value->warehouse_id} | Qty: {$old_qty_log->qty} -> {$model_sum->qty} | Resv: {$old_qty_log->reserv_qty} -> {$model_sum->reserv_qty} | User:" . \Yii::$app->user->id, 'stock-calc');
                                             }
                                         }
                                     }
@@ -1471,6 +1476,7 @@ class JournaltransController extends Controller
                     // --------------------------------
 
 
+                    $old_qty_log = clone $model_sum;
                     if ($effective_stock_type == 2) { // stock out (ขาย/ยืม/ส่งช่าง)
                         if ($model->trans_type_id == 5 || $model->trans_type_id == 7) {
 
@@ -1482,7 +1488,9 @@ class JournaltransController extends Controller
                             $model_sum->qty += (float)$cancel_qty;
 
                         }
-                        $model_sum->save(false);
+                        if ($model_sum->save(false)) {
+                            \Yii::info("CancelLineOut(Act:{$model->trans_type_id}): PID:{$model_line->product_id} WH:{$model_line->warehouse_id} | Qty: {$old_qty_log->qty} -> {$model_sum->qty} | Resv: {$old_qty_log->reserv_qty} -> {$model_sum->reserv_qty} | User:" . \Yii::$app->user->id, 'stock-calc');
+                        }
 
                     } else if ($effective_stock_type == 1) { // stock in (คืนยืม/คืนส่งช่าง)
                         if ($model->trans_type_id == 6 || $model->trans_type_id == 8) {
@@ -1525,7 +1533,9 @@ class JournaltransController extends Controller
                             }
                         } else {
                             $model_sum->qty -= (float)$cancel_qty;
-                            $model_sum->save(false);
+                            if ($model_sum->save(false)) {
+                                \Yii::info("CancelLineIn(Act:{$model->trans_type_id}): PID:{$model_line->product_id} WH:{$model_line->warehouse_id} | Qty: {$old_qty_log->qty} -> {$model_sum->qty} | Resv: {$old_qty_log->reserv_qty} -> {$model_sum->reserv_qty} | User:" . \Yii::$app->user->id, 'stock-calc');
+                            }
                         }
                     }
 
