@@ -86,6 +86,7 @@ return [
         'user' => [
             'identityClass' => 'common\models\User',
             'enableAutoLogin' => true,
+            'authTimeout' => 3600 * 24 * 7, // Force logout after 7 days of inactivity
             'identityCookie' => ['name' => '_identity-backend', 'httpOnly' => true],
         ],
         'session' => [
@@ -96,9 +97,9 @@ return [
 
             'class'=> 'yii\web\Session',
             'name' => 'advanced-backend',
-            'cookieParams' => ['lifetime' => 7 * 24 *60 * 60],
+            'cookieParams' => ['lifetime' => 3600 * 24 * 7], // 7 days lifetime
             // 'cookieParams' => ['httpOnly'=>true],
-            'timeout' => 60*60*24*30,
+            'timeout' => 3600 * 24 * 7, // 7 days timeout
             'useCookies' => true,
         ],
         'log' => [
