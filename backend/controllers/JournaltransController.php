@@ -155,6 +155,17 @@ class JournaltransController extends Controller
             if ($valid) {
                 $transaction = \Yii::$app->db->beginTransaction();
                 try {
+                    // Lock StockSum rows early to prevent concurrent stock depletion
+                    $lock_product_ids = [];
+                    foreach ($modelLines as $line) {
+                        if ($line->product_id > 0) {
+                            $lock_product_ids[] = $line->product_id;
+                        }
+                    }
+                    if (!empty($lock_product_ids)) {
+                        \backend\models\Stocksum::find()->where(['product_id' => $lock_product_ids])->forUpdate()->all();
+                    }
+
                     // Stock Availability Check
                     if ($model->stock_type_id == 2) { // เฉพาะรายการจ่ายออก
                         foreach ($modelLines as $i => $line) {
