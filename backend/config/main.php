@@ -14,6 +14,16 @@ return [
     'as actionLog' => [
         'class' => 'backend\components\ActionLogBehavior',
     ],
+    'as access' => [
+        'class' => 'yii\filters\AccessControl',
+        'except' => ['site/login', 'site/error', 'site/logindriver', 'site/calproduct-stock', 'api/*'],
+        'rules' => [
+            [
+                'allow' => true,
+                'roles' => ['@'],
+            ],
+        ],
+    ],
     'modules' => [
         'gridview' => [
             'class' => '\kartik\grid\Module'
