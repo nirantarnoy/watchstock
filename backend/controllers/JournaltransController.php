@@ -820,7 +820,6 @@ class JournaltransController extends Controller
                 }
             }
         }
-    }
 
     function updateProductStock($product_id)
     {
