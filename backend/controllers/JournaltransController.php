@@ -678,6 +678,7 @@ class JournaltransController extends Controller
                         $other_models = \common\models\StockSum::find()
                             ->where(['product_id' => $product_id])
                             ->andWhere(['>', 'reserv_qty', 0])
+                            ->forUpdate()
                             ->all();
                         foreach ($other_models as $om) {
                             if ($remaining_to_reduce <= 0) break;
@@ -739,14 +740,15 @@ class JournaltransController extends Controller
                             $model->reserv_qty = 0;
                             $model->updated_at = date('Y-m-d H:i:s');
                             if ($model->save(false)) {
-                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->forUpdate()->all();
+                                $model_update_reserve = \common\models\StockSum::find()->where(['product_id' => $product_id])->andWhere(['>', 'reserv_qty', 0])->forUpdate()->all();
                                 if ($model_update_reserve) {
+                                    $remaining_to_reduce = $qty;
                                     foreach ($model_update_reserve as $model_reserve) {
-                                        if ($model_reserve->reserv_qty >= ($qty)) { // remove reserve qty
-                                            $model_reserve->reserv_qty = ($model_reserve->reserv_qty - $qty);
-                                            $model_reserve->save(false);
-                                            break;
-                                        }
+                                        if ($remaining_to_reduce <= 0) break;
+                                        $take = min($remaining_to_reduce, $model_reserve->reserv_qty);
+                                        $model_reserve->reserv_qty -= $take;
+                                        $remaining_to_reduce -= $take;
+                                        $model_reserve->save(false);
                                     }
                                 }
                                 $this->updateProductStock($product_id);
@@ -768,12 +770,26 @@ class JournaltransController extends Controller
                         $cost = \backend\models\Product::findCostAvgPrice($product_id);
                         $model_trans->line_price = $cost;
                         if ($model_trans->save(false)) {
+                            // Drain reserv_qty from original product
+                            $remaining_to_reduce = $qty;
                             $model = \common\models\StockSum::find()->where(['product_id' => $original_product_id, 'warehouse_id' => $original_warehouse_id])->forUpdate()->one(); // หักยอดจองสินค้าต้นฉบับ
-                            if ($model) {
-                                // $model->qty = ($model->qty - $qty); //
-                                $model->reserv_qty = ($model->reserv_qty - $qty); //reduce reserve qty original product
-
-                                if ($model->save(false)) {
+                            if ($model && $model->reserv_qty > 0) {
+                                $take = min($remaining_to_reduce, $model->reserv_qty);
+                                $model->reserv_qty -= $take;
+                                $remaining_to_reduce -= $take;
+                                $model->save(false);
+                            }
+                            if ($remaining_to_reduce > 0) {
+                                $other_models = \common\models\StockSum::find()->where(['product_id' => $original_product_id])->andWhere(['>', 'reserv_qty', 0])->forUpdate()->all();
+                                foreach ($other_models as $om) {
+                                    if ($remaining_to_reduce <= 0) break;
+                                    $take = min($remaining_to_reduce, $om->reserv_qty);
+                                    $om->reserv_qty -= $take;
+                                    $remaining_to_reduce -= $take;
+                                    $om->save(false);
+                                }
+                            }
+                            if (true) {
                                     $this->updateProductStock($original_product_id); // update stock qty
 
                                     $modelx = \common\models\StockSum::find()->where(['product_id' => $product_id, 'warehouse_id' => $warehouse_id])->forUpdate()->one(); // ตรวจสอบสต๊อกสินค้าใหม่
