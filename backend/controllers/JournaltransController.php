@@ -629,12 +629,14 @@ class JournaltransController extends Controller
 
             // Allow negative stock on FORCE (reversals)
             if ($model && ($force || $model->qty >= $qty)) {
+                $old_qty = clone $model;
                 $model->qty -= $qty;
                 if (in_array($activity_type, [5, 6, 7, 8])) { // ยืม (5), คืนยืม (6), ส่งช่าง (7), คืนช่าง (8)
                     $model->reserv_qty += $qty;
                 }
                 $model->updated_at = date('Y-m-d H:i:s');
                 if ($model->save(false)) {
+                    \Yii::info("StockOut(Act:{$activity_type}): PID:{$product_id} WH:{$warehouse_id} | Qty: {$old_qty->qty} -> {$model->qty} | Resv: {$old_qty->reserv_qty} -> {$model->reserv_qty} | User:" . \Yii::$app->user->id, 'stock-calc');
                     $this->updateProductStock($product_id);
                 }
                 return true;
@@ -657,10 +659,12 @@ class JournaltransController extends Controller
                 $model->qty = 0;
                 $model->reserv_qty = 0;
             }
+            $old_qty = clone $model;
             $model->qty += $qty;
             $model->updated_at = date('Y-m-d H:i:s');
             
             if ($model->save(false)) {
+                \Yii::info("StockIn(Act:{$activity_type}): PID:{$product_id} WH:{$warehouse_id} | Qty: {$old_qty->qty} -> {$model->qty} | Resv: {$old_qty->reserv_qty} (Before drain) | User:" . \Yii::$app->user->id, 'stock-calc');
                 // 2. จัดการ reserv_qty สำหรับกิจกรรมที่เกี่ยวข้องกับการคืนหรือยกเลิก (5, 6, 7, 8)
                 if (in_array($activity_type, [5, 6, 7, 8])) {
                     $remaining_to_reduce = $qty;

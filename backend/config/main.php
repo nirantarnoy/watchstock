@@ -108,6 +108,13 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
                 ],
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'levels' => ['info', 'warning', 'error'],
+                    'categories' => ['stock-calc'],
+                    'logFile' => '@runtime/logs/stock-calc.log',
+                    'logVars' => [], // Disable global variable logging (like $_SERVER) to save space
+                ],
             ],
         ],
         'errorHandler' => [
