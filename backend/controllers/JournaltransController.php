@@ -930,7 +930,7 @@ class JournaltransController extends Controller
                                 ->innerJoin('journal_trans t', 't.id = l.journal_trans_id')
                                 ->where(['l.journal_trans_ref_id' => $journal_trans_id, 'l.product_id' => $pid])
                                 ->andWhere(['!=', 'l.status', 300])
-                                ->andWhere(['!=', 't.status', \common\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL])
+                                ->andWhere(['!=', 't.status', \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL])
                                 ->sum('l.qty') ?: 0;
                                 
                             if (($already_returned_qty + $total_qty_to_return) > $borrowed_qty) {
