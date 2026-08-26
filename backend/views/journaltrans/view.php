@@ -464,7 +464,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     'headerOptions' => ['style' => 'text-align:right'],
                     'contentOptions' => ['style' => 'text-align:right'],
                     'value' => function($model){
-                        $sale = $model->sale_price > 0 ? $model->sale_price : ($model->product ? $model->product->sale_price : 0);
+                        $sale = ($model->sale_price !== null && $model->sale_price !== '') ? $model->sale_price : ($model->product ? $model->product->sale_price : 0);
                         return number_format($sale, 2);
                     }
                 ],

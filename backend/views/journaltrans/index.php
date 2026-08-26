@@ -174,7 +174,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function ($model) {
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
-                        $sale = $line->sale_price > 0 ? $line->sale_price : ($line->product ? $line->product->sale_price : 0);
+                        $sale = ($line->sale_price !== null && $line->sale_price !== '') ? $line->sale_price : ($line->product ? $line->product->sale_price : 0);
                         $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">' . number_format($sale, 2) . '</div>';
                     }
                     return $html;
