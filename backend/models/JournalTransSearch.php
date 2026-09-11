@@ -42,7 +42,7 @@ class JournalTransSearch extends JournalTrans
      */
     public function search($params)
     {
-        $query = JournalTrans::find()->joinWith('journalTransLine.product');
+        $query = JournalTrans::find()->joinWith('journalTransLine.product')->with(['watchMaker', 'creator']);
         $query->groupBy('journal_trans.id');
 
         $dataProvider = new ActiveDataProvider([

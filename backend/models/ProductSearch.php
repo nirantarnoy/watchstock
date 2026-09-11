@@ -113,7 +113,8 @@ class ProductSearch extends Product
 
         // ใช้ main query โดยอ้างอิง subquery
         $query = Product::find()
-            ->where(['id' => $subQuery]);
+            ->where(['id' => $subQuery])
+            ->with(['brand', 'stocksum.warehouse', 'journaltransLine.journalTrans']);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

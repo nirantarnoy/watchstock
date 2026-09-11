@@ -207,6 +207,11 @@ class JournalTrans extends \common\models\JournalTrans
         return $this->hasMany(\common\models\JournalTransLine::class, ['journal_trans_id' => 'id']);
     }
 
+    public function getCreator()
+    {
+        return $this->hasOne(\backend\models\User::class, ['id' => 'created_by']);
+    }
+
 
 
 }

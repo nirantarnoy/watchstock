@@ -124,7 +124,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'headerOptions' => ['style' => 'text-align:center'],
                 'contentOptions' => ['style' => 'text-align:center; vertical-align: middle;'],
                 'value' => function ($model) {
-                    return \backend\models\Watchmaker::findName($model->party_id);
+                    return $model->watchMaker ? $model->watchMaker->name : '';
                 }
             ],
 
@@ -138,7 +138,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     $html = '';
                     foreach ($model->journalTransLines as $line) {
                         if ($line->product) {
-                            $line_photo = \backend\models\Product::getPhoto($line->product_id);
+                            $line_photo = $line->product->photo;
                             $html .= '<div style="height: 80px; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">';
                             if ($line_photo != '') {
                                 $html .= '<img src="' . \Yii::$app->getUrlManager()->baseUrl . '/uploads/product_photo/' . $line_photo . '" style="width: 80px; height: 80px; margin-right: 10px;" > ';
@@ -191,7 +191,10 @@ $this->params['breadcrumbs'][] = $this->title;
                         if ($model->trans_type_id == 9) {
                             $cost = $line->line_price;
                         } else {
-                            $cost = \backend\models\Product::findCostAvgPrice($line->product_id);
+                            $cost = 0;
+                            if ($line->product) {
+                                $cost = $line->product->cost_avg > 0 ? $line->product->cost_avg : $line->product->cost_price;
+                            }
                             if ($cost <= 0) {
                                 $cost = $line->cost_price > 0 ? $line->cost_price : $line->line_price;
                             }
@@ -246,7 +249,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'headerOptions' => ['style' => 'text-align: center;'],
                 'contentOptions' => ['style' => 'text-align: center; vertical-align: middle;'],
                 'value' => function ($data) {
-                    return \backend\models\User::findName($data->created_by);
+                    return $data->creator ? $data->creator->username : '';
                 }
             ],
 

@@ -110,7 +110,22 @@ $this->params['breadcrumbs'][] = $this->title;
                     'headerOptions' => ['style' => 'text-align: center'],
                     'contentOptions' => ['style' => 'text-align: center'],
                     'value' => function ($data) {
-                        $res_qty = \backend\models\Stocksum::getResQty($data->id);
+                        $borrow_qty = 0;
+                        $return_qty = 0;
+                        if ($data->journaltransLine) {
+                            foreach ($data->journaltransLine as $line) {
+                                if ($line->journalTrans && $line->journalTrans->status != 4) { // CANCEL status is 4
+                                    if (in_array($line->journalTrans->trans_type_id, [5, 7])) {
+                                        $borrow_qty += $line->qty;
+                                    }
+                                    if (in_array($line->journalTrans->trans_type_id, [6, 8])) {
+                                        $return_qty += $line->qty;
+                                    }
+                                }
+                            }
+                        }
+                        $res_qty = $borrow_qty - $return_qty;
+                        $res_qty = $res_qty > 0 ? $res_qty : 0;
                         return number_format($res_qty, 0);
                     }
                 ],
@@ -124,7 +139,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'brand_id',
                     'value' => function ($data) {
-                        return \backend\models\Productbrand::findName($data->brand_id);
+                        return $data->brand ? $data->brand->name : '';
                     }
                 ],
                 [
@@ -132,16 +147,18 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'คลัง',
                     'format' => 'raw',
                     'value' => function ($data) {
-                      //  $namex = \backend\models\Product::getWarehouseName($data->id,$data->stock_qty);
-                        $namex = \backend\models\Product::getWarehouseNames($data->id);
-                        return $namex;
-//                        $warehouses = [];
-//                        foreach ($data->warehouse as $line) {
-//                            if ($line->product) {
-//                                $warehouses[] = $line->warehouse->name;
-//                            }
-//                        }
-//                        return implode('<br>', $warehouses);
+                        $html = '';
+                        if ($data->stocksum) {
+                            foreach ($data->stocksum as $value) {
+                                if ($value->qty == 0) {
+                                    continue;
+                                }
+                                if ($value->warehouse) {
+                                    $html .= '<div class="badge badge-pill badge-info">'. $value->warehouse->name.'</div>'.'<br />';
+                                }
+                            }
+                        }
+                        return $html;
                     }
                 ],
 

@@ -215,6 +215,10 @@ class Product extends \common\models\Product
         return $this->hasMany(Stocksum::class, ['product_id' => 'id']);
   }
 
+  public function getBrand(){
+        return $this->hasOne(Productbrand::class, ['id' => 'brand_id']);
+  }
+
   public static function getPhoto($id){
         $model = Product::find()->where(['id'=>$id])->one();
         return $model != null ?$model->photo:'';
