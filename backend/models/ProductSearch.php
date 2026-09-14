@@ -105,15 +105,9 @@ class ProductSearch extends Product
 
     public function search($params)
     {
-        // สร้าง subquery เพื่อดึง product_id ที่ไม่ซ้ำพร้อมเงื่อนไข join
-        $subQuery = Product::find()
-            ->select('product.id')
-            ->joinWith(['journaltransLine.journalTrans.watchMaker'])
-            ->distinct();
+        $this->load($params);
 
-        // ใช้ main query โดยอ้างอิง subquery
         $query = Product::find()
-            ->where(['id' => $subQuery])
             ->with(['brand', 'stocksum.warehouse', 'journaltransLine.journalTrans']);
 
         $dataProvider = new ActiveDataProvider([
@@ -126,14 +120,13 @@ class ProductSearch extends Product
             ]
         ]);
 
-        $this->load($params);
-
         if (!$this->validate()) {
             return $dataProvider;
         }
 
-        // ย้าย filter conditions ไปที่ subQuery แทน
-        $subQuery->andFilterWhere([
+        // กรองข้อมูลในตารางหลัก
+        $query->andFilterWhere([
+            'product.id' => $this->id,
             'product.product_group_id' => $this->product_group_id,
             'product.product_type_id' => $this->product_type_id,
             'product.brand_id' => $this->brand_id,
@@ -141,28 +134,37 @@ class ProductSearch extends Product
             'product.status' => $this->status,
         ]);
 
-        if($this->party_id){
-            $subQuery->andFilterWhere(['watchmaker.id' => $this->party_id]);
-        }
-
-        if($this->warehouse_id){
-            $subQuery->andFilterWhere(['journal_trans_line.warehouse_id' => $this->warehouse_id]);
-        }
-
-        // stock_empty filter ใน main query
         if($this->stock_empty == 1){
-            $query->andFilterWhere(['stock_qty' => 0]);
+            $query->andFilterWhere(['product.stock_qty' => 0]);
         }
         if($this->stock_empty == 2){
-            $query->andFilterWhere(['!=', 'stock_qty', 0]);
+            $query->andFilterWhere(['!=', 'product.stock_qty', 0]);
         }
 
         if($this->globalSearch != ''){
             $query->andWhere([
                 'or',
-                ['like', 'name', $this->globalSearch],
-                ['like', 'description', $this->globalSearch]
+                ['like', 'product.name', $this->globalSearch],
+                ['like', 'product.description', $this->globalSearch]
             ]);
+        }
+
+        // ทำ SubQuery และ Join เฉพาะเมื่อมีการค้นหาด้วยช่าง หรือ คลังสินค้า
+        if ($this->party_id || $this->warehouse_id) {
+            $subQuery = Product::find()
+                ->select('product.id')
+                ->joinWith(['journaltransLine.journalTrans.watchMaker'])
+                ->distinct();
+
+            if($this->party_id){
+                $subQuery->andFilterWhere(['watchmaker.id' => $this->party_id]);
+            }
+
+            if($this->warehouse_id){
+                $subQuery->andFilterWhere(['journal_trans_line.warehouse_id' => $this->warehouse_id]);
+            }
+            
+            $query->andWhere(['product.id' => $subQuery]);
         }
 
         return $dataProvider;
