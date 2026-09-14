@@ -72,12 +72,14 @@ $this->params['breadcrumbs'][] = $this->title;
                     'value' => function ($data) {
                         if ($data->photo != '') {
                             $url = Yii::$app->request->baseUrl . '/uploads/product_photo/' . $data->photo;
+                            $thumbUrl = $data->getThumbnailUrl(100, 100) ?: $url;
                             return Html::a(
-                                Html::img($url, ['style' => 'max-width:100px']),
+                                Html::img($thumbUrl, ['style' => 'max-width:100px; border-radius:4px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);']),
                                 $url,
                                 [
                                     'target' => '_blank',
                                     'data-pjax' => '0',
+                                    'title' => 'คลิกเพื่อดูรูปขนาดจริง',
                                 ]
                             );
                         } else {

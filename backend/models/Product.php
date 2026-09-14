@@ -281,4 +281,103 @@ class Product extends \common\models\Product
         
         return $current_cost;
     }
+
+    public function getThumbnailUrl($maxWidth = 100, $maxHeight = 100)
+    {
+        if (empty($this->photo)) {
+            return '';
+        }
+
+        $uploadPath = Yii::getAlias('@webroot') . '/uploads/product_photo/';
+        $thumbPath = $uploadPath . 'thumbs/';
+        $thumbUrl = Yii::$app->request->baseUrl . '/uploads/product_photo/thumbs/';
+
+        if (!file_exists($uploadPath . $this->photo)) {
+            return '';
+        }
+
+        if (!is_dir($thumbPath)) {
+            if (!mkdir($thumbPath, 0777, true)) {
+                return Yii::$app->request->baseUrl . '/uploads/product_photo/' . $this->photo;
+            }
+        }
+
+        $thumbName = $maxWidth . 'x' . $maxHeight . '_' . $this->photo;
+        $thumbFile = $thumbPath . $thumbName;
+
+        if (!file_exists($thumbFile)) {
+            $info = @getimagesize($uploadPath . $this->photo);
+            if ($info) {
+                $mime = $info['mime'];
+                switch ($mime) {
+                    case 'image/jpeg':
+                        $image_create_func = 'imagecreatefromjpeg';
+                        $image_save_func = 'imagejpeg';
+                        break;
+                    case 'image/png':
+                        $image_create_func = 'imagecreatefrompng';
+                        $image_save_func = 'imagepng';
+                        break;
+                    case 'image/gif':
+                        $image_create_func = 'imagecreatefromgif';
+                        $image_save_func = 'imagegif';
+                        break;
+                    case 'image/webp':
+                        if (function_exists('imagecreatefromwebp')) {
+                            $image_create_func = 'imagecreatefromwebp';
+                            $image_save_func = 'imagewebp';
+                        } else {
+                            $image_create_func = '';
+                        }
+                        break;
+                    default:
+                        $image_create_func = '';
+                        $image_save_func = '';
+                }
+
+                if ($image_create_func && function_exists($image_create_func)) {
+                    $original_image = @$image_create_func($uploadPath . $this->photo);
+                    if ($original_image) {
+                        $original_width = imagesx($original_image);
+                        $original_height = imagesy($original_image);
+
+                        if ($original_width <= $maxWidth && $original_height <= $maxHeight) {
+                            copy($uploadPath . $this->photo, $thumbFile);
+                        } else {
+                            $ratio = min($maxWidth / $original_width, $maxHeight / $original_height);
+                            $new_width = (int)round($original_width * $ratio);
+                            $new_height = (int)round($original_height * $ratio);
+
+                            $new_image = imagecreatetruecolor($new_width, $new_height);
+                            
+                            if ($mime == 'image/png' || $mime == 'image/gif') {
+                                imagecolortransparent($new_image, imagecolorallocatealpha($new_image, 0, 0, 0, 127));
+                                imagealphablending($new_image, false);
+                                imagesavealpha($new_image, true);
+                            }
+
+                            imagecopyresampled($new_image, $original_image, 0, 0, 0, 0, $new_width, $new_height, $original_width, $original_height);
+                            
+                            if ($mime == 'image/jpeg') {
+                                @$image_save_func($new_image, $thumbFile, 80);
+                            } else {
+                                @$image_save_func($new_image, $thumbFile);
+                            }
+                            
+                            imagedestroy($new_image);
+                        }
+                        imagedestroy($original_image);
+                    } else {
+                         return Yii::$app->request->baseUrl . '/uploads/product_photo/' . $this->photo;
+                    }
+                } else {
+                     return Yii::$app->request->baseUrl . '/uploads/product_photo/' . $this->photo;
+                }
+            } else {
+                 return Yii::$app->request->baseUrl . '/uploads/product_photo/' . $this->photo;
+            }
+        }
+
+        return $thumbUrl . $thumbName;
+    }
 }
