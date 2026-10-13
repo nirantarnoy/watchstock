@@ -10,6 +10,10 @@ use yii\web\JsExpression;
 use kartik\select2\Select2;
 use yii\helpers\Url;
 
+// โหลด select2 JS/CSS เสมอ เพื่อให้ dropdown สินค้าเป็น select2 ทุกครั้ง
+\kartik\select2\Select2Asset::register($this);
+\kartik\select2\ThemeDefaultAsset::register($this);
+
 /* @var $this yii\web\View */
 /* @var $model app\models\JournalTrans */
 /* @var $form yii\widgets\ActiveForm */
@@ -438,13 +442,9 @@ $(document).ready(function() {
         onAfterDelete(e);
     });
 
-     $('.product-select').select2({
-        theme: 'default',
-        placeholder: '-- เลือกสินค้า --',
-        allowClear: true,
-        width: '100%',
-        minimumResultsForSearch: 0
-    });
+    initProductSelect2($('.container-items'));
+    // กันกรณีสคริปต์อื่นโหลดช้า/ทำลาย select2 ภายหลัง
+    $(window).on('load', function(){ initProductSelect2($('.container-items')); });
     
     // ป้องกันการกดบันทึกซ้ำและแสดง modal กำลังบันทึก
     $('#dynamic-form').on('beforeSubmit', function() {
@@ -459,6 +459,28 @@ $(document).ready(function() {
        //return false;
     });
 });
+
+function initProductSelect2(scope) {
+    if (typeof $.fn.select2 === 'undefined') { return; }
+    $(scope).find('select.product-select').each(function() {
+        var \$el = $(this);
+        if (\$el.hasClass('select2-hidden-accessible') && \$el.data('select2')) {
+            return; // already OK
+        }
+        // ล้าง markup ของ select2 ที่ถูก clone มาจากแถวก่อนหน้า
+        \$el.siblings('.select2-container').remove();
+        \$el.removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex');
+        \$el.find('option').removeAttr('data-select2-id');
+        \$el.removeData('select2');
+        \$el.select2({
+            theme: 'default',
+            placeholder: '-- เลือกสินค้า --',
+            allowClear: true,
+            width: '100%',
+            minimumResultsForSearch: 0
+        });
+    });
+}
 
 function initializeDynamicForm() {
     // Create main add button
@@ -512,16 +534,8 @@ function onAfterInsert(e, item) {
     updateRowNumbers();
 
     // Re-initialize Select2 for new items
-    $(item).find('.select2-container').remove(); // Remove old select2 containers
-    $(item).find('select.product-select').each(function() {
-        $(this).select2({
-            theme: 'default',
-            placeholder: '-- เลือกสินค้า --',
-            allowClear: true,
-            width: '100%',
-            minimumResultsForSearch: 0
-        });
-    });
+    $(item).find('select.product-select').removeClass('select2-hidden-accessible').removeData('select2');
+    initProductSelect2(item);
 }
 
 function onAfterDelete(e) {
