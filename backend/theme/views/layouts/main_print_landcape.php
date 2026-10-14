@@ -48,7 +48,7 @@ $is_pos_user = 0;
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 
 <!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">-->
 
     <link rel="stylesheet" href="<?= Yii::$app->request->baseUrl ?>/css/sweetalert.css">
     <?php $this->head() ?>
@@ -159,7 +159,7 @@ $is_pos_user = 0;
 <script src="<?= Yii::$app->request->baseUrl ?>/js/module_index_delete.js"></script>
 <script src="<?= Yii::$app->request->baseUrl ?>/js/jspdf.js"></script>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>-->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>-->
 
 <script>
     var cururl = $("#current-url").val();
