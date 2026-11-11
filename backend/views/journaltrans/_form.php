@@ -128,13 +128,15 @@ $this->registerCss($select2FixCss);
 // Register Font Awesome
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
 
+$effective_type = !empty($create_type) ? $create_type : ($model->trans_type_id ? $model->trans_type_id : 0);
+
 $is_disabled_maker = true;
-if ($create_type == 7) {
+if ($effective_type == 7) {
     $is_disabled_maker = false;
 }
 
 $model_products = null;
-if($create_type == 10){
+if(in_array($effective_type, [1, 10])){
     $model_products =  \backend\models\Product::find()->where(['status' => 1])->all();
 }else{
     $model_products =  \backend\models\Product::find()->where(['status' => 1])->andWhere(['>', 'stock_qty', 0])->all();
@@ -178,9 +180,9 @@ if($create_type == 10){
             </div>
         </div>
 
-        <input type="hidden" id="create-type" value="<?= $create_type ?>">
+        <input type="hidden" id="create-type" value="<?= $effective_type ?>">
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
-        <?php $model->trans_type_id = $model->isNewRecord ? $create_type : $model->trans_type_id ?>
+        <?php $model->trans_type_id = $model->isNewRecord ? $effective_type : $model->trans_type_id ?>
         <?= $form->field($model, 'trans_type_id')->hiddenInput()->label(false) ?>
         <div class="row">
             <div class="col-md-3">
@@ -335,9 +337,13 @@ if($create_type == 10){
                                         <label for="">ต้นทุนเฉลี่ย</label>
                                         <input type="text" class="form-control line-cost-avg-price" name="line_cost_avg_price" readonly value="<?= !$modelLine->isNewRecord ? \backend\models\Product::findCostAvgPrice($modelLine->product_id) : '' ?>">
                                     </div>
-                                  <div class="col-sm-2" style="<?= $create_type == 10 ? '' : 'display: none;' ?>">
-                                        <!--                                        --><?php //= $form->field($modelLine, "[{$i}]sale_price")->textInput(['maxlength' => true, 'class' => 'form-control line-sale-price','readonly'=>$create_type == 10 ? 'readonly' : '']) ?>
-                                        <?= $form->field($modelLine, "[{$i}]cost_price")->textInput(['maxlength' => true, 'class' => 'form-control line-cost-price']) ?>
+                                    <div class="col-sm-2" style="<?= in_array($effective_type, [1, 10]) ? '' : 'display: none;' ?>">
+                                        <!-- <?= $form->field($modelLine, "[{$i}]cost_price")->textInput(['maxlength' => true, 'class' => 'form-control line-cost-price']) ?> -->
+                                        <?= $form->field($modelLine, "[{$i}]cost_price")->textInput([
+                                            'maxlength' => true,
+                                            'class' => 'form-control line-cost-price',
+                                            'value' => ($modelLine->cost_price !== null && (float)$modelLine->cost_price > 0) ? $modelLine->cost_price : (($modelLine->line_price !== null && (float)$modelLine->line_price > 0) ? $modelLine->line_price : '')
+                                        ]) ?>
                                     </div>
                                     <div class="col-sm-2">
                                         <?= $form->field($modelLine, "[{$i}]qty")->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0', 'class' => 'form-control line-qty', 'onchange' => 'checkOverQty($(this))']) ?>
@@ -566,6 +572,10 @@ function getProductonhand(e){
                     row.find(".line-product-onhand").val(data[0]['stock_qty']);
                     row.find(".line-sale-price").val(data[0]['sale_price']);
                     row.find(".line-cost-avg-price").val(data[0]['cost_avg_price']);
+                    var costInput = row.find(".line-cost-price");
+                    if(costInput.length && (!costInput.val() || parseFloat(costInput.val()) == 0)){
+                        costInput.val(data[0]['cost_avg_price']);
+                    }
                 }
             },
             error: function() {
@@ -588,7 +598,7 @@ function linecal(e){
 function checkOverQty(e){
     var row = e.closest(".row");
     var create_type = $("#create-type").val();
-    if(create_type != '10'){
+    if(create_type != '10' && create_type != '1'){
         var line_quantity = e.val();
         var line_product_onhand = row.find(".line-product-onhand").val();
         if(parseFloat(line_quantity) > parseFloat(line_product_onhand)){

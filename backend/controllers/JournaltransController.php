@@ -203,7 +203,17 @@ class JournaltransController extends Controller
                         $total_qty = 0;
                         $processed_products = [];
                         foreach ($modelLines as $modelLine) {
-                            if(!in_array($type, [1, 10, 9])){
+                            if (in_array($type, [1, 10, 9])) {
+                                if ($modelLine->cost_price !== null && (float)$modelLine->cost_price > 0) {
+                                    $modelLine->line_price = (float)$modelLine->cost_price;
+                                } elseif ($modelLine->line_price !== null && (float)$modelLine->line_price > 0) {
+                                    $modelLine->cost_price = (float)$modelLine->line_price;
+                                } else {
+                                    $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                                    $modelLine->cost_price = $cost;
+                                    $modelLine->line_price = $cost;
+                                }
+                            } else {
                                 $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
                                 $modelLine->line_price = $cost;
                                 $modelLine->cost_price = $cost;
@@ -238,9 +248,18 @@ class JournaltransController extends Controller
                                 throw new Exception("Error saving stock transaction");
                             }
 
-                            if ($type == 10) {
-                                // Update price later after loop for efficiency
-                                $processed_products[$modelLine->product_id] = $modelLine->sale_price;
+                            if (in_array($type, [1, 10])) {
+                                $processed_products[$modelLine->product_id] = [
+                                    'sale_price' => (float)$modelLine->sale_price,
+                                    'cost_price' => (float)$modelLine->cost_price,
+                                ];
+                            } else {
+                                if (!isset($processed_products[$modelLine->product_id])) {
+                                    $processed_products[$modelLine->product_id] = [
+                                        'sale_price' => 0,
+                                        'cost_price' => 0,
+                                    ];
+                                }
                             }
 
                             // Calculate and save balance to journal_trans_line
@@ -250,8 +269,8 @@ class JournaltransController extends Controller
                         }
 
                         // Batch update products
-                        foreach($processed_products as $pid => $price) {
-                            $this->updateProductPrice($pid, $price);
+                        foreach($processed_products as $pid => $info) {
+                            $this->updateProductPrice($pid, $info['sale_price'], $info['cost_price']);
                         }
 
                         \backend\models\JournalTrans::updateAll(['qty' => $total_qty], ['id' => $model->id]);
@@ -426,10 +445,20 @@ class JournaltransController extends Controller
                                 $this->updateCancelTrans($modelLine->id);
                             }
 
-                            if(!in_array($model->trans_type_id, [1, 10, 9])){
-                                 $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
-                                 $modelLine->line_price = $cost;
-                                 $modelLine->cost_price = $cost;
+                            if (in_array($model->trans_type_id, [1, 10, 9])) {
+                                if ($modelLine->cost_price !== null && (float)$modelLine->cost_price > 0) {
+                                    $modelLine->line_price = (float)$modelLine->cost_price;
+                                } elseif ($modelLine->line_price !== null && (float)$modelLine->line_price > 0) {
+                                    $modelLine->cost_price = (float)$modelLine->line_price;
+                                } else {
+                                    $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                                    $modelLine->cost_price = $cost;
+                                    $modelLine->line_price = $cost;
+                                }
+                            } else {
+                                $cost = \backend\models\Product::findCostAvgPrice($modelLine->product_id);
+                                $modelLine->line_price = $cost;
+                                $modelLine->cost_price = $cost;
                             }
                             $modelLine->journal_trans_id = $model->id;
                             if($model->trans_type_id == 5 || $model->trans_type_id == 7){
@@ -459,16 +488,24 @@ class JournaltransController extends Controller
                             $modelLine->save(false);
 
                             // Save for later production price update
-                            if($model->trans_type_id == 10){
-                                $processed_products[$modelLine->product_id] = $modelLine->sale_price;
+                            if (in_array($model->trans_type_id, [1, 10])) {
+                                $processed_products[$modelLine->product_id] = [
+                                    'sale_price' => (float)$modelLine->sale_price,
+                                    'cost_price' => (float)$modelLine->cost_price,
+                                ];
                             } else {
-                                $processed_products[$modelLine->product_id] = 0;
+                                if (!isset($processed_products[$modelLine->product_id])) {
+                                    $processed_products[$modelLine->product_id] = [
+                                        'sale_price' => 0,
+                                        'cost_price' => 0,
+                                    ];
+                                }
                             }
                             }
                         }
 
-                        foreach($processed_products as $pid => $price) {
-                            $this->updateProductPrice($pid, $price);
+                        foreach($processed_products as $pid => $info) {
+                            $this->updateProductPrice($pid, $info['sale_price'], $info['cost_price']);
                         }
 
                         $total_qty = 0;
@@ -707,7 +744,7 @@ class JournaltransController extends Controller
         return false;
     }
 
-    public function updateProductPrice($product_id,$new_price){
+    public function updateProductPrice($product_id, $new_price = 0, $new_cost = 0){
         if($product_id){
             $cost_avg = \backend\models\Product::recalculateCostAvg($product_id);
 
@@ -715,6 +752,11 @@ class JournaltransController extends Controller
             if($model){
                 if ($new_price > 0) {
                     $model->sale_price = $new_price;
+                }
+                if ($new_cost > 0) {
+                    $model->cost_price = $new_cost;
+                } elseif ((float)$model->cost_price <= 0 && $cost_avg > 0) {
+                    $model->cost_price = $cost_avg;
                 }
                 $model->cost_avg = $cost_avg;
                 $model->save(false);
@@ -1794,40 +1836,84 @@ class JournaltransController extends Controller
 
     public function actionUpdateAllCosts()
     {
-        $lines = \common\models\JournalTransLine::find()
-            ->where(['or',
-                ['cost_price' => 0],
-                ['cost_price' => null],
-                ['line_price' => 0],
-                ['line_price' => null]
-            ])
-            ->all();
-
+        $lines = \common\models\JournalTransLine::find()->all();
         $updated_count = 0;
-        $no_product_cost_count = 0;
+        $updated_products = [];
 
         foreach ($lines as $line) {
-            $product = \common\models\Product::findOne($line->product_id);
-            if ($product) {
-                $new_cost = $product->cost_price > 0 ? $product->cost_price : $product->cost_avg;
-                if ($new_cost > 0) {
-                    $line->cost_price = $new_cost;
-                    $line->line_price = $new_cost;
-                    if ($line->save(false)) {
-                        $updated_count++;
-                        \common\models\StockTrans::updateAll(['line_price' => $new_cost], [
-                            'journal_trans_id' => $line->journal_trans_id,
-                            'product_id' => $line->product_id,
-                            'line_price' => [0, null]
-                        ]);
+            $changed = false;
+            $cost = 0;
+
+            if ($line->cost_price !== null && (float)$line->cost_price > 0) {
+                $cost = (float)$line->cost_price;
+                if ((float)$line->line_price <= 0 || $line->line_price === null) {
+                    $line->line_price = $cost;
+                    $changed = true;
+                }
+            } elseif ($line->line_price !== null && (float)$line->line_price > 0) {
+                $cost = (float)$line->line_price;
+                if ((float)$line->cost_price <= 0 || $line->cost_price === null) {
+                    $line->cost_price = $cost;
+                    $changed = true;
+                }
+            } else {
+                $product = \common\models\Product::findOne($line->product_id);
+                if ($product) {
+                    $p_cost = (float)($product->cost_price > 0 ? $product->cost_price : $product->cost_avg);
+                    if ($p_cost > 0) {
+                        $line->cost_price = $p_cost;
+                        $line->line_price = $p_cost;
+                        $cost = $p_cost;
+                        $changed = true;
                     }
-                } else {
-                    $no_product_cost_count++;
+                }
+            }
+
+            if ($changed) {
+                $line->save(false);
+                $updated_count++;
+            }
+
+            if ($cost > 0) {
+                \common\models\StockTrans::updateAll(['line_price' => $cost], [
+                    'journal_trans_id' => $line->journal_trans_id,
+                    'product_id' => $line->product_id,
+                    'line_price' => [0, null]
+                ]);
+            }
+
+            if ($line->product_id > 0) {
+                $updated_products[$line->product_id] = true;
+            }
+        }
+
+        // Also update any remaining StockTrans records where line_price is 0/null
+        $zeroStockTrans = \common\models\StockTrans::find()
+            ->where(['or', ['line_price' => 0], ['line_price' => null]])
+            ->all();
+        foreach ($zeroStockTrans as $st) {
+            $product = \common\models\Product::findOne($st->product_id);
+            if ($product) {
+                $p_cost = (float)($product->cost_price > 0 ? $product->cost_price : $product->cost_avg);
+                if ($p_cost > 0) {
+                    $st->line_price = $p_cost;
+                    $st->save(false);
+                    $updated_count++;
+                    $updated_products[$st->product_id] = true;
                 }
             }
         }
 
-        \Yii::$app->session->setFlash('success', "อัพเดทสำเร็จ {$updated_count} รายการ, สินค้าไม่มีต้นทุน {$no_product_cost_count} รายการ");
+        // Recalculate cost_avg for all products
+        $prodCount = 0;
+        foreach (array_keys($updated_products) as $pid) {
+            if ($pid > 0) {
+                \backend\models\Product::recalculateCostAvg($pid);
+                $prodCount++;
+            }
+        }
+
+        \Yii::$app->session->setFlash('success', "อัพเดทต้นทุนสำเร็จ {$updated_count} รายการ, คำนวณต้นทุนเฉลี่ยใหม่ {$prodCount} สินค้า");
         return $this->redirect(['index']);
     }
 

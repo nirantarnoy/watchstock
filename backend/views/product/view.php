@@ -214,7 +214,19 @@ $this->params['breadcrumbs'][] = $this->title;
                             'contentOptions' => ['style' => 'text-align: right'],
                             'visible' => \Yii::$app->user->can('ViewCostPrice'),
                             'value' => function ($data) {
-                                return number_format($data->line_price, 2);
+                                $cost = (float)$data->line_price;
+                                if ($cost <= 0 && $data->journal_trans_id) {
+                                    $line = \common\models\JournalTransLine::find()
+                                        ->where(['journal_trans_id' => $data->journal_trans_id, 'product_id' => $data->product_id])
+                                        ->one();
+                                    if ($line) {
+                                        $cost = (float)($line->cost_price > 0 ? $line->cost_price : $line->line_price);
+                                    }
+                                }
+                                if ($cost <= 0) {
+                                    $cost = (float)\backend\models\Product::findCostAvgPrice($data->product_id);
+                                }
+                                return number_format($cost, 2);
                             }
                         ],
                         [

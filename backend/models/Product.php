@@ -239,7 +239,7 @@ class Product extends \common\models\Product
         $current_qty = 0;
 
         // Replay history chronologically for Moving Average
-        $sql = "SELECT jl.qty, jl.cost_price, jt.stock_type_id, jt.trans_type_id
+        $sql = "SELECT jl.qty, jl.cost_price, jl.line_price, jt.stock_type_id, jt.trans_type_id
                 FROM journal_trans_line jl 
                 INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id 
                 WHERE jl.product_id = :product_id 
@@ -251,7 +251,7 @@ class Product extends \common\models\Product
         
         foreach ($transactions as $trans) {
             $qty = (float)$trans['qty'];
-            $cost = (float)$trans['cost_price'];
+            $cost = (float)($trans['cost_price'] > 0 ? $trans['cost_price'] : ($trans['line_price'] ?? 0));
             $stock_type = (int)$trans['stock_type_id'];
             $trans_type = (int)$trans['trans_type_id'];
 
@@ -276,7 +276,11 @@ class Product extends \common\models\Product
         }
         
         if ($current_cost > 0) {
-            Product::updateAll(['cost_avg' => $current_cost], ['id' => $product_id]);
+            $updateFields = ['cost_avg' => $current_cost];
+            if (!$model || (float)$model->cost_price <= 0) {
+                $updateFields['cost_price'] = $current_cost;
+            }
+            Product::updateAll($updateFields, ['id' => $product_id]);
         }
         
         return $current_cost;

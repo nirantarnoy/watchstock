@@ -1805,7 +1805,7 @@ class ProductController extends Controller
                 $product_id = $product->id;
                 $current_cost = $product && $product->cost_price > 0 ? (float)$product->cost_price : 0;
                 
-                $sql = "SELECT jt.journal_no, jt.trans_date, jl.qty, jl.cost_price, jt.stock_type_id, jt.trans_type_id
+                $sql = "SELECT jt.journal_no, jt.trans_date, jl.qty, jl.cost_price, jl.line_price, jt.stock_type_id, jt.trans_type_id
                         FROM journal_trans_line jl 
                         INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id 
                         WHERE jl.product_id = :product_id 
@@ -1817,7 +1817,7 @@ class ProductController extends Controller
                 
                 foreach ($transactions as $trans) {
                     $qty = (float)$trans['qty'];
-                    $cost = (float)$trans['cost_price'];
+                    $cost = (float)($trans['cost_price'] > 0 ? $trans['cost_price'] : ($trans['line_price'] ?? 0));
                     $stock_type = (int)$trans['stock_type_id'];
                     $trans_type = (int)$trans['trans_type_id'];
 

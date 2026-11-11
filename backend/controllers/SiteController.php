@@ -157,6 +157,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * 
                         CASE 
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             ELSE p.cost_price 
                         END
                     ) AS daily_profit
@@ -211,6 +213,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * 
                         CASE 
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             ELSE p.cost_price 
                         END
                     ) AS profit
@@ -489,7 +493,9 @@ class SiteController extends Controller
                 'AVG(jtl.sale_price) as avg_price',
                 new \yii\db\Expression("
                     CASE 
-                        WHEN COALESCE(AVG(jtl.line_price), 0) > 0 THEN AVG(jtl.line_price)
+                        WHEN COALESCE(AVG(NULLIF(jtl.line_price, 0)), AVG(NULLIF(jtl.cost_price, 0)), 0) > 0 
+                        THEN COALESCE(AVG(NULLIF(jtl.line_price, 0)), AVG(NULLIF(jtl.cost_price, 0))) 
+                        WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                         ELSE p.cost_price 
                     END AS cost_price
                 "),
@@ -498,6 +504,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * 
                         CASE 
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             ELSE p.cost_price 
                         END
                     ) AS profit
@@ -509,6 +517,8 @@ class SiteController extends Controller
                             SUM(jtl.qty * 
                                 CASE 
                                     WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                                    WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                                    WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                                     ELSE p.cost_price 
                                 END
                             )) / SUM(jtl.qty * jtl.sale_price)) * 100
@@ -553,6 +563,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * 
                         CASE 
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             ELSE p.cost_price 
                         END
                     )
@@ -567,6 +579,8 @@ class SiteController extends Controller
                 SUM(jtl.qty * 
                     CASE 
                         WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                        WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                        WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                         ELSE p.cost_price 
                     END
                 ) AS profit
@@ -620,6 +634,8 @@ class SiteController extends Controller
                     SUM(jtl.qty * 
                         CASE 
                             WHEN COALESCE(jtl.line_price, 0) > 0 THEN jtl.line_price
+                            WHEN COALESCE(jtl.cost_price, 0) > 0 THEN jtl.cost_price
+                            WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
                             ELSE p.cost_price 
                         END
                     ) AS profit

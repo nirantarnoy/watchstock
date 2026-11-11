@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = 'แก้ไข';
     <?= $this->render('_form', [
         'model' => $model,
         'modelLines' => $modelLines,
-        'create_type'=> null,
+        'create_type'=> $model->trans_type_id,
     ]) ?>
 
 </div>
