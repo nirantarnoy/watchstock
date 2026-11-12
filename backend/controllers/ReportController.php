@@ -85,6 +85,9 @@ class ReportController extends Controller
                 'AVG(jtl.sale_price) as avg_price',
                 new \yii\db\Expression("
                     CASE 
+                        WHEN COALESCE(AVG(jtl.line_price), 0) = 0 
+                        THEN p.cost_price 
+                        ELSE AVG(jtl.line_price) 
                         WHEN COALESCE(AVG(NULLIF(jtl.line_price, 0)), AVG(NULLIF(jtl.cost_price, 0)), 0) > 0 
                         THEN COALESCE(AVG(NULLIF(jtl.line_price, 0)), AVG(NULLIF(jtl.cost_price, 0))) 
                         WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg
@@ -93,6 +96,7 @@ class ReportController extends Controller
                 "),
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
                     SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), NULLIF(jtl.cost_price, 0), NULLIF(p.cost_avg, 0), p.cost_price, 0)) 
                     AS profit
                 ")
@@ -122,6 +126,7 @@ class ReportController extends Controller
                 new \yii\db\Expression("
                 SUM(jtl.sale_price * jtl.qty)
                 -
+                SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price))
                 SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), NULLIF(jtl.cost_price, 0), NULLIF(p.cost_avg, 0), p.cost_price, 0))
                 AS profit
             ")
@@ -169,6 +174,7 @@ class ReportController extends Controller
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
                     SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), NULLIF(jtl.cost_price, 0), NULLIF(p.cost_avg, 0), p.cost_price, 0)) 
                     AS profit
                 ")
@@ -216,6 +222,7 @@ class ReportController extends Controller
                 'SUM(jtl.qty * jtl.sale_price) as total_sales',
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
                     SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), NULLIF(jtl.cost_price, 0), NULLIF(p.cost_avg, 0), p.cost_price, 0)) 
                     AS profit
                 ")
@@ -258,6 +265,7 @@ class ReportController extends Controller
                 "SUM(jtl.qty * jtl.sale_price) as daily_sales",
                 new \yii\db\Expression("
                     SUM(jtl.qty * jtl.sale_price) - 
+                    SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), p.cost_price)) 
                     SUM(jtl.qty * COALESCE(NULLIF(jtl.line_price, 0), NULLIF(jtl.cost_price, 0), NULLIF(p.cost_avg, 0), p.cost_price, 0)) 
                     AS daily_profit
                 ")

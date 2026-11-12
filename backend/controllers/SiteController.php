@@ -493,6 +493,7 @@ class SiteController extends Controller
                 'AVG(jtl.sale_price) as avg_price',
                 new \yii\db\Expression("
                     CASE 
+                        WHEN COALESCE(AVG(jtl.line_price), 0) > 0 THEN AVG(jtl.line_price)
                         WHEN COALESCE(AVG(NULLIF(jtl.line_price, 0)), AVG(NULLIF(jtl.cost_price, 0)), 0) > 0 
                         THEN COALESCE(AVG(NULLIF(jtl.line_price, 0)), AVG(NULLIF(jtl.cost_price, 0))) 
                         WHEN COALESCE(p.cost_avg, 0) > 0 THEN p.cost_avg

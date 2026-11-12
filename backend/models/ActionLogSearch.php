@@ -18,7 +18,7 @@ class ActionLogSearch extends ActionLog
     {
         return [
             [['id', 'user_id', 'created_at'], 'integer'],
-            [['controller', 'action', 'query_string', 'data', 'sql_query', 'product_name'], 'safe'],
+            [['controller', 'action', 'query_string', 'data', 'sql_query', 'product_name', 'description'], 'safe'],
         ];
     }
 
@@ -69,7 +69,8 @@ class ActionLogSearch extends ActionLog
             ->andFilterWhere(['like', 'query_string', $this->query_string])
             ->andFilterWhere(['like', 'data', $this->data])
             ->andFilterWhere(['like', 'sql_query', $this->sql_query])
-            ->andFilterWhere(['like', 'product_name', $this->product_name]);
+            ->andFilterWhere(['like', 'product_name', $this->product_name])
+            ->andFilterWhere(['like', 'description', $this->description]);
 
         return $dataProvider;
     }

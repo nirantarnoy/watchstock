@@ -38,6 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'controller',
             'action',
             'product_name',
+            'description:ntext',
             'query_string:ntext',
             'data:ntext',
             'sql_query:ntext',

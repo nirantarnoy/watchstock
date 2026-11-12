@@ -469,16 +469,19 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     }
                 ],
                 [
+                    'label' => 'ต้นทุนเฉลี่ย',
                     'label' => 'ต้นทุน',
                     'headerOptions' => ['style' => 'text-align:right'],
                     'contentOptions' => ['style' => 'text-align:right'],
                     'value' => function($model){
+                        $cost = \backend\models\Product::findCostAvgPrice($model->product_id);
                         $cost = 0;
                         $jtrans = $model->journalTrans;
                         if ($jtrans && in_array($jtrans->trans_type_id, [1, 10, 9])) {
                             $cost = (float)($model->cost_price > 0 ? $model->cost_price : $model->line_price);
                         }
                         if ($cost <= 0) {
+                            $cost = $model->cost_price > 0 ? $model->cost_price : $model->line_price;
                             $cost = (float)\backend\models\Product::findCostAvgPrice($model->product_id);
                         }
                         if ($cost <= 0) {

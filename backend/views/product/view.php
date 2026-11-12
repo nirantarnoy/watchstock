@@ -214,6 +214,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'contentOptions' => ['style' => 'text-align: right'],
                             'visible' => \Yii::$app->user->can('ViewCostPrice'),
                             'value' => function ($data) {
+                                return number_format($data->line_price, 2);
                                 $cost = (float)$data->line_price;
                                 if ($cost <= 0 && $data->journal_trans_id) {
                                     $line = \common\models\JournalTransLine::find()

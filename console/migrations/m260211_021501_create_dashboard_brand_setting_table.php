@@ -12,11 +12,13 @@ class m260211_021501_create_dashboard_brand_setting_table extends Migration
      */
     public function safeUp()
     {
-        $this->createTable('{{%dashboard_brand_setting}}', [
-            'id' => $this->primaryKey(),
-            'user_id' => $this->integer()->notNull(),
-            'brand_id' => $this->integer()->notNull(),
-        ]);
+        if (!$this->db->getTableSchema('dashboard_brand_setting')) {
+            $this->createTable('{{%dashboard_brand_setting}}', [
+                'id' => $this->primaryKey(),
+                'user_id' => $this->integer()->notNull(),
+                'brand_id' => $this->integer()->notNull(),
+            ]);
+        }
     }
 
     /**

@@ -33,6 +33,17 @@ $this->params['breadcrumbs'][] = $this->title;
             'controller',
             'action',
             'product_name',
+            [
+                'attribute' => 'description',
+                'label' => 'รายละเอียดกิจกรรม',
+                'format' => 'raw',
+                'value' => function($model) {
+                    if (empty($model->description)) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return Html::encode($model->description);
+                }
+            ],
             'query_string:ntext',
             //'data:ntext',
             [
