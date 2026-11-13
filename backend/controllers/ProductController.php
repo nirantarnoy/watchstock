@@ -1805,7 +1805,6 @@ class ProductController extends Controller
                 $product_id = $product->id;
                 $current_cost = $product && $product->cost_price > 0 ? (float)$product->cost_price : 0;
                 
-                $sql = "SELECT jt.journal_no, jt.trans_date, jl.qty, jl.cost_price, jt.stock_type_id, jt.trans_type_id
                 $sql = "SELECT jt.journal_no, jt.trans_date, jl.qty, jl.cost_price, jl.line_price, jt.stock_type_id, jt.trans_type_id
                         FROM journal_trans_line jl 
                         INNER JOIN journal_trans jt ON jl.journal_trans_id = jt.id 
