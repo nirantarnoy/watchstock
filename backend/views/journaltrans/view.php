@@ -356,6 +356,10 @@ $warehouse_data = \backend\models\Warehouse::find()->where(['status' => 1])->all
 $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
 ?>
     <div class="journal-trans-view">
+        <div id="return-loading-overlay" style="display:none; position:fixed; top:0; left:0; z-index:99999; width:100%; height:100%; background:rgba(255,255,255,0.75); text-align:center; padding-top:20%;">
+            <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
+            <h4 style="margin-top:15px;">กำลังบันทึกข้อมูล... กรุณารอสักครู่</h4>
+        </div>
 
         <p>
             <?= Html::a('แก้ไข', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
@@ -538,8 +542,9 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     <h4>รับสินค้าคืนช่าง</h4>
                 </div>
             </div>
-            <form onsubmit="return validateForm();"
+            <form id="form-return-fix" onsubmit="return handleReturnFixSubmit(this);"
                   action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
+                <input type="hidden" name="submit_token" value="<?= \Yii::$app->security->generateRandomString(32) ?>">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="8">
                 <div class="row" style="margin-top: 10px">
@@ -636,7 +641,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                 <div class="row">
                     <div class="col-lg-3">
                         <?php if ($has_line > 0): ?>
-                            <button class="btn btn-success">บันทึกรายการ</button>
+                            <button type="submit" class="btn btn-success btn-submit-return">บันทึกรายการ</button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -649,7 +654,9 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                     <h4>รับคืนยืมสินค้า</h4>
                 </div>
             </div>
-            <form action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
+            <form id="form-return-loan" onsubmit="return handleReturnLoanSubmit(this);"
+                  action="<?= \yii\helpers\Url::to(['journaltrans/addreturnproduct'], true) ?>" method="post">
+                <input type="hidden" name="submit_token" value="<?= \Yii::$app->security->generateRandomString(32) ?>">
                 <input type="hidden" name="journal_trans_id" value="<?= $model->id ?>">
                 <input type="hidden" name="trans_type_id" value="6">
                 <div class="row" style="margin-top: 10px">
@@ -692,12 +699,12 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                             <input type="text" class="form-control" readonly value="<?= $value->qty ?>">
                         </div>
                         <div class="col-lg-2">
-                            <input type="number" name="return_qty[]" class="form-control"
+                            <input type="number" name="return_qty[]" class="form-control line-loan-return-qty"
                                    value="<?= $check_return_qty ?>" data-var="<?= $check_return_qty ?>"
                                    onchange="checkReturnQty($(this))">
                         </div>
                         <div class="col-lg-2">
-                            <select name="return_to_warehouse[]" class="form-control">
+                            <select name="return_to_warehouse[]" class="form-control line-loan-return-warehouse">
                                 <option value="">--เลือกคลัง--</option>
                                 <?php foreach ($warehouse_data as $value_warehouse): ?>
                                     <option value="<?= $value_warehouse->id ?>"><?= $value_warehouse->name ?></option>
@@ -713,7 +720,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
                 <div class="row">
                     <?php if ($has_line > 0): ?>
                         <div class="col-lg-3">
-                            <button class="btn btn-success">บันทึกรายการ</button>
+                            <button type="submit" class="btn btn-success btn-submit-return">บันทึกรายการ</button>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -723,6 +730,7 @@ $yes_no = [['id' => 0, 'name' => 'NO'], ['id' => 1, 'name' => 'YES']];
 
     </div>
     <form id="form-cancel-line" action="<?= Url::to(['journaltrans/cancelbyline'], true) ?>" method="post">
+        <input type="hidden" name="submit_token" value="<?= \Yii::$app->security->generateRandomString(32) ?>">
         <input type="hidden" class="cancel-id" name="cancel_id" value="">
         <input type="hidden" name="cancel_qty" id="real-cancel-qty">
     </form>
@@ -765,7 +773,13 @@ function getReturnProduct($journal_trans_id, $product_id, $original_qty)
 {
     $qty = 0;
     if ($product_id && $original_qty) {
-        $return_qty = \common\models\JournalTransLine::find()->where(['journal_trans_ref_id' => $journal_trans_id, 'product_id' => $product_id])->sum('qty');
+        $return_qty = \common\models\JournalTransLine::find()
+            ->alias('l')
+            ->innerJoin('journal_trans t', 't.id = l.journal_trans_id')
+            ->where(['l.journal_trans_ref_id' => $journal_trans_id, 'l.product_id' => $product_id])
+            ->andWhere(['!=', 'l.status', 300])
+            ->andWhere(['!=', 't.status', \backend\models\JournalTrans::JOURNAL_TRANS_STATUS_CANCEL])
+            ->sum('l.qty') ?: 0;
         if ($return_qty <= $original_qty) {
             $qty = $original_qty - $return_qty;
         }
@@ -847,12 +861,15 @@ function checkReturnNew(e){
 function validateForm() {
     let select_warehouses = document.querySelectorAll('.line-return-to-warehouse');
     let select_qty = document.querySelectorAll('.line-return-qty');
+    let hasPositiveQty = false;
     
     for (let i = 0; i < select_warehouses.length; i++) {
         // ลบ required ก่อนทุกครั้ง
         select_warehouses[i].removeAttribute("required");
+        let q = parseFloat(select_qty[i].value);
     
-        if (parseFloat(select_qty[i].value) > 0) {
+        if (q > 0) {
+            hasPositiveQty = true;
             // ถ้าจำนวน > 0 แต่ยังไม่ได้เลือกคลัง
             if (select_warehouses[i].value === '-1' || select_warehouses[i].value === '') {
                 select_warehouses[i].focus();
@@ -860,6 +877,11 @@ function validateForm() {
                 return false;
             }
         }
+    }
+
+    if (!hasPositiveQty) {
+        alert("กรุณาระบุจำนวนที่ต้องการคืนอย่างน้อย 1 รายการ");
+        return false;
     }
     
     let line_remark = document.querySelectorAll('.line-return-remark');
@@ -874,6 +896,50 @@ function validateForm() {
             }
         }
     }
+    return true;
+}
+
+function handleReturnFixSubmit(formEl) {
+    if ($(formEl).data('submitting')) {
+        return false;
+    }
+    if (!validateForm()) {
+        return false;
+    }
+    $(formEl).data('submitting', true);
+    $('.btn-submit-return').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> กำลังบันทึก...');
+    $('#return-loading-overlay').show();
+    return true;
+}
+
+function handleReturnLoanSubmit(formEl) {
+    if ($(formEl).data('submitting')) {
+        return false;
+    }
+    let select_warehouses = document.querySelectorAll('.line-loan-return-warehouse');
+    let select_qty = document.querySelectorAll('.line-loan-return-qty');
+    let hasPositiveQty = false;
+
+    for (let i = 0; i < select_qty.length; i++) {
+        let q = parseFloat(select_qty[i].value);
+        if (q > 0) {
+            hasPositiveQty = true;
+            if (!select_warehouses[i] || select_warehouses[i].value === '' || select_warehouses[i].value === '-1') {
+                if (select_warehouses[i]) select_warehouses[i].focus();
+                alert("กรุณาเลือกคลัง");
+                return false;
+            }
+        }
+    }
+
+    if (!hasPositiveQty) {
+        alert("กรุณาระบุจำนวนที่ต้องการคืนอย่างน้อย 1 รายการ");
+        return false;
+    }
+
+    $(formEl).data('submitting', true);
+    $('.btn-submit-return').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> กำลังบันทึก...');
+    $('#return-loading-overlay').show();
     return true;
 }
 
@@ -910,13 +976,19 @@ function canelline(e) {
 
 // เมื่อกดปุ่มยืนยันใน modal
 $("#btn-submit-cancel").on("click", function() {
+    if ($(this).prop("disabled")) {
+        return;
+    }
     var maxQty = parseFloat($("#max-sale-qty").val());
     var inputQty = parseFloat($("#cancel-qty").val());
 
-    if (inputQty > maxQty) {
+    if (isNaN(inputQty) || inputQty <= 0 || inputQty > maxQty) {
         $("#qty-error").removeClass("d-none");
         return;
     }
+
+    $(this).prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> กำลังดำเนินการ...');
+    $("#return-loading-overlay").show();
 
     // ส่งค่าเข้าฟอร์มจริง
     $(".cancel-id").val($("#cancel-id").val());

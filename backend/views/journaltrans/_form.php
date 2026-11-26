@@ -182,6 +182,7 @@ if(in_array($effective_type, [1, 10])){
 
         <input type="hidden" id="create-type" value="<?= $effective_type ?>">
         <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
+        <input type="hidden" name="submit_token" value="<?= \Yii::$app->security->generateRandomString(32) ?>">
         <?php $model->trans_type_id = $model->isNewRecord ? $effective_type : $model->trans_type_id ?>
         <?= $form->field($model, 'trans_type_id')->hiddenInput()->label(false) ?>
         <div class="row">
@@ -520,9 +521,20 @@ $(document).ready(function() {
         if (\$form.find('.has-error').length) {
             return false;
         }
-        \$form.find('button[type="submit"]').prop('disabled', true);
-        var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-        loadingModal.show();
+        if (\$form.data('submitting')) {
+            return false;
+        }
+        \$form.data('submitting', true);
+        \$form.find('button[type="submit"]').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> กำลังบันทึก...');
+        try {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+                loadingModal.show();
+            } else if (typeof \$.fn.modal === 'function') {
+                $('#loadingModal').modal({backdrop: 'static', keyboard: false});
+                $('#loadingModal').modal('show');
+            }
+        } catch (err) {}
         return true;
     });
 });
